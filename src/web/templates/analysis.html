@@ -1,0 +1,446 @@
+{% extends "base.html" %}
+
+{% block title %}Model Analysis & Diagnostics | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<style>
+  .subpage-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: rgba(18, 12, 8, 0.85);
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .subpage-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .subpage-btn:hover {
+    color: var(--text-main);
+    background: rgba(229, 169, 60, 0.12);
+  }
+  .subpage-btn.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+  .analysis-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.5rem;
+    backdrop-filter: blur(4px);
+  }
+  .stat-card h3 {
+    font-family: var(--font-heading);
+    color: var(--accent-gold);
+    font-size: 1.2rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.6);
+    padding-bottom: 0.5rem;
+  }
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    font-family: var(--font-stats);
+    font-size: 0.92rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.2);
+  }
+  .stat-row:last-child { border-bottom: none; }
+  .stat-label { color: var(--text-muted); }
+  .stat-val { font-weight: 600; color: #ffde8a; }
+
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    margin-top: 0.75rem;
+  }
+  .matrix-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+    text-align: center;
+  }
+  .matrix-table td {
+    padding: 0.75rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+    font-size: 0.95rem;
+  }
+  .high-corr {
+    color: #66bb6a;
+    font-weight: 700;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Subpage Navigation -->
+<div class="subpage-nav">
+  <a href="{{ url_for('analysis.index', format=active_format) }}" class="subpage-btn active">Overview</a>
+  <a href="{{ url_for('analysis.calibration', format=active_format) }}" class="subpage-btn">Calibration &amp; Reliability</a>
+  <a href="{{ url_for('analysis.movers', format=active_format) }}" class="subpage-btn">Top Movers &amp; Divergence</a>
+  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn">Activity &amp; Demographics</a>
+</div>
+
+<div class="analysis-hero-card">
+  <div>
+    <h1 class="analysis-hero-title">
+      Model Diagnostics &amp; Comparative Analysis
+    </h1>
+    <p class="analysis-hero-desc">
+      Empirical statistical validation across <strong>Glicko-2 Standard</strong> (naive pairwise),
+      <strong>Glicko-2 MP-Weighted</strong> (Coulom/Glickman multiplayer fractional variance weighting), and <strong>Whole-History Rating</strong> (retrospective MAP Brownian motion).
+    </p>
+  </div>
+
+  <!-- Format Switcher -->
+  <div class="format-bar">
+    {% for f_id, f_name in formats.items() %}
+      <a href="?format={{ f_id }}" 
+         class="format-btn {% if active_format == f_id %}active{% endif %}"
+         data-tooltip="Filter statistical properties for {{ f_name }}">
+        {{ f_name }}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- 3 Models Statistical Properties -->
+<div class="analysis-grid">
+  {% for m_id, m_name in models.items() %}
+    {% set st = stats.get(m_id, {}) %}
+    <div class="stat-card">
+      <h3>{{ m_name }}</h3>
+      <div class="stat-row">
+        <span class="stat-label">Active Players:</span>
+        <span class="stat-val">{{ "{:,}".format(st.get('count', 0)) }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Mean Rating:</span>
+        <span class="stat-val">{{ st.get('mean_rating', '-') }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Median Rating:</span>
+        <span class="stat-val">{{ st.get('median_rating', '-') }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Rating Std Dev (&sigma;):</span>
+        <span class="stat-val">{{ st.get('std_rating', '-') }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Mean Rating Deviation (RD):</span>
+        <span class="stat-val" style="color: #4fc3f7;">&plusmn;{{ st.get('mean_rd', '-') }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Mean Conservative (C):</span>
+        <span class="stat-val" style="color: var(--accent-gold);">{{ st.get('mean_c_rating', '-') }}</span>
+      </div>
+      <div class="stat-row">
+        <span class="stat-label">Min / Max Rating:</span>
+        <span class="stat-val">{{ st.get('min_rating', '-') }} &mdash; {{ st.get('max_rating', '-') }}</span>
+      </div>
+    </div>
+  {% endfor %}
+</div>
+
+<!-- Cross-Model Agreement Matrix (Fixed Descriptor) -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin-bottom: 0.5rem;">
+    Cross-Model Agreement Matrix (Sample: {{ correlations.sample_size }} active players)
+  </h3>
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
+    Evaluates rank agreement (Spearman Rank Correlation <span data-tooltip="Spearman's Rank Correlation (ρ): Measures ordinal rank agreement between two rating systems (-1.0 to +1.0). 1.0 represents identical leaderboard standings."><em>&rho;</em></span>) and absolute rating scale alignment (Pearson Correlation <span data-tooltip="Pearson Correlation (r): Measures linear correlation between rating numbers assigned to players (-1.0 to +1.0)."><em>r</em></span>) across players with at least 15 competitive encounters.
+  </p>
+
+  <table class="matrix-table">
+    <thead>
+      <tr>
+        <th style="text-align: left;">Model Pair</th>
+        <th>
+          <span data-tooltip="Spearman's Rank Correlation (ρ): Non-parametric measure of statistical rank agreement between models (-1.0 to +1.0). 1.0 indicates identical leaderboard rankings.">
+            Spearman Rank Correlation (&rho;)
+          </span>
+        </th>
+        <th>
+          <span data-tooltip="Pearson Correlation (r): Measures linear correlation between the ratings assigned by two models (-1.0 to +1.0).">
+            Pearson Rating Correlation (r)
+          </span>
+        </th>
+        <th>Interpretation</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td style="text-align: left; font-weight: 600;">Glicko-2 Standard &harr; Glicko-2 MP-Weighted</td>
+        <td class="high-corr">{{ correlations.spearman_std_mp }}</td>
+        <td class="high-corr">{{ correlations.pearson_std_mp }}</td>
+        <td style="color: var(--text-muted); font-size: 0.85rem;">Very high agreement; divergence concentrated among heavy 4-player participants.</td>
+      </tr>
+      <tr>
+        <td style="text-align: left; font-weight: 600;">Glicko-2 Standard &harr; Whole-History Rating</td>
+        <td class="high-corr">{{ correlations.spearman_std_whr }}</td>
+        <td class="high-corr">{{ correlations.pearson_std_whr }}</td>
+        <td style="color: var(--text-muted); font-size: 0.85rem;">Strong correlation; WHR smooths early career volatility and incorporates retrospective knowledge.</td>
+      </tr>
+      <tr>
+        <td style="text-align: left; font-weight: 600;">Glicko-2 MP-Weighted &harr; Whole-History Rating</td>
+        <td class="high-corr">{{ correlations.spearman_mp_whr }}</td>
+        <td class="high-corr">{{ correlations.pearson_mp_whr }}</td>
+        <td style="color: var(--text-muted); font-size: 0.85rem;">Optimal calibration; both models prevent multiplayer overconfidence.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Two Charts in Grid: Rating Density & Calibration Curves -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+  
+  <!-- Chart 1: Calibration & Reliability Diagram -->
+  <div class="rating-card" style="padding: 1.5rem;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem;">
+        Model Calibration Curve (Reliability Diagram)
+      </h3>
+      <a href="{{ url_for('analysis.calibration', format=active_format) }}" style="color: var(--accent-gold); font-size: 0.85rem; text-decoration: none;">
+        Full Breakdown &raquo;
+      </a>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+      Predicted win probability vs actual observed win rate. A perfectly calibrated model falls exactly along the 45&deg; dashed diagonal.
+    </p>
+    <div style="position: relative; height: 320px; width: 100%;">
+      <canvas id="calibChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Chart 2: Rating Distribution Histogram -->
+  <div class="rating-card" style="padding: 1.5rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 0.75rem;">
+      Rating Distribution Density by Model
+    </h3>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
+      Frequency histogram of skill ratings across 100-point buckets in {{ formats.get(active_format, 'All Formats') }}.
+    </p>
+    <div style="position: relative; height: 320px; width: 100%;">
+      <canvas id="histChart"></canvas>
+    </div>
+  </div>
+</div>
+
+<!-- Title Rating Benchmark & Skill Tier Distribution Matrix -->
+<div class="rating-card" style="padding: 1.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem;">
+        Official Title Rating Benchmarks &amp; Skill Tier Calibration
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+        Empirical rating distributions and win rates across official competitive TTA title tiers in {{ formats.get(active_format, 'All Formats') }} (min. 15 matches).
+      </p>
+    </div>
+    <a href="{{ url_for('analysis.movers', format=active_format) }}" class="btn-antique" style="text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
+      <span>🚀</span> Explore Top Movers Subpage &raquo;
+    </a>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="matrix-table" style="text-align: left;">
+      <thead>
+        <tr>
+          <th style="text-align: left;">Competitive Tier</th>
+          <th>Qualified Players</th>
+          <th>Mean Glicko-2 Std</th>
+          <th>Mean MP-Weighted</th>
+          <th>Mean WHR</th>
+          <th>Median C-Rating</th>
+          <th>Average Win %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for b in title_benchmarks %}
+        <tr>
+          <td style="font-weight: 600; text-align: left;">
+            <span class="badge {{ b.badge_cls }}" style="margin-right: 0.4rem;">{{ b.code }}</span>
+            <span style="color: var(--text-main);">{{ b.label }}</span>
+          </td>
+          <td style="text-align: center; font-weight: 700; color: #ffd54f;">{{ b.count }}</td>
+          <td style="text-align: center;">{{ "%.1f"|format(b.mean_std) }}</td>
+          <td style="text-align: center; color: var(--accent-gold); font-weight: 700;">{{ "%.1f"|format(b.mean_mp) }}</td>
+          <td style="text-align: center; color: #4fc3f7;">{{ "%.1f"|format(b.mean_whr) }}</td>
+          <td style="text-align: center; color: #ffde8a; font-weight: 600;">{{ "%.1f"|format(b.median_c) }}</td>
+          <td style="text-align: center;">
+            <strong style="color: {% if b.mean_win_rate >= 55 %}#66bb6a{% elif b.mean_win_rate >= 50 %}#ffa726{% else %}#ef5350{% endif %};">
+              {{ "%.1f"|format(b.mean_win_rate) }}%
+            </strong>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    // 1. Histogram Chart
+    const rawHist = {{ hist_json|safe }};
+    const ctxHist = document.getElementById('histChart').getContext('2d');
+
+    new Chart(ctxHist, {
+      type: 'bar',
+      data: {
+        labels: rawHist.labels,
+        datasets: [
+          {
+            label: 'Glicko-2 Standard',
+            data: rawHist.std,
+            backgroundColor: 'rgba(229, 169, 60, 0.65)',
+            borderColor: '#e5a93c',
+            borderWidth: 1
+          },
+          {
+            label: 'Glicko-2 MP-Weighted',
+            data: rawHist.mp,
+            backgroundColor: 'rgba(142, 30, 29, 0.65)',
+            borderColor: '#8e1e1d',
+            borderWidth: 1
+          },
+          {
+            label: 'Whole-History Rating',
+            data: rawHist.whr,
+            backgroundColor: 'rgba(79, 195, 247, 0.65)',
+            borderColor: '#4fc3f7',
+            borderWidth: 1
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#f3e5c8', font: { family: "'Cinzel', serif" } } },
+          tooltip: {
+            backgroundColor: 'rgba(28, 19, 13, 0.95)',
+            titleColor: '#e5a93c',
+            bodyColor: '#f3e5c8'
+          }
+        },
+        scales: {
+          x: { grid: { color: 'rgba(74, 53, 37, 0.25)' }, ticks: { color: '#a89880' } },
+          y: { grid: { color: 'rgba(74, 53, 37, 0.25)' }, ticks: { color: '#a89880' } }
+        }
+      }
+    });
+
+    // 2. Calibration Reliability Diagram
+    const rawCalib = {{ calib_json|safe }};
+    const ctxCalib = document.getElementById('calibChart').getContext('2d');
+
+    const idealData = rawCalib.ideal.map(x => (x * 100).toFixed(1));
+    const stdData = rawCalib.models.glicko2_std ? rawCalib.models.glicko2_std.actuals.map(x => (x * 100).toFixed(1)) : [];
+    const mpData = rawCalib.models.glicko2_mp ? rawCalib.models.glicko2_mp.actuals.map(x => (x * 100).toFixed(1)) : [];
+    const whrData = rawCalib.models.whr ? rawCalib.models.whr.actuals.map(x => (x * 100).toFixed(1)) : [];
+
+    new Chart(ctxCalib, {
+      type: 'line',
+      data: {
+        labels: rawCalib.labels,
+        datasets: [
+          {
+            label: 'Ideal 45° Diagonal',
+            data: idealData,
+            borderColor: 'rgba(255, 255, 255, 0.4)',
+            borderDash: [6, 6],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false
+          },
+          {
+            label: 'Glicko-2 Standard (Brier: ' + (rawCalib.models.glicko2_std ? rawCalib.models.glicko2_std.brier : '') + ')',
+            data: stdData,
+            borderColor: '#e5a93c',
+            backgroundColor: '#e5a93c',
+            borderWidth: 2,
+            pointRadius: 4,
+            tension: 0.15,
+            fill: false
+          },
+          {
+            label: 'Glicko-2 MP-Weighted (Brier: ' + (rawCalib.models.glicko2_mp ? rawCalib.models.glicko2_mp.brier : '') + ')',
+            data: mpData,
+            borderColor: '#ef5350',
+            backgroundColor: '#ef5350',
+            borderWidth: 2,
+            pointRadius: 4,
+            tension: 0.15,
+            fill: false
+          },
+          {
+            label: 'Whole-History Rating (Brier: ' + (rawCalib.models.whr ? rawCalib.models.whr.brier : '') + ')',
+            data: whrData,
+            borderColor: '#4fc3f7',
+            backgroundColor: '#4fc3f7',
+            borderWidth: 2,
+            pointRadius: 4,
+            tension: 0.15,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#f3e5c8', font: { family: "'Inter', sans-serif", size: 11 } } },
+          tooltip: {
+            backgroundColor: 'rgba(28, 19, 13, 0.95)',
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.y + '% actual win rate';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Predicted Win Probability Bin', color: '#a89880' },
+            grid: { color: 'rgba(74, 53, 37, 0.25)' },
+            ticks: { color: '#a89880' }
+          },
+          y: {
+            title: { display: true, text: 'Actual Empirical Win Rate (%)', color: '#a89880' },
+            min: 0,
+            max: 100,
+            grid: { color: 'rgba(74, 53, 37, 0.25)' },
+            ticks: { color: '#a89880', callback: val => val + '%' }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

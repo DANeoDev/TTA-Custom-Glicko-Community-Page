@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Through the Ages - Rating Engine{% endblock %}</title>
+  <link rel="icon" type="image/png" href="{{ url_for('static', filename='img/favicon.png') }}">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Marcellus&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- KaTeX for formula rendering -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}]});"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-dark) url('{{ url_for("static", filename="img/background.png") }}') no-repeat center top fixed;
+      background-size: cover;
+      color: var(--text-main);
+      font-family: var(--font-body);
+    }
+    header {
+      background: rgba(28, 19, 13, 0.94);
+      border-bottom: 2px solid var(--border-subtle);
+      backdrop-filter: blur(8px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      padding: 0.75rem 2rem;
+    }
+    .header-container {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      text-decoration: none;
+      color: var(--accent-gold);
+    }
+    .brand img {
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
+    }
+    .brand h1 {
+      font-family: var(--font-heading);
+      font-size: 1.4rem;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-weight: 700;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+    .brand .subtitle {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+      font-family: var(--font-subheading);
+      text-transform: uppercase;
+    }
+    nav {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    nav a {
+      color: var(--text-main);
+      text-decoration: none;
+      font-family: var(--font-subheading);
+      font-size: 1.05rem;
+      letter-spacing: 0.5px;
+      transition: color 0.2s, border-bottom 0.2s;
+      padding: 0.25rem 0.5rem;
+      border-bottom: 2px solid transparent;
+      cursor: pointer;
+    }
+    nav a:hover, nav a.active {
+      color: var(--accent-gold);
+      border-bottom: 2px solid var(--accent-gold);
+    }
+    .model-switcher {
+      display: flex;
+      background: rgba(18, 12, 8, 0.85);
+      border: 1px solid var(--border-subtle);
+      border-radius: 6px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .model-btn {
+      padding: 0.35rem 0.75rem;
+      border-radius: 4px;
+      font-family: var(--font-stats);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-decoration: none;
+      transition: all 0.2s;
+      cursor: pointer !important;
+    }
+    .model-btn:hover {
+      color: var(--text-main);
+      background: rgba(229, 169, 60, 0.15);
+    }
+    .model-btn.active {
+      background: var(--accent-gold);
+      color: #1c130d;
+      box-shadow: 0 2px 6px rgba(229, 169, 60, 0.4);
+    }
+    main {
+      flex: 1;
+      max-width: 1400px;
+      width: 100%;
+      margin: 2rem auto;
+      padding: 0 1.5rem;
+    }
+    footer {
+      background: rgba(20, 13, 8, 0.95);
+      border-top: 1px solid var(--border-subtle);
+      padding: 2rem 1.5rem;
+      text-align: center;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-family: var(--font-stats);
+      margin-top: auto;
+    }
+    footer a {
+      color: var(--accent-gold);
+      text-decoration: none;
+    }
+    .badge {
+      display: inline-block;
+      padding: 0.15rem 0.45rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      font-family: var(--font-stats);
+      text-align: center;
+    }
+    .badge-gm { background: #e5a93c; color: #1c130d; border: 1px solid #ffcc66; }
+    .badge-m { background: #8a9ba8; color: #111; border: 1px solid #cfd8dc; }
+    .badge-p { background: #b87333; color: #fff; border: 1px solid #d7995b; }
+    .badge-g { background: #d4af37; color: #1c130d; border: 1px solid #ffd700; font-weight: 700; }
+    .badge-rank {
+      background: rgba(229, 169, 60, 0.15);
+      color: var(--accent-gold);
+      border: 1px solid rgba(229, 169, 60, 0.4);
+    }
+    .flag-icon {
+      margin-right: 0.35rem;
+      vertical-align: middle;
+      display: inline-flex;
+      align-items: center;
+    }
+    .flag-icon-img {
+      width: 22px;
+      height: 15px;
+      object-fit: cover;
+      border-radius: 2px;
+      vertical-align: middle;
+      display: inline-block;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.18);
+    }
+    .flag-icon-img.flag-lg {
+      width: 28px;
+      height: 19px;
+    }
+    /* Antique Hover Tooltips */
+    [data-tooltip] {
+      position: relative;
+      border-bottom: 1px dotted rgba(229, 169, 60, 0.4);
+    }
+    span[data-tooltip] {
+      cursor: help;
+    }
+    .model-btn, .format-btn, select, button, a[data-tooltip], .btn-antique, .btn-reset, .faq-tab-btn {
+      cursor: pointer !important;
+    }
+    [data-tooltip]::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      bottom: 130%;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(18, 12, 8, 0.97);
+      color: #f3e5c8;
+      border: 1px solid var(--accent-gold);
+      padding: 0.45rem 0.8rem;
+      border-radius: 5px;
+      font-size: 0.8rem;
+      font-family: var(--font-stats);
+      font-weight: 400;
+      white-space: normal;
+      width: max-content;
+      max-width: 320px;
+      z-index: 1000;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.8);
+      line-height: 1.4;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.2s ease, visibility 0.2s ease;
+    }
+    [data-tooltip]:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+    /* Tooltip positioned downward for header buttons, mode switches, and table headers */
+    .model-btn[data-tooltip]::after,
+    .tooltip-bottom[data-tooltip]::after,
+    th [data-tooltip]::after,
+    th[data-tooltip]::after,
+    .table-header-tooltip[data-tooltip]::after {
+      bottom: auto !important;
+      top: 135% !important;
+      z-index: 9999 !important;
+    }
+    /* Edge-aware tooltip anchoring to prevent clipping off-screen */
+    th:first-child [data-tooltip]::after,
+    td:first-child [data-tooltip]::after,
+    th:nth-child(2) [data-tooltip]::after,
+    td:nth-child(2) [data-tooltip]::after,
+    .tooltip-left[data-tooltip]::after {
+      left: 0 !important;
+      right: auto !important;
+      transform: none !important;
+    }
+    th:last-child [data-tooltip]::after,
+    td:last-child [data-tooltip]::after,
+    th:nth-last-child(2) [data-tooltip]::after,
+    td:nth-last-child(2) [data-tooltip]::after,
+    .tooltip-right[data-tooltip]::after {
+      left: auto !important;
+      right: 0 !important;
+      transform: none !important;
+    }
+    /* High contrast dark gold text and outlines */
+    .text-gold-contrast {
+      color: #e5a544 !important;
+      text-shadow: -1.5px -1.5px 0 #3a1010, 1.5px -1.5px 0 #3a1010, -1.5px 1.5px 0 #3a1010, 1.5px 1.5px 0 #3a1010, 0 3px 6px rgba(0,0,0,0.95);
+      letter-spacing: 0.5px;
+    }
+    .text-muted-contrast {
+      color: #bfaea0 !important;
+      text-shadow: 0 1px 2px rgba(0,0,0,0.9);
+    }
+    /* Player Profile Name - darker rich wine-red with perfectly aligned vector border */
+    .player-profile-name {
+      font-family: var(--font-heading);
+      font-size: 2.4rem;
+      font-weight: 800;
+      color: #98222b;
+      letter-spacing: 1.2px;
+      -webkit-text-stroke: 1.5px #120203;
+      paint-order: stroke fill;
+      text-shadow: 0 3px 8px rgba(0, 0, 0, 0.95);
+      display: inline-block;
+    }
+    /* Global Format Switcher Toolbar & Pill Buttons */
+    .format-bar {
+      display: inline-flex;
+      gap: 0.45rem;
+      background: rgba(14, 9, 6, 0.92);
+      padding: 0.35rem 0.5rem;
+      border-radius: 6px;
+      border: 1px solid var(--border-subtle);
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .format-btn {
+      padding: 0.4rem 0.9rem;
+      border-radius: 4px;
+      font-family: var(--font-stats);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #cfbeab !important;
+      background: rgba(43, 29, 20, 0.85);
+      text-decoration: none !important;
+      transition: all 0.2s ease;
+      border: 1px solid rgba(74, 53, 37, 0.8);
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      cursor: pointer;
+    }
+    .format-btn:hover {
+      color: #fff !important;
+      background: rgba(229, 169, 60, 0.25);
+      border-color: var(--accent-gold);
+    }
+    .format-btn.active {
+      background: linear-gradient(135deg, #e5a93c 0%, #b87c1c 100%);
+      color: #120904 !important;
+      font-weight: 700;
+      border-color: #ffd700;
+      box-shadow: 0 2px 8px rgba(229, 169, 60, 0.4);
+    }
+    /* Analysis Hero Card - high contrast opaque panel */
+    .analysis-hero-card {
+      background: rgba(26, 17, 12, 0.95);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1.5rem 1.75rem;
+      margin-bottom: 2rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      backdrop-filter: blur(8px);
+    }
+    .analysis-hero-title {
+      font-family: var(--font-heading);
+      font-size: 2.1rem;
+      color: #f7d377;
+      letter-spacing: 1px;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.95);
+      margin-bottom: 0.4rem;
+    }
+    .analysis-hero-desc {
+      color: #f1e4d0;
+      font-family: var(--font-body);
+      font-size: 1.05rem;
+      line-height: 1.6;
+      max-width: 880px;
+    }
+    .analysis-hero-desc strong {
+      color: #ffde8a;
+      font-weight: 700;
+    }
+    /* Circular Home / Back to Leaderboard Button (1.3x larger = 58px) */
+    .home-circle-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      transition: transform 0.2s ease, filter 0.2s ease;
+      text-decoration: none;
+      cursor: pointer;
+      position: relative;
+      border-bottom: none !important;
+    }
+    .home-circle-btn[data-tooltip] {
+      border-bottom: none !important;
+    }
+    .home-circle-btn:hover {
+      transform: scale(1.08);
+      filter: drop-shadow(0 0 10px rgba(229, 169, 60, 0.8));
+    }
+    .home-circle-btn[data-tooltip]::after {
+      top: calc(100% + 10px) !important;
+      bottom: auto !important;
+      left: 50% !important;
+      right: auto !important;
+      transform: translateX(-50%) !important;
+      white-space: nowrap !important;
+      z-index: 99999 !important;
+      background: rgba(18, 12, 8, 0.98) !important;
+      color: #f7dfa5 !important;
+      border: 1px solid var(--accent-gold) !important;
+      padding: 0.45rem 0.85rem !important;
+      font-size: 0.82rem !important;
+      font-weight: 600 !important;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.9) !important;
+      pointer-events: none !important;
+      max-width: 90vw !important;
+    }
+    .home-circle-btn.tooltip-right[data-tooltip]::after {
+      left: auto !important;
+      right: 0 !important;
+      transform: none !important;
+    }
+    .home-btn-img {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      display: block;
+    }
+    /* High-contrast tactile Antique buttons (Back to Profile, etc.) */
+    .btn-antique, .btn-back-profile {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: linear-gradient(180deg, #2e1d13 0%, #170d08 100%);
+      border: 1.5px solid var(--accent-gold);
+      color: #fff4dc !important;
+      font-family: var(--font-subheading);
+      font-size: 0.95rem;
+      font-weight: 700;
+      padding: 0.55rem 1.15rem;
+      border-radius: 6px;
+      cursor: pointer !important;
+      text-decoration: none !important;
+      box-shadow: 0 3px 8px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(229, 169, 60, 0.35);
+      transition: all 0.2s ease;
+    }
+    .btn-antique:hover, .btn-back-profile:hover {
+      background: linear-gradient(180deg, #422919 0%, #26150d 100%);
+      border-color: #ffd700;
+      color: #ffd700 !important;
+      box-shadow: 0 4px 14px rgba(229, 169, 60, 0.45), inset 0 1px 0 rgba(255, 215, 0, 0.5);
+      transform: translateY(-1px);
+    }
+    /* Tournament Achievements Button */
+    .btn-tournament-achievements {
+      background: linear-gradient(135deg, rgba(74, 18, 22, 0.92) 0%, rgba(43, 29, 20, 0.95) 100%);
+      border: 1.5px solid #d49438;
+      color: #ffd54f !important;
+      font-family: var(--font-subheading);
+      font-size: 0.92rem;
+      font-weight: 700;
+      padding: 0.55rem 1.1rem;
+      border-radius: 5px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+      box-shadow: 0 3px 10px rgba(0, 0, 0, 0.5);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s ease;
+      text-decoration: none;
+    }
+    .btn-tournament-achievements:hover {
+      border-color: #ffd54f;
+      background: linear-gradient(135deg, rgba(100, 24, 30, 0.98) 0%, rgba(65, 40, 25, 0.98) 100%);
+      box-shadow: 0 4px 14px rgba(229, 169, 60, 0.4);
+      transform: translateY(-1px);
+      color: #fff !important;
+    }
+    /* Career Honors Grid */
+    .career-honors-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 0.6rem;
+      margin: 0.8rem 0 1rem 0;
+    }
+    .career-honor-badge {
+      background: rgba(18, 12, 8, 0.92);
+      border: 1px solid #c59b27;
+      border-left: 3px solid #ffd54f;
+      padding: 0.45rem 0.85rem;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+    }
+    .honor-star {
+      color: #ffd54f;
+      font-size: 1rem;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .honor-text {
+      font-family: var(--font-subheading);
+      font-size: 0.92rem;
+      font-weight: 700;
+      color: #f7dfa5;
+      white-space: normal;
+    }
+    /* Duel Head-to-Head Compare Button */
+    .btn-h2h-compare {
+      background: rgba(142, 30, 29, 0.25);
+      border: 1px solid #8e1e1d;
+      color: #ffb4a2;
+      font-family: var(--font-stats);
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.3rem 0.65rem;
+      border-radius: 4px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      transition: all 0.2s ease;
+    }
+    .btn-h2h-compare:hover {
+      background: #8e1e1d;
+      border-color: var(--accent-gold);
+      color: #fff;
+      box-shadow: 0 2px 8px rgba(142, 30, 29, 0.6);
+      transform: translateY(-1px);
+    }
+    /* Global clean link styling - no default blue underlines */
+    a {
+      color: var(--accent-gold);
+      text-decoration: none;
+      transition: color 0.15s ease;
+    }
+    a:hover {
+      color: #ffde8a;
+      text-decoration: none;
+    }
+    /* Jump highlight animation for single player navigation */
+    @keyframes jumpPulse {
+      0% { background: rgba(229, 169, 60, 0.45); box-shadow: inset 0 0 15px rgba(229, 169, 60, 0.8); }
+      50% { background: rgba(229, 169, 60, 0.15); box-shadow: inset 0 0 4px rgba(229, 169, 60, 0.4); }
+      100% { background: rgba(229, 169, 60, 0.35); box-shadow: inset 0 0 12px rgba(229, 169, 60, 0.7); }
+    }
+    .jump-highlight td {
+      animation: jumpPulse 1.8s ease-in-out 3;
+      background: rgba(229, 169, 60, 0.25) !important;
+    }
+    /* RB48 Delta Indicators */
+    .delta-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      padding: 0.1rem 0.35rem;
+      border-radius: 3px;
+      font-family: var(--font-stats);
+    }
+    .delta-pos {
+      color: #66bb6a;
+      background: rgba(102, 187, 106, 0.12);
+    }
+    .delta-neg {
+      color: #ef5350;
+      background: rgba(239, 83, 80, 0.12);
+    }
+    .delta-zero {
+      color: var(--text-muted);
+      opacity: 0.6;
+    }
+  </style>
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+  <header>
+    <div class="header-container">
+      <a href="{{ url_for('leaderboard.index') }}" class="brand">
+        <img src="{{ url_for('static', filename='img/home_button.png') }}" alt="TTA Logo">
+        <div>
+          <h1>Through the Ages</h1>
+          <div class="subtitle">Competitive Rating & Performance Engine</div>
+        </div>
+      </a>
+
+      <nav>
+        <a href="{{ url_for('leaderboard.index') }}" class="{% if request.endpoint and 'leaderboard' in request.endpoint %}active{% endif %}">Leaderboard</a>
+        <a href="{{ url_for('analysis.index') }}" class="{% if request.endpoint and 'analysis' in request.endpoint %}active{% endif %}">Model Analysis</a>
+        <a href="{{ url_for('faq.index') }}" class="{% if request.endpoint and 'faq' in request.endpoint %}active{% endif %}">FAQ & Guide</a>
+      </nav>
+
+      <div class="model-switcher" title="Select Rating Model">
+        {% for m_id, m_name in models.items() %}
+          <a href="?model={{ m_id }}" 
+             class="model-btn {% if active_model == m_id %}active{% endif %}"
+             {% if m_id == 'glicko2_std' %}
+               data-tooltip="Standard naive 1v1 pairwise decomposition without multiplayer downweighting (official online baseline)."
+             {% elif m_id == 'glicko2_mp' %}
+               data-tooltip="Coulom fractional weighting w=1/(N-1) variance-calibrated for 3p/4p games to prevent overconfidence."
+             {% else %}
+               data-tooltip="Rémi Coulom Whole-History Rating with continuous retrospective Brownian motion across 2017-2026."
+             {% endif %}>
+            {{ m_name }}
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </header>
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer>
+    <div style="max-width: 1000px; margin: 0 auto; line-height: 1.6;">
+      <p><strong>Through the Ages Rating Engine</strong> -- Powered by Glicko-2 and Coulom Whole-History Rating.</p>
+      <p style="margin-top: 0.4rem;">
+        Active Model: <span style="color: var(--accent-gold); font-weight: 600;">{{ active_model_name }}</span> |
+        Active Format: <span style="color: var(--accent-gold); font-weight: 600;">{{ active_format_name }}</span> |
+        Matches Analyzed: <strong>131,424</strong> | Unique Players: <strong>3,489</strong>
+      </p>
+      <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #887864;">
+        Data from competitive online TTA tournaments (2017-2026).
+      </p>
+    </div>
+  </footer>
+</body>
+</html>

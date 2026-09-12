@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tta-glicko2-whr"
+version = "1.0.0"
+description = "Competitive Through the Ages Rating Engine and Web Portal"
+authors = [{ name = "TTA Community" }]
+dependencies = [
+    "Flask>=3.0.0",
+    "numpy>=1.26.0",
+    "pandas>=2.0.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = [".", "src"]

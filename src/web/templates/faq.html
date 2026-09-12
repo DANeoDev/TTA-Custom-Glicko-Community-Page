@@ -1,0 +1,393 @@
+{% extends "base.html" %}
+
+{% block title %}FAQ & Model Guide - Through the Ages Rating Engine{% endblock %}
+
+{% block extra_head %}
+<style>
+  .faq-container {
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  .faq-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 2rem;
+    background: rgba(16, 10, 6, 0.95);
+    padding: 0.45rem 0.6rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-subtle);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  }
+  .faq-tab-btn {
+    background: rgba(43, 29, 20, 0.85);
+    border: 1px solid rgba(74, 53, 37, 0.85);
+    color: #cfbeab;
+    font-family: var(--font-subheading);
+    font-size: 0.95rem;
+    font-weight: 600;
+    padding: 0.5rem 1.15rem;
+    border-radius: 6px;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+  }
+  .faq-tab-btn:hover {
+    color: #fff;
+    border-color: var(--accent-gold);
+    background: rgba(229, 169, 60, 0.22);
+  }
+  .faq-tab-btn.active {
+    background: linear-gradient(135deg, #e5a93c 0%, #b87c1c 100%);
+    color: #120904;
+    font-weight: 700;
+    border-color: #ffd700;
+    box-shadow: 0 2px 8px rgba(229, 169, 60, 0.4);
+  }
+  .faq-section {
+    display: none;
+    animation: fadeIn 0.25s ease-in-out;
+  }
+  .faq-section.active {
+    display: block;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .faq-card {
+    background: rgba(26, 17, 12, 0.95);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.75rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+  }
+  .faq-card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    color: #f7d377;
+    margin-bottom: 0.85rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.9);
+  }
+  .faq-card p {
+    font-family: var(--font-body);
+    font-size: 1.05rem;
+    line-height: 1.75;
+    color: #f1e4d0;
+    margin-bottom: 0.75rem;
+  }
+  .faq-card p:last-child {
+    margin-bottom: 0;
+  }
+  .faq-formula {
+    background: rgba(12, 8, 5, 0.92);
+    border: 1px solid rgba(229, 169, 60, 0.4);
+    border-left: 4px solid var(--accent-gold);
+    padding: 0.95rem 1.35rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 1rem;
+    color: #ffe6a3;
+    margin: 1rem 0;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+  }
+  .faq-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-family: var(--font-stats);
+    font-weight: 600;
+  }
+  .faq-list {
+    margin-left: 1.5rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.75;
+    color: #f1e4d0;
+  }
+  .faq-list li {
+    margin-bottom: 0.5rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="faq-container">
+  <div class="analysis-hero-card" style="margin-bottom: 1.75rem;">
+    <div>
+      <h1 class="analysis-hero-title">
+        Frequently Asked Questions & Model Guide
+      </h1>
+      <p class="analysis-hero-desc">
+        In-depth scientific documentation of the rating algorithms, multiplayer adjustments, and leaderboard mechanics.
+      </p>
+    </div>
+  </div>
+
+  <!-- Category Nav Tabs -->
+  <div class="faq-nav">
+    <button class="faq-tab-btn active" onclick="switchFaqTab('models', this)">Rating Models</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('crating', this)">Conservative Rating (C)</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('multiplayer', this)">Multiplayer Weighting</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('formats', this)">2p / 3p / 4p Formats</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('inactivity', this)">Inactivity &amp; Retirement</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('titles', this)">Titles &amp; Badges</button>
+  </div>
+
+  <!-- SECTION 1: MODELS -->
+  <div id="faq-models" class="faq-section active">
+    <div class="faq-card">
+      <h3>What are the three rating models, and how do they differ?</h3>
+      <p>
+        The portal provides three state-of-the-art rating models computed on the same competitive dataset of over 131,000 matches:
+      </p>
+      <ul class="faq-list">
+        <li>
+          <strong style="color: var(--accent-gold);">Glicko-2 Standard:</strong>
+          The official online leaderboard baseline developed by Mark Glickman. It treats every multiplayer game as a set of independent naive 1v1 duels with full weight ($w=1.0$).
+        </li>
+        <li>
+          <strong style="color: var(--accent-gold);">Glicko-2 MP-Weighted (Coulom/Glickman Fractional):</strong>
+          Variance-calibrated for 3-player and 4-player games using Rémi Coulom's fractional match weight formula ($w = \frac{1}{N-1}$). This preserves correct physical evidence accumulation, preventing artificial variance shrinkage and premature overconfidence.
+        </li>
+        <li>
+          <strong style="color: var(--accent-gold);">Whole-History Rating (WHR):</strong>
+          Rémi Coulom's Bayesian state-space model that computes retrospective Maximum A Posteriori (MAP) skill estimates across each player's entire career. Crucially, <strong>WHR explicitly models skill change over time</strong> via daily Brownian motion drift ($\sigma^2$ variance expansion per day elapsed). WHR does not assume static ability; rather, it uses future games backwards in time to refine and smooth the historical skill trajectory, eliminating early noisy fluctuations and revealing a player's true career evolution.
+        </li>
+      </ul>
+    </div>
+
+    <div class="faq-card">
+      <h3>Whole-History Rating (WHR): How Does It Work and How Does It Differ From Glicko?</h3>
+      <p>
+        <strong>Whole-History Rating (WHR)</strong>, developed by French computer scientist and Go AI pioneer <strong>Rémi Coulom (2008)</strong>, represents a fundamental paradigm shift from sequential rating systems like Elo and Glicko. Instead of maintaining a single running snapshot of ability, WHR models a player's <em>entire career skill trajectory</em> as a joint global optimization problem.
+      </p>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">1. The Core Mathematical Model: Brownian Motion State-Space</h4>
+      <p>
+        Traditional models assume a player's skill is either constant or changes only during discrete periods. In contrast, WHR treats skill $r(t)$ as a <strong>one-dimensional Wiener process (Brownian motion)</strong> continuously evolving across time. The variance of the skill change between day $t$ and day $t + \Delta t$ expands in direct proportion to elapsed days:
+      </p>
+
+      <div class="faq-formula">
+
+$$
+\mathrm{Var}(r_{t + \Delta t} - r_t) = w^2 \cdot \Delta t
+$$
+
+      </div>
+
+      <p>
+        Here, $w^2$ is the daily process variance parameter (empirically calibrated to $w^2 = 0.0016$ for competitive TTA). If a player is absent for 100 days, their skill uncertainty expands smoothly by $100 \times w^2$, naturally reflecting temporal decay without biasing their expected ability.
+      </p>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">2. Global Maximum A Posteriori (MAP) Estimation</h4>
+      <p>
+        WHR does not evaluate games one-by-one. Instead, it places the entire competitive history (over <strong>131,424 matches</strong> and <strong>3,489 players</strong> across 2017–2026) into a unified posterior probability distribution and solves for the global mode:
+      </p>
+
+      <div class="faq-formula">
+
+$$
+P(\mathbf{r} \mid \mathbf{D}) \propto P(\mathbf{r}) \prod_{k=1}^{M} P(\text{Outcome}_k \mid \mathbf{r})
+$$
+
+      </div>
+
+      <p>
+        Using multidimensional <strong>Newton-Raphson optimization</strong> accelerated by a linear-time <strong>Thomas block-tridiagonal algorithm</strong>, WHR simultaneously converges on every player's exact skill trajectory on every single day of competitive play.
+      </p>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">3. Key Differences: WHR vs. Glicko-2</h4>
+
+      <div style="overflow-x: auto; margin: 1rem 0;">
+        <table style="width: 100%; border-collapse: collapse; font-family: var(--font-stats); font-size: 0.92rem; background: rgba(14, 9, 6, 0.85); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-subtle);">
+          <thead>
+            <tr style="background: rgba(30, 20, 14, 0.95); color: var(--accent-gold); border-bottom: 2px solid var(--border-subtle); text-align: left;">
+              <th style="padding: 0.75rem 1rem;">Dimension</th>
+              <th style="padding: 0.75rem 1rem;">Glicko-2 (Standard / MP)</th>
+              <th style="padding: 0.75rem 1rem;">Whole-History Rating (WHR)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Information Flow</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Unidirectional (Forward-Only)</strong>: Evaluates matches sequentially. Day $t$ only knows days $1 \dots t-1$.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Bidirectional (Retrospective)</strong>: Future matches inform past skill estimates (Kalman smoother).</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Historical Corrections</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Permanent</strong>: Past ratings are immutable, even if early opponents were vastly underrated.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Self-Correcting</strong>: If an opponent you defeated years ago later becomes World Champion, that historical win retroactively increases in value.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Time Continuity</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Discrete Periods</strong>: Matches are binned into arbitrary rating intervals.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Continuous Drift</strong>: Prior covariance scales directly with elapsed days ($\Delta t$) via Brownian motion.</td>
+            </tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Match Order Invariance</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Order-Dependent</strong>: Changing the ingestion order of games within a period alters intermediate ratings.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>100% Order-Invariant</strong>: Operates on the complete static graph; match sequence order within days cannot alter the result.</td>
+            </tr>
+            <tr>
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Peak Detection</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Susceptible to temporary local rating spikes from short lucky streaks.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;">Produces smooth, mathematically robust career peak evaluations stripped of high-frequency noise.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <p style="margin-top: 0.85rem;">
+        <strong>Summary</strong>: While Glicko-2 is well-suited for live matchmaking queues requiring instant, one-pass incremental updates, WHR is universally acknowledged as the gold standard for retrospective historical analysis and definitive career skill evaluation.
+      </p>
+    </div>
+
+    <div class="faq-card">
+      <h3>Which model is the most accurate?</h3>
+      <p>
+        For retrospective analysis of historic performance and career peak detection, <strong>Whole-History Rating (WHR)</strong> offers the highest predictive accuracy and smoothest rating trajectories because it uses complete information across all seasons.
+      </p>
+      <p>
+        For live, online leaderboard tracking that directly corrects multiplayer inflation while maintaining forward-only updates, <strong>Glicko-2 MP-Weighted</strong> is mathematically optimal.
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 2: C-RATING -->
+  <div id="faq-crating" class="faq-section">
+    <div class="faq-card">
+      <h3>What is the Conservative Rating (C-Rating)?</h3>
+      <p>
+        The leaderboard ranks players by their <strong>Conservative Rating</strong> ($C$) rather than raw rating ($\mu$). It represents the lower bound of a 99.7% confidence interval:
+      </p>
+      <div class="faq-formula">
+        $$C = \mu - 3 \times \sigma \quad \text{or in Glicko scale:} \quad C = \text{Rating} - 3 \times \text{RD}$$
+      </div>
+      <p>
+        For example, a player with Rating 1800 and RD 50 has $C = 1800 - 150 = 1650.00$. A new player with Rating 1800 but RD 350 has $C = 1800 - 1050 = 750.00$.
+      </p>
+    </div>
+
+    <div class="faq-card">
+      <h3>Why rank by C-Rating instead of raw Rating?</h3>
+      <p>
+        Ranking by raw rating rewards "volatility camping"—a player could join, win 2 fortunate games, reach 1750, and sit at the top of the leaderboard without facing tough opponents.
+      </p>
+      <p>
+        By penalizing uncertainty ($3 \times \text{RD}$), C-Rating requires players to play consistently to narrow their RD before they can earn high ranks. As you play more games, your RD decreases and your C-Rating climbs towards your actual skill rating.
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 3: MULTIPLAYER WEIGHTING -->
+  <div id="faq-multiplayer" class="faq-section">
+    <div class="faq-card">
+      <h3>What is the "multiplayer fractional weighting" problem?</h3>
+      <p>
+        In Through the Ages, matches are played with 2, 3, or 4 players. When a 4-player game is decomposed into 1v1 duels, it creates $\binom{4}{2} = 6$ pairwise matches.
+      </p>
+      <p>
+        In naive Glicko-2, each player is treated as if they played 3 separate 1v1 duels in a single game. This accumulates 3 times more statistical evidence than physically occurred, causing the Rating Deviation (RD) to collapse 3 times too fast!
+      </p>
+      <div class="faq-formula">
+        $$\text{Coulom Match Weight:} \quad w = \frac{1}{N - 1}$$
+        $$\text{For 2-player duel:} \quad w = \frac{1}{2 - 1} = 1.00$$
+        $$\text{For 3-player game:} \quad w = \frac{1}{3 - 1} = 0.50$$
+        $$\text{For 4-player game:} \quad w = \frac{1}{4 - 1} = 0.333$$
+      </div>
+      <p>
+        By weighting each encounter by $1/(N-1)$, the total information gained from an $N$-player game exactly equals that of an authentic 1v1 duel.
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 4: FORMATS -->
+  <div id="faq-formats" class="faq-section">
+    <div class="faq-card">
+      <h3>Why are 2p, 3p, and 4p ratings separated?</h3>
+      <p>
+        Through the Ages accommodates different competitive player counts (2-player duel, 3-player, and 4-player games).
+      </p>
+      <p>
+        The portal provides dedicated rating trackers for each player count as well as a combined <em>All Formats</em> leaderboard. This allows players and analysts to inspect skill ratings, win rates, and ranking positions across specific disciplines.
+      </p>
+    </div>
+  </div>
+
+  <!-- SECTION 5: INACTIVITY -->
+  <div id="faq-inactivity" class="faq-section">
+    <div class="faq-card">
+      <h3>What is the official Inactivity Rule?</h3>
+      <p>
+        In accordance with official TTA tournament conventions, players who have not played a competitive tournament match in over <strong>12 months (365 days)</strong> are classified as <em>Inactive / Retired</em>.
+      </p>
+      <ul class="faq-list">
+        <li><strong>Leaderboard Display:</strong> The standard view shows only active players (1,507 players). You can select <em>"Include Inactive"</em> or <em>"Inactive Only"</em> from the status selector to view all 3,489 recorded competitors.</li>
+        <li><strong>Unretired Status:</strong> When a retired player participates in a tournament match after absence, their status immediately changes back to active with an <em>"unretired"</em> badge.</li>
+        <li><strong>Inactivity Drift:</strong> For every month a player is inactive, their Rating Deviation (RD) gently drifts upwards by approximately $1.7$ RD, reflecting growing uncertainty in their current sharpness.</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SECTION 6: TITLES & ACHIEVEMENTS -->
+  <div id="faq-titles" class="faq-section">
+    <div class="faq-card">
+      <h3>What do the official title badges (GM, M, P, G) mean?</h3>
+      <p>
+        Titles are awarded for distinguished finishes in official TTA World Championships and elite tournament divisions:
+      </p>
+      <ul class="faq-list">
+        <li><span class="badge badge-gm">GM</span> <strong>Grandmaster:</strong> Top-flight division champions, multiple major tournament victories, or World Championship podium finishes.</li>
+        <li><span class="badge badge-m">M</span> <strong>Master:</strong> Established top-tier competitive tournament finalists and continental champions.</li>
+        <li><span class="badge badge-p">P</span> <strong>Platinum:</strong> High-performing competitive tournament contenders and division winners.</li>
+        <li><span class="badge badge-g">G</span> <strong>Gold:</strong> Accomplished competitors who have earned division titles and podium placements in competitive tournament leagues.</li>
+      </ul>
+      <p>
+        Official titles are derived from the player's verified championship record and competitive tier achievements across registered TTA seasons.
+      </p>
+    </div>
+
+    <div class="faq-card">
+      <h3>How is the "Peak Rank" calculated?</h3>
+      <p>
+        Alongside a player's all-time <strong>Peak Rating</strong>, the portal calculates their historical <strong>Peak Rank</strong>. Rather than displaying their current rank, the engine queries the historical snapshot on the exact date their peak rating was recorded, evaluating their true leaderboard rank relative to all competitors active on that day.
+      </p>
+    </div>
+
+    <div class="faq-card">
+      <h3>Where do the Tournament Achievements and Records come from?</h3>
+      <p>
+        The portal integrates structured records from official TTA competitive events, including:
+      </p>
+      <ul class="faq-list">
+        <li><strong>International Championships:</strong> Multi-season world-class divisions (Diamond, Platinum, Gold, Silver).</li>
+        <li><strong>Intermezzo Championships:</strong> Prestigious mid-season cups.</li>
+        <li><strong>Continental &amp; Regional Leagues:</strong> European, Americas, Czech, and Asia-Pacific competitive tiers.</li>
+      </ul>
+      <p>
+        Players can inspect their full chronological tournament breakdown on their dedicated <em>Tournament Achievements</em> subpage, featuring sortable columns for seasons, divisions, tiers, final ranks, and match records.
+      </p>
+    </div>
+  </div>
+</div>
+
+<script>
+  function switchFaqTab(tabId, btn) {
+    document.querySelectorAll('.faq-section').forEach(s => s.classList.remove('active'));
+    document.querySelectorAll('.faq-tab-btn').forEach(b => b.classList.remove('active'));
+    
+    const target = document.getElementById('faq-' + tabId);
+    if (target) {
+      target.classList.add('active');
+    }
+    if (btn) {
+      btn.classList.add('active');
+    }
+  }
+</script>
+{% endblock %}

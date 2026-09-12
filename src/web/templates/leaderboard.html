@@ -1,0 +1,499 @@
+{% extends "base.html" %}
+
+{% block title %}Leaderboard - {{ active_model_name }} ({{ formats.get(active_format, 'All Formats') }}) | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<style>
+  .format-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: rgba(18, 12, 8, 0.85);
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .format-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .format-btn:hover {
+    color: var(--text-main);
+    background: rgba(229, 169, 60, 0.12);
+  }
+  .format-btn.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+  .controls-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+    background: rgba(28, 19, 13, 0.6);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .search-form {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .input-antique {
+    background: rgba(18, 12, 8, 0.85);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-main);
+    padding: 0.5rem 0.85rem;
+    border-radius: 4px;
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .input-antique:focus {
+    border-color: var(--accent-gold);
+    box-shadow: 0 0 8px rgba(229, 169, 60, 0.3);
+  }
+  .btn-antique {
+    background: var(--accent-gold);
+    color: #1c130d;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    font-family: var(--font-subheading);
+    font-weight: 700;
+    cursor: pointer;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    transition: all 0.2s;
+  }
+  .btn-antique:hover {
+    background: #f0ba54;
+    box-shadow: 0 2px 10px rgba(229, 169, 60, 0.4);
+  }
+  .btn-reset {
+    background: rgba(74, 53, 37, 0.6);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    padding: 0.5rem 0.85rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-family: var(--font-subheading);
+    font-size: 0.85rem;
+  }
+  .btn-reset:hover {
+    color: var(--text-main);
+    background: rgba(74, 53, 37, 0.9);
+  }
+  .stats-delta-selector {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .delta-toggle-btn {
+    padding: 0.45rem 0.75rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: 1px solid var(--border-subtle);
+    background: rgba(18, 12, 8, 0.85);
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+  .delta-toggle-btn:hover {
+    border-color: var(--accent-gold);
+    color: var(--text-main);
+  }
+  .delta-toggle-btn.active {
+    background: rgba(229, 169, 60, 0.2);
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+  }
+  .leaderboard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    text-align: left;
+  }
+  .leaderboard-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.85rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+  }
+  .leaderboard-table th a {
+    color: var(--accent-gold);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+  }
+  .leaderboard-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+    font-size: 0.92rem;
+  }
+  .leaderboard-table tr:hover td {
+    background: rgba(229, 169, 60, 0.06);
+  }
+  .player-link {
+    color: var(--text-main);
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    transition: color 0.2s;
+  }
+  .player-link:hover {
+    color: var(--accent-gold);
+    text-decoration: underline;
+  }
+  .rating-primary {
+    font-weight: 700;
+    color: #ffde8a;
+  }
+  .rating-rd {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+  }
+  .c-rating-val {
+    font-weight: 700;
+    color: var(--accent-gold);
+  }
+  .pagination {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1.5rem;
+    font-family: var(--font-stats);
+    font-size: 0.9rem;
+    color: var(--text-muted);
+  }
+  .pagination a {
+    background: rgba(43, 29, 20, 0.85);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-main);
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .pagination a:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+  }
+  .rank-col {
+    font-family: var(--font-heading);
+    font-weight: 700;
+    color: var(--text-muted);
+    width: 85px;
+  }
+  .top-3-rank {
+    color: var(--accent-gold);
+    font-size: 1.1rem;
+  }
+  .retired-badge {
+    background: rgba(100, 90, 80, 0.25);
+    color: #a89880;
+    border: 1px solid #5a4838;
+    font-size: 0.72rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 3px;
+    margin-left: 0.4rem;
+    font-family: var(--font-stats);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+
+  <!-- Format Selector (2p / 3p / 4p / All) -->
+  <div class="format-bar">
+    {% for f_id, f_name in formats.items() %}
+      <a href="?model={{ active_model }}&format={{ f_id }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}"
+         class="format-btn {% if active_format == f_id %}active{% endif %}">
+        {{ f_name }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+    <div>
+      <h2 style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 1px;">
+        Competitive Leaderboard
+      </h2>
+      <p style="color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5;">
+        Model: <strong style="color: var(--text-main);">{{ active_model_name }}</strong>
+        <span class="badge" style="background: rgba(229, 169, 60, 0.18); color: var(--accent-gold); border: 1px solid var(--accent-gold); margin-left: 0.3rem;">
+          {{ formats.get(active_format, 'All Formats') }}
+        </span>
+        <span style="color: var(--text-muted); margin-left: 0.5rem; font-size: 0.88rem;">
+          {% if active_model == 'glicko2_std' %}
+            (Standard naive 1v1 pairwise baseline)
+          {% elif active_model == 'glicko2_mp' %}
+            (Multiplayer fractional weighting &mdash; variance-calibrated)
+          {% else %}
+            (Whole-History Rating retrospective MAP)
+          {% endif %}
+        </span>
+      </p>
+    </div>
+    <div style="font-family: var(--font-stats); font-size: 0.9rem; color: var(--text-muted);">
+      Players: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
+      {% if status == 'active' %}
+        <span style="font-size: 0.8rem; color: #66bb6a; margin-left: 0.3rem;">(Active Only)</span>
+      {% elif status == 'inactive' %}
+        <span style="font-size: 0.8rem; color: #ef5350; margin-left: 0.3rem;">(Inactive Only)</span>
+      {% else %}
+        <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">(All Recorded)</span>
+      {% endif %}
+      {% if min_opps > 0 %}
+        <span style="font-size: 0.8rem; color: var(--accent-gold); margin-left: 0.3rem;">(&ge; {{ min_opps }} matches)</span>
+      {% endif %}
+    </div>
+  </div>
+
+  <div class="controls-bar">
+    <form method="GET" action="{{ url_for('leaderboard.index') }}" class="search-form">
+      <input type="hidden" name="model" value="{{ active_model }}">
+      <input type="hidden" name="format" value="{{ active_format }}">
+
+      <!-- Search Input with multi-name explainer -->
+      <div style="display: flex; align-items: center; gap: 0.35rem;">
+        <input type="text" name="search" value="{{ search }}" 
+               placeholder="Search player or country (e.g. Pazout, Genghisip)..." 
+               class="input-antique" style="width: 250px;"
+               title="Search by player name or country. To filter and compare multiple players simultaneously, enter comma-separated names (e.g. Pazout, Weidenbaum).">
+        <span data-tooltip="Search by player or country code. To compare multiple specific players, separate names with commas (e.g. Weidenbaum, Genghisip, Pazout). When searching a single player, the full leaderboard page containing that player will load with direct scroll." 
+              style="color: var(--accent-gold); font-size: 0.95rem; cursor: help; padding: 0 4px;" class="tooltip-bottom">&#9432;</span>
+      </div>
+      
+      <!-- Title Filter -->
+      <select name="title" class="input-antique">
+        <option value="ALL">All Titles</option>
+        {% for t in available_titles %}
+          <option value="{{ t }}" {% if title_filter == t %}selected{% endif %}>
+            {% if t == 'GM' %}Grandmaster (GM){% elif t == 'M' %}Master (M){% elif t == 'P' %}Platinum (P){% elif t == 'G' %}Gold (G){% else %}{{ t }}{% endif %}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Inactive / Active Player Status Selector -->
+      <select name="status" class="input-antique" onchange="this.form.submit()">
+        <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only (Standard)</option>
+        <option value="all" {% if status == 'all' %}selected{% endif %}>Include Inactive (All)</option>
+        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only (Retired)</option>
+      </select>
+
+      <!-- Minimum Matches Filter -->
+      <div style="display: flex; align-items: center; gap: 0.35rem;">
+        <label style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">Min Matches:</label>
+        <input type="number" name="min_opps" value="{{ min_opps }}" min="0" max="1000" class="input-antique" style="width: 68px; padding: 0.45rem 0.5rem;" title="Minimum competitive tournament matches">
+      </div>
+
+      <!-- RB48 Deltas Timeframe Selector (Always displays deltas) -->
+      <div class="stats-delta-selector">
+        <select name="delta" class="input-antique" onchange="this.form.submit()">
+          <option value="none" {% if delta_window == 'none' %}selected{% endif %}>Deltas: Off</option>
+          <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Update (~3M)</option>
+          <option value="month" {% if delta_window == 'month' %}selected{% endif %}>&Delta; Last Month (30d)</option>
+          <option value="quarter" {% if delta_window == 'quarter' %}selected{% endif %}>&Delta; Last Quarter (90d)</option>
+          <option value="year" {% if delta_window == 'year' %}selected{% endif %}>&Delta; Last Year (365d)</option>
+          <option value="baseline" {% if delta_window == 'baseline' %}selected{% endif %}>&Delta; Official Baseline</option>
+        </select>
+      </div>
+
+      <button type="submit" class="btn-antique">Filter</button>
+      {% if search or (title_filter and title_filter != 'ALL') or status != 'active' or delta_window != 'none' or min_opps != 30 %}
+        <a href="{{ url_for('leaderboard.index', model=active_model, format=active_format) }}" class="btn-reset">Reset</a>
+      {% endif %}
+    </form>
+
+    <div style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
+      Sorted by: <strong>{{ sort_by.replace('_', ' ').title() }}</strong> ({{ order.upper() }})
+    </div>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="leaderboard-table">
+      <thead>
+        <tr>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=rank&order={% if sort_by == 'rank' and order == 'asc' %}desc{% else %}asc{% endif %}"
+               data-tooltip="Current competitive ranking based on Conservative Rating (C = μ - 3σ).">
+              Rank
+            </a>
+          </th>
+          <th>
+            <span data-tooltip="Player's registered national flag.">Flag</span>
+          </th>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=name&order={% if sort_by == 'name' and order == 'asc' %}desc{% else %}asc{% endif %}"
+               data-tooltip="Player username. Click to view full career profile, rating trajectories, and match history.">
+              Player
+            </a>
+          </th>
+          <th>
+            <span data-tooltip="Official TTA Titles: GM (Grandmaster), M (Master), P (Platinum), G (Gold). Number inside parentheses is total career title achievements.">Title</span>
+          </th>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=c_rating&order={% if sort_by == 'c_rating' and order == 'desc' %}asc{% else %}desc{% endif %}"
+               data-tooltip="Conservative Rating: C = Rating - 3 × RD (99.7% confidence lower bound). Prevents unearned top spots with high uncertainty.">
+              C-Rating
+            </a>
+          </th>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=rating&order={% if sort_by == 'rating' and order == 'desc' %}asc{% else %}desc{% endif %}"
+               data-tooltip="Glicko-2 / WHR Skill Rating (mean μ) and Rating Deviation (RD / σ). Default starting rating is 1500 ± 350.">
+              Rating &plusmn; RD
+            </a>
+          </th>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=opps&order={% if sort_by == 'opps' and order == 'desc' %}asc{% else %}desc{% endif %}"
+               data-tooltip="Total competitive opponents faced across all recorded tournament games in this format.">
+              Opps
+            </a>
+          </th>
+          <th>
+            <span data-tooltip="Total Wins, Losses, and Draws accumulated across competitive tournament matches.">W-L-D</span>
+          </th>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=win_rate&order={% if sort_by == 'win_rate' and order == 'desc' %}asc{% else %}desc{% endif %}"
+               data-tooltip="Effective win percentage: (Wins + 0.5 × Draws) / Opponents × 100.">
+              Win %
+            </a>
+          </th>
+          <th>
+            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=last_played&order={% if sort_by == 'last_played' and order == 'desc' %}asc{% else %}desc{% endif %}"
+               data-tooltip="Date of player's most recent competitive match. Players without games in > 12 months are retired.">
+              Last Played
+            </a>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for p in players %}
+        <tr id="player-{{ p.player_name }}" class="{% if jump_to_player == p.player_name %}jump-highlight{% endif %}">
+          <td class="rank-col {% if p.display_rank <= 3 %}top-3-rank{% endif %}">
+            #{{ p.display_rank }}
+            {% if p.delta and p.delta.rank != 0 %}
+              <span class="delta-badge {% if p.delta.rank > 0 %}delta-pos{% else %}delta-neg{% endif %}" data-tooltip="Rank change over selected timeframe">
+                {% if p.delta.rank > 0 %}&uarr;+{{ p.delta.rank }}{% else %}&darr;{{ p.delta.rank }}{% endif %}
+              </span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="flag-icon" title="Country: {{ p.country_code or 'Unknown' }}">{{ get_flag(p.country_code) }}</span>
+          </td>
+          <td>
+            <a href="{{ url_for('player.profile', player_name=p.player_name) }}" class="player-link">
+              {{ p.player_name }}
+            </a>
+            {% if not p.is_active and status == 'all' %}
+              <span class="retired-badge" data-tooltip="Inactive / Retired (no competitive match in > 12 months)">Retired</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if p.title == 'GM' %}
+              <span class="badge badge-gm" title="Grandmaster ({{ p.title_count }} tournament titles earned)">GM</span>
+            {% elif p.title == 'M' %}
+              <span class="badge badge-m" title="Master ({{ p.title_count }} tournament titles earned)">M</span>
+            {% elif p.title == 'P' %}
+              <span class="badge badge-p" title="Platinum ({{ p.title_count }} tournament titles earned)">P</span>
+            {% elif p.title == 'G' %}
+              <span class="badge badge-g" title="Gold ({{ p.title_count }} tournament titles earned)">G</span>
+            {% else %}
+              <span style="color: #665544;">-</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="c-rating-val">{{ "%.2f"|format(p.c_rating) }}</span>
+            {% if p.delta %}
+              <span class="delta-badge {% if p.delta.c_rating > 0.05 %}delta-pos{% elif p.delta.c_rating < -0.05 %}delta-neg{% else %}delta-zero{% endif %}" data-tooltip="C-Rating change in selected timeframe">
+                {% if p.delta.c_rating > 0.05 %}&uarr;+{{ "%.1f"|format(p.delta.c_rating) }}{% elif p.delta.c_rating < -0.05 %}&darr;{{ "%.1f"|format(p.delta.c_rating) }}{% else %}&mdash;0.0{% endif %}
+              </span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="rating-primary">{{ "%.1f"|format(p.rating) }}</span>
+            <span class="rating-rd">&plusmn;{{ "%.1f"|format(p.rd) }}</span>
+            {% if p.delta %}
+              <span class="delta-badge {% if p.delta.rating > 0.05 %}delta-pos{% elif p.delta.rating < -0.05 %}delta-neg{% else %}delta-zero{% endif %}" data-tooltip="Rating change in selected timeframe">
+                {% if p.delta.rating > 0.05 %}&uarr;+{{ "%.1f"|format(p.delta.rating) }}{% elif p.delta.rating < -0.05 %}&darr;{{ "%.1f"|format(p.delta.rating) }}{% else %}&mdash;0.0{% endif %}
+              </span>
+            {% endif %}
+          </td>
+          <td>{{ p.opponents_count }}</td>
+          <td>
+            <span style="color: #66bb6a;">{{ p.wins }}</span> - 
+            <span style="color: #ef5350;">{{ p.losses }}</span> - 
+            <span style="color: #ffa726;">{{ p.draws }}</span>
+          </td>
+          <td>
+            <strong>{{ "%.1f"|format(p.win_rate) }}%</strong>
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.85rem;">
+            {{ p.last_played or '-' }}
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="10" style="text-align: center; padding: 2rem; color: var(--text-muted);">
+            No players found matching your criteria.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="pagination">
+    <div>
+      Showing page <strong>{{ page }}</strong> of <strong>{{ total_pages }}</strong>
+    </div>
+    <div style="display: flex; gap: 0.5rem;">
+      {% if page > 1 %}
+        <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort={{ sort_by }}&order={{ order }}&page={{ page - 1 }}">&laquo; Previous</a>
+      {% endif %}
+      {% if page < total_pages %}
+        <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort={{ sort_by }}&order={{ order }}&page={{ page + 1 }}">Next &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if jump_to_player %}
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('player-{{ jump_to_player }}');
+    if (el) {
+      setTimeout(function() {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  });
+</script>
+{% endif %}
+{% endblock %}

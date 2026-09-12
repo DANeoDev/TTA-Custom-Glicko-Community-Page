@@ -1,0 +1,664 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} - Player Profile | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<style>
+  .profile-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1.25rem;
+    margin: 0.5rem auto 2rem auto;
+    max-width: 900px;
+  }
+  .player-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.6rem;
+  }
+  .player-name-h1 {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+  }
+  .cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .model-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.5rem;
+    backdrop-filter: blur(4px);
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .model-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-gold);
+  }
+  .model-card.active-card {
+    border: 1px solid var(--accent-gold);
+    box-shadow: 0 4px 15px rgba(229, 169, 60, 0.25);
+  }
+  .model-card h3 {
+    font-family: var(--font-heading);
+    font-size: 1.1rem;
+    color: var(--accent-gold);
+    margin-bottom: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .rating-number {
+    font-size: 2rem;
+    font-weight: 700;
+    font-family: var(--font-stats);
+    color: #ffde8a;
+  }
+  .rd-tag {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    font-weight: normal;
+  }
+  .c-rating-box {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid rgba(74, 53, 37, 0.5);
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-stats);
+    font-size: 0.9rem;
+  }
+  .chart-container {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .tables-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 2rem;
+  }
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    font-size: 0.9rem;
+  }
+  .data-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.65rem 0.85rem;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+    text-align: left;
+  }
+  .data-table td {
+    padding: 0.6rem 0.85rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+  }
+  .placement-badge {
+    display: inline-block;
+    width: 26px;
+    height: 26px;
+    line-height: 26px;
+    text-align: center;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.8rem;
+  }
+  .place-1 { background: #e5a93c; color: #1c130d; }
+  .place-2 { background: #9e9e9e; color: #111; }
+  .place-3 { background: #b87333; color: #fff; }
+  .place-4 { background: #4a3525; color: #aaa; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="profile-header">
+  <div class="player-identity">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+      <h1 class="player-profile-name">{{ player.name }}</h1>
+      {% if player.title == 'GM' %}
+        <span class="badge badge-gm" data-tooltip="Official Competitive Title: Grandmaster">Grandmaster</span>
+      {% elif player.title == 'M' %}
+        <span class="badge badge-m" data-tooltip="Official Competitive Title: Master">Master</span>
+      {% elif player.title == 'P' %}
+        <span class="badge badge-p" data-tooltip="Official Competitive Title: Platinum">Platinum</span>
+      {% elif player.title == 'G' %}
+        <span class="badge badge-g" data-tooltip="Official Competitive Title: Gold">Gold</span>
+      {% endif %}
+    </div>
+    <div style="color: #1a0f08; font-family: var(--font-stats); font-size: 0.88rem; font-weight: 600; margin-top: 0.2rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; background: rgba(212, 163, 67, 0.28); padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(138, 90, 36, 0.45);">
+      <span title="Nationality / Flag">{{ get_flag(player.country_code) }}</span>
+      <span style="color: #5a3518;">&bull;</span>
+      <span>Last Match: <strong style="color: #0c0603;">{{ player.last_played or 'N/A' }}</strong></span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 0.25rem;">
+    <a href="{{ url_for('player.player_achievements', player_name=player.name) }}" class="btn-tournament-achievements">
+      <span>🏆</span> Tournament Achievements &raquo;
+    </a>
+    <a href="{{ url_for('leaderboard.index', model=active_model, format=active_format) }}" 
+       class="home-circle-btn tooltip-bottom tooltip-right" 
+       title="Return to Competitive Leaderboard"
+       data-tooltip="Return to Competitive Leaderboard">
+      <img src="{{ url_for('static', filename='img/home_button_circle.png') }}" alt="Leaderboard" class="home-btn-img">
+    </a>
+  </div>
+</div>
+
+<!-- Format Selector on Player Profile -->
+<div class="format-bar" style="margin: 0 auto 2rem auto; width: fit-content; display: flex; justify-content: center;">
+  {% for f_id, f_name in formats.items() %}
+    <a href="?model={{ active_model }}&format={{ f_id }}" 
+       class="format-btn {% if active_format == f_id %}active{% endif %}"
+       data-tooltip="View rating and history for {{ f_name }}">
+      {{ f_name }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Dynamic Career Narrative Summary Box -->
+<div class="rating-card" style="padding: 1.25rem 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--accent-gold);">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.6rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; display: flex; align-items: center; gap: 0.5rem; margin: 0;">
+      <span>&#128220; Career Profile &amp; Tournament Accolades</span>
+    </h3>
+    {% if achievements %}
+      <div style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted); display: flex; gap: 0.75rem;">
+        {% if achievements.total_titles > 0 %}<span style="color: #ffd700;">🏆 <strong>{{ achievements.total_titles }}</strong> Titles</span>{% endif %}
+        {% if achievements.gold_medals > 0 %}<span style="color: #ffd700;">🥇 <strong>{{ achievements.gold_medals }}</strong></span>{% endif %}
+        {% if achievements.silver_medals > 0 %}<span style="color: #cfd8dc;">🥈 <strong>{{ achievements.silver_medals }}</strong></span>{% endif %}
+        {% if achievements.bronze_medals > 0 %}<span style="color: #cd7f32;">🥉 <strong>{{ achievements.bronze_medals }}</strong></span>{% endif %}
+      </div>
+    {% endif %}
+  </div>
+  <div style="font-family: var(--font-body); font-size: 0.95rem; line-height: 1.6; color: var(--text-main);">
+    {% if narrative and narrative.career_summary %}
+      <p style="margin-bottom: 0.6rem; font-size: 1.05rem; color: #fff3db; font-weight: 500;">
+        🏅 {{ narrative.career_summary }}
+      </p>
+    {% else %}
+      <p style="margin-bottom: 0.5rem;">
+        <strong>{{ player.name }}</strong> has competed in <strong>{{ recent_matches|length }}</strong> recent matches across competitive TTA tournament divisions
+        {% if player.title %}
+          and holds the official title of <strong>{% if player.title == 'GM' %}Grandmaster{% elif player.title == 'M' %}Master{% elif player.title == 'P' %}Platinum{% elif player.title == 'G' %}Gold{% else %}{{ player.title }}{% endif %}</strong>.
+        {% endif %}
+      </p>
+    {% endif %}
+
+    {% if top_achievements %}
+      <div class="career-honors-grid">
+        {% for ach in top_achievements %}
+          <div class="career-honor-badge">
+            <span class="honor-star">★</span>
+            <span class="honor-text">{{ ach }}</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    {% if narrative and narrative.peaks %}
+      <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; margin: 0.6rem 0; padding: 0.6rem 0.85rem; background: rgba(18, 12, 8, 0.7); border-radius: 4px; border: 1px solid var(--border-subtle); font-family: var(--font-stats); font-size: 0.85rem;">
+        {% for m_key, pk in narrative.peaks.items() %}
+          <div>
+            <span style="color: var(--text-muted);">{{ models.get(m_key, m_key) }} Peak:</span>
+            <strong style="color: #ffd54f;">{{ pk.rating }}</strong>
+            {% if pk.rank %}
+              <span style="color: var(--accent-gold); font-weight: 700; margin-left: 0.2rem;">(Rank #{{ pk.rank }})</span>
+            {% endif %}
+            <span style="color: var(--text-muted); font-size: 0.8rem;">({{ pk.date }})</span>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% if narrative and narrative.divergence %}
+      <ul style="margin-left: 1.25rem; margin-top: 0.4rem; color: #d0c0b0; font-size: 0.9rem;">
+        {% for note in narrative.divergence %}
+          <li style="margin-bottom: 0.25rem;">{{ note }}</li>
+        {% endfor %}
+      </ul>
+    {% endif %}
+  </div>
+</div>
+
+<!-- 3 Models Rating Summary Cards -->
+<div class="cards-grid">
+  <!-- Glicko-2 Standard -->
+  {% set std = ratings.get('glicko2_std', {}) %}
+  <div class="model-card {% if active_model == 'glicko2_std' %}active-card{% endif %}">
+    <h3>
+      <span>Glicko-2 Standard</span>
+      <span class="badge badge-rank">#{{ std.get('rank', '-') }}</span>
+    </h3>
+    <div class="rating-number">
+      {{ "%.1f"|format(std.get('rating', 1500.0)) }}
+      <span class="rd-tag">&plusmn;{{ "%.1f"|format(std.get('rd', 350.0)) }}</span>
+    </div>
+    <div class="c-rating-box">
+      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
+      <strong style="color: var(--accent-gold);">{{ "%.2f"|format(std.get('c_rating', 450.0)) }}</strong>
+    </div>
+    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
+      Matches: {{ std.get('opponents_count', 0) }} | Win%: {{ "%.1f"|format(std.get('win_rate', 0.0)) }}%
+    </div>
+  </div>
+
+  <!-- Glicko-2 MP-Weighted -->
+  {% set mp = ratings.get('glicko2_mp', {}) %}
+  <div class="model-card {% if active_model == 'glicko2_mp' %}active-card{% endif %}">
+    <h3>
+      <span>Glicko-2 MP-Weighted</span>
+      <span class="badge badge-rank">#{{ mp.get('rank', '-') }}</span>
+    </h3>
+    <div class="rating-number">
+      {{ "%.1f"|format(mp.get('rating', 1500.0)) }}
+      <span class="rd-tag">&plusmn;{{ "%.1f"|format(mp.get('rd', 350.0)) }}</span>
+    </div>
+    <div class="c-rating-box">
+      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
+      <strong style="color: var(--accent-gold);">{{ "%.2f"|format(mp.get('c_rating', 450.0)) }}</strong>
+    </div>
+    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
+      Multiplayer fractional variance calibration
+    </div>
+  </div>
+
+  <!-- Whole-History Rating (WHR) -->
+  {% set whr = ratings.get('whr', {}) %}
+  <div class="model-card {% if active_model == 'whr' %}active-card{% endif %}">
+    <h3>
+      <span>Whole-History Rating</span>
+      <span class="badge badge-rank">#{{ whr.get('rank', '-') }}</span>
+    </h3>
+    <div class="rating-number">
+      {{ "%.1f"|format(whr.get('rating', 1500.0)) }}
+      <span class="rd-tag">&plusmn;{{ "%.1f"|format(whr.get('rd', 350.0)) }}</span>
+    </div>
+    <div class="c-rating-box">
+      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
+      <strong style="color: var(--accent-gold);">{{ "%.2f"|format(whr.get('c_rating', 450.0)) }}</strong>
+    </div>
+    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
+      Full 2017-2026 retrospective Brownian walk
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Chart.js Trajectory Comparison -->
+<div class="chart-container">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.2rem;">
+      Historical Rating Trajectory (2017 - 2026)
+    </h3>
+    <span style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-stats);">
+      Click legend items to toggle individual rating models
+    </span>
+  </div>
+  <div style="position: relative; height: 360px; width: 100%;">
+    <canvas id="ratingHistoryChart"></canvas>
+  </div>
+</div>
+
+<!-- Recent Matches & Head-to-Head Grids -->
+<div class="tables-grid">
+  <!-- Recent Matches -->
+  <div class="rating-card" style="padding: 1.25rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); margin-bottom: 1rem; font-size: 1.1rem;">
+      Recent Matches ({{ recent_matches|length }})
+    </h3>
+    <div style="overflow-x: auto;">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Tournament</th>
+            <th>Type</th>
+            <th>Place</th>
+            <th>Participants &amp; Scores</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in recent_matches %}
+          <tr>
+            <td style="color: var(--text-muted); white-space: nowrap;">{{ m.date }}</td>
+            <td style="font-weight: 600;">{{ m.tournament }}</td>
+            <td>
+              <span class="badge" style="background: rgba(74, 53, 37, 0.6); color: var(--text-main);">
+                {{ m.player_count }}P
+              </span>
+            </td>
+            <td>
+              <span class="placement-badge place-{{ m.placement }}">{{ m.placement }}</span>
+            </td>
+            <td>
+              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
+                {% for p in m.participants %}
+                  <span style="{% if p.name == player.name %}color: var(--accent-gold); font-weight: bold;{% else %}color: var(--text-muted);{% endif %}">
+                    {{ p.name }} ({{ p.score|int if p.score == p.score|int else p.score }}){% if not loop.last %},{% endif %}
+                  </span>
+                {% endfor %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              No recent match history found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Head-to-Head Records with natural height matching recent matches -->
+  <div class="rating-card" style="padding: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); margin: 0; font-size: 1.1rem;">
+        Head-to-Head vs Rivals (<span id="rivalCount">{{ h2h|length }}</span>)
+      </h3>
+      <input type="text" id="rivalFilter" onkeyup="filterRivals()" placeholder="🔍 Filter rival by name..." class="input-antique" style="font-size: 0.85rem; padding: 0.4rem 0.85rem; width: 210px; border: 1px solid var(--border-subtle); background: rgba(14, 9, 6, 0.95); color: #f3e5c8;">
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="data-table" id="rivalsTable">
+        <thead>
+          <tr>
+            <th>Opponent</th>
+            <th>Games</th>
+            <th>W - L - D</th>
+            <th>Win %</th>
+            <th>Head-to-Head</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in h2h %}
+          <tr class="rival-row {% if loop.index > 30 %}rival-overflow{% endif %}" {% if loop.index > 30 %}style="display: none;"{% endif %}>
+            <td>
+              <a href="{{ url_for('player.profile', player_name=r.opponent) }}" class="player-link rival-name" style="font-family: var(--font-body); font-weight: 600; color: #f7dfa5;">
+                {{ r.opponent }}
+              </a>
+            </td>
+            <td><strong>{{ r.games }}</strong></td>
+            <td>
+              <span style="color: #66bb6a; font-weight: 600;">{{ r.wins }}</span> - 
+              <span style="color: #ef5350; font-weight: 600;">{{ r.losses }}</span> - 
+              <span style="color: #ffa726; font-weight: 600;">{{ r.draws }}</span>
+            </td>
+            <td>
+              <strong style="color: {% if r.win_rate >= 50 %}#66bb6a{% else %}#ef5350{% endif %};">
+                {{ r.win_rate }}%
+              </strong>
+            </td>
+            <td>
+              <button type="button" class="btn-h2h-compare" onclick="showH2HHistory('{{ player.name }}', '{{ r.opponent }}')">
+                <span>⚔️</span> Compare
+              </button>
+            </td>
+          </tr>
+          {% else %}
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+              No head-to-head records found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% if h2h|length > 30 %}
+      <div id="rivalsExpandBar" style="text-align: center; margin-top: 0.85rem;">
+        <button type="button" class="btn-antique" style="font-size: 0.85rem; padding: 0.4rem 1rem;" onclick="toggleAllRivals(this)">
+          + Show all {{ h2h|length }} rivals
+        </button>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<!-- Exclusive Head-to-Head History Modal -->
+<div id="h2hModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 10000; align-items: center; justify-content: center; padding: 1.5rem;">
+  <div style="background: rgba(28, 19, 13, 0.98); border: 2px solid var(--accent-gold); border-radius: 8px; width: 100%; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.9);">
+    <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+      <h3 id="h2hModalTitle" style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin: 0;">
+        Exclusive Match History
+      </h3>
+      <button onclick="closeH2HModal()" style="background: transparent; border: none; color: var(--accent-gold); font-size: 1.8rem; cursor: pointer; line-height: 1;">&times;</button>
+    </div>
+    <div id="h2hModalStats" style="padding: 0.75rem 1.5rem; background: rgba(18, 12, 8, 0.7); font-family: var(--font-stats); font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 1.5rem; flex-wrap: wrap;">
+    </div>
+    <div id="h2hModalBody" style="padding: 1rem 1.5rem; overflow-y: auto; flex: 1;">
+      <div style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading head-to-head records...</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  function showH2HHistory(player1, player2) {
+    const modal = document.getElementById('h2hModal');
+    const title = document.getElementById('h2hModalTitle');
+    const statsEl = document.getElementById('h2hModalStats');
+    const bodyEl = document.getElementById('h2hModalBody');
+
+    title.innerText = player1 + ' vs ' + player2 + ' - Exclusive History';
+    statsEl.innerHTML = '<span style="color: var(--text-muted);">Fetching exclusive game records...</span>';
+    bodyEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">Loading match records...</div>';
+    modal.style.display = 'flex';
+
+    fetch('/api/h2h/' + encodeURIComponent(player1) + '/' + encodeURIComponent(player2))
+      .then(res => res.json())
+      .then(data => {
+        statsEl.innerHTML = `
+          <div>Total Mutual Games: <strong style="color: #ffd54f;">${data.total_matches}</strong></div>
+          <div><strong style="color: #66bb6a;">${data.player1} Wins: ${data.p1_wins}</strong></div>
+          <div><strong style="color: #ef5350;">${data.player2} Wins: ${data.p2_wins}</strong></div>
+          <div><strong style="color: #ffa726;">Draws / Splits: ${data.draws}</strong></div>
+        `;
+
+        if (!data.matches || data.matches.length === 0) {
+          bodyEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No direct tournament encounters found.</div>';
+          return;
+        }
+
+        let html = `
+          <table class="data-table" style="width: 100%;">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Tournament</th>
+                <th>Format</th>
+                <th>${data.player1} Finish</th>
+                <th>${data.player2} Finish</th>
+                <th>Table Scores</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        data.matches.forEach(m => {
+          const p1Badge = m.p1_place ? `<span class="placement-badge place-${m.p1_place}">#${m.p1_place}</span>` : '-';
+          const p2Badge = m.p2_place ? `<span class="placement-badge place-${m.p2_place}">#${m.p2_place}</span>` : '-';
+          const parts = m.participants.map(p => {
+            const isTarget = p.name.toLowerCase() === player1.toLowerCase() || p.name.toLowerCase() === player2.toLowerCase();
+            const color = isTarget ? '#ffd54f' : 'var(--text-muted)';
+            const weight = isTarget ? '700' : 'normal';
+            return `<span style="color: ${color}; font-weight: ${weight};">${p.name}: ${p.score}</span>`;
+          }).join(', ');
+
+          html += `
+            <tr>
+              <td>${m.date}</td>
+              <td style="color: var(--accent-gold); font-weight: 600;">${m.tournament || 'Competitive Match'}</td>
+              <td>${m.player_count}p</td>
+              <td>${p1Badge}</td>
+              <td>${p2Badge}</td>
+              <td style="font-size: 0.82rem;">${parts}</td>
+            </tr>
+          `;
+        });
+
+        html += '</tbody></table>';
+        bodyEl.innerHTML = html;
+      })
+      .catch(err => {
+        bodyEl.innerHTML = '<div style="text-align: center; color: #ef5350; padding: 2rem;">Failed to load match history: ' + err + '</div>';
+      });
+  }
+
+  function closeH2HModal() {
+    document.getElementById('h2hModal').style.display = 'none';
+  }
+
+  window.onclick = function(event) {
+    const modal = document.getElementById('h2hModal');
+    if (event.target === modal) {
+      closeH2HModal();
+    }
+  };
+</script>
+
+<script>
+  let rivalsExpanded = false;
+
+  function toggleAllRivals(btn) {
+    rivalsExpanded = !rivalsExpanded;
+    const overflowRows = document.querySelectorAll('#rivalsTable tbody tr.rival-overflow');
+    overflowRows.forEach(r => {
+      r.style.display = rivalsExpanded ? '' : 'none';
+    });
+    if (btn) {
+      btn.innerText = rivalsExpanded ? '- Show top 30 rivals only' : '+ Show all {{ h2h|length }} rivals';
+    }
+    const countEl = document.getElementById('rivalCount');
+    if (countEl) {
+      countEl.innerText = rivalsExpanded ? '{{ h2h|length }}' : '30';
+    }
+  }
+
+  function filterRivals() {
+    const input = document.getElementById('rivalFilter');
+    const filter = input.value.trim().toLowerCase();
+    const rows = document.querySelectorAll('#rivalsTable tbody tr.rival-row');
+    let visible = 0;
+
+    rows.forEach(row => {
+      const opp = row.querySelector('.rival-name');
+      if (opp) {
+        const txt = (opp.textContent || opp.innerText).toLowerCase();
+        let match = false;
+        if (filter !== '') {
+          match = txt.indexOf(filter) > -1;
+        } else {
+          match = rivalsExpanded || !row.classList.contains('rival-overflow');
+        }
+        row.style.display = match ? '' : 'none';
+        if (match) visible++;
+      }
+    });
+
+    const countEl = document.getElementById('rivalCount');
+    if (countEl) countEl.innerText = visible;
+
+    const expandBar = document.getElementById('rivalsExpandBar');
+    if (expandBar) {
+      expandBar.style.display = filter !== '' ? 'none' : '';
+    }
+  }
+</script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const rawData = {{ chart_json|safe }};
+    const ctx = document.getElementById('ratingHistoryChart').getContext('2d');
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: rawData.labels,
+        datasets: [
+          {
+            label: 'Glicko-2 Standard',
+            data: rawData.glicko2_std,
+            borderColor: '#e5a93c',
+            backgroundColor: 'rgba(229, 169, 60, 0.1)',
+            borderWidth: 2,
+            pointRadius: 1,
+            tension: 0.1,
+            spanGaps: true
+          },
+          {
+            label: 'Glicko-2 MP-Weighted',
+            data: rawData.glicko2_mp,
+            borderColor: '#8e1e1d',
+            backgroundColor: 'rgba(142, 30, 29, 0.1)',
+            borderWidth: 2,
+            pointRadius: 1,
+            tension: 0.1,
+            spanGaps: true
+          },
+          {
+            label: 'Whole-History Rating (WHR)',
+            data: rawData.whr,
+            borderColor: '#4fc3f7',
+            backgroundColor: 'rgba(79, 195, 247, 0.1)',
+            borderWidth: 2,
+            pointRadius: 1,
+            tension: 0.2,
+            spanGaps: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            labels: {
+              color: '#f3e5c8',
+              font: { family: "'Cinzel', serif", size: 12 }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(28, 19, 13, 0.95)',
+            titleColor: '#e5a93c',
+            bodyColor: '#f3e5c8',
+            borderColor: '#4a3525',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(74, 53, 37, 0.25)' },
+            ticks: { color: '#a89880', maxTicksLimit: 12 }
+          },
+          y: {
+            grid: { color: 'rgba(74, 53, 37, 0.25)' },
+            ticks: { color: '#a89880' }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

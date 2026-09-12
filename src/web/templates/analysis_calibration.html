@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Model Calibration & Reliability Curves | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<style>
+  .subpage-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: rgba(18, 12, 8, 0.85);
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .subpage-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .subpage-btn:hover {
+    color: var(--text-main);
+    background: rgba(229, 169, 60, 0.12);
+  }
+  .subpage-btn.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+  .brier-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .brier-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  .brier-val {
+    font-size: 2.2rem;
+    font-family: var(--font-heading);
+    font-weight: 700;
+    margin: 0.4rem 0;
+  }
+  .calib-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    margin-top: 1rem;
+  }
+  .calib-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.75rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+    text-align: center;
+  }
+  .calib-table td {
+    padding: 0.65rem 0.75rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+    font-size: 0.9rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Subpage Navigation -->
+<div class="subpage-nav">
+  <a href="{{ url_for('analysis.index', format=active_format) }}" class="subpage-btn">Overview</a>
+  <a href="{{ url_for('analysis.calibration', format=active_format) }}" class="subpage-btn active">Calibration &amp; Reliability</a>
+  <a href="{{ url_for('analysis.movers', format=active_format) }}" class="subpage-btn">Top Movers &amp; Divergence</a>
+  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn">Activity &amp; Demographics</a>
+</div>
+
+<div class="analysis-hero-card">
+  <div>
+    <h1 class="analysis-hero-title">
+      Model Calibration &amp; Reliability Curves
+    </h1>
+    <p class="analysis-hero-desc">
+      Empirical calibration evaluates whether a predicted 70% win probability genuinely wins 70% of the time across recorded matches.
+    </p>
+  </div>
+
+  <!-- Format Switcher -->
+  <div class="format-bar">
+    {% for f_id, f_name in formats.items() %}
+      <a href="?format={{ f_id }}" 
+         class="format-btn {% if active_format == f_id %}active{% endif %}"
+         data-tooltip="Filter calibration for {{ f_name }}">
+        {{ f_name }}
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Brier Score & ECE Calibration Summary Cards -->
+<div class="brier-grid">
+  {% set std_m = calib_data.models.glicko2_std if calib_data.models.glicko2_std else {} %}
+  {% set mp_m = calib_data.models.glicko2_mp if calib_data.models.glicko2_mp else {} %}
+  {% set whr_m = calib_data.models.whr if calib_data.models.whr else {} %}
+
+  <div class="brier-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Glicko-2 Standard</div>
+    <div class="brier-val" style="color: #e5a93c;">{{ std_m.get('ece_pct', 0.0) }}%</div>
+    <div style="font-size: 0.85rem; font-weight: 600; color: #ffde8a;" data-tooltip="Expected Calibration Error (ECE): Weighted mean absolute error between predicted win probabilities and observed outcomes across deciles. Lower is better.">
+      ECE (Expected Calibration Error)
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;" data-tooltip="Brier Score: Mean squared error of probabilistic predictions (0 to 1). Lower is better.">
+      Brier MSE: <strong>{{ std_m.get('brier', 0.25) }}</strong>
+    </div>
+  </div>
+
+  <div class="brier-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Glicko-2 MP-Weighted</div>
+    <div class="brier-val" style="color: #ef5350;">{{ mp_m.get('ece_pct', 0.0) }}%</div>
+    <div style="font-size: 0.85rem; font-weight: 600; color: #ffde8a;" data-tooltip="Expected Calibration Error (ECE): Weighted mean absolute error between predicted win probabilities and observed outcomes across deciles. Lower is better.">
+      ECE (Expected Calibration Error)
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;" data-tooltip="Brier Score: Mean squared error of probabilistic predictions (0 to 1). Lower is better.">
+      Brier MSE: <strong>{{ mp_m.get('brier', 0.25) }}</strong>
+    </div>
+  </div>
+
+  <div class="brier-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Whole-History Rating</div>
+    <div class="brier-val" style="color: #4fc3f7;">{{ whr_m.get('ece_pct', 0.0) }}%</div>
+    <div style="font-size: 0.85rem; font-weight: 600; color: #66bb6a;" data-tooltip="Expected Calibration Error (ECE): Weighted mean absolute error between predicted win probabilities and observed outcomes across deciles. Lower is better.">
+      ECE (Optimal Calibration)
+    </div>
+    <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.3rem;" data-tooltip="Brier Score: Mean squared error of probabilistic predictions (0 to 1). Lower is better.">
+      Brier MSE: <strong>{{ whr_m.get('brier', 0.25) }}</strong>
+    </div>
+  </div>
+</div>
+
+<!-- Calibration Diagram -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin-bottom: 0.5rem;">
+    Reliability Diagram Across Probability Deciles (Format: {{ formats.get(active_format, 'All Formats') }})
+  </h3>
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
+    A model is perfectly calibrated when its curve coincides with the dashed diagonal. Curves above the diagonal indicate under-confidence (underestimating winning chances), while curves below indicate over-confidence.
+  </p>
+  <div style="position: relative; height: 380px; width: 100%;">
+    <canvas id="deepCalibChart"></canvas>
+  </div>
+</div>
+
+<!-- Detailed Bin Statistics Table -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin-bottom: 0.5rem;">
+    Empirical Calibration Bin Breakdown
+  </h3>
+  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
+    Observed win percentages across symmetric match encounters.
+  </p>
+  <div style="overflow-x: auto;">
+    <table class="calib-table">
+      <thead>
+        <tr>
+          <th>Probability Bin</th>
+          <th>Ideal Target</th>
+          <th style="color: #e5a93c;">Glicko-2 Std Actual</th>
+          <th style="color: #ef5350;">Glicko-2 MP Actual</th>
+          <th style="color: #4fc3f7;">WHR Actual</th>
+          <th>Sample Count (N)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for idx in range(10) %}
+          {% set bin_lbl = calib_data.labels[idx] %}
+          {% set ideal = (calib_data.ideal[idx] * 100)|round(1) %}
+          {% set std_act = (calib_data.models.glicko2_std.actuals[idx] * 100)|round(1) if calib_data.models.glicko2_std.actuals[idx] else '-' %}
+          {% set mp_act = (calib_data.models.glicko2_mp.actuals[idx] * 100)|round(1) if calib_data.models.glicko2_mp.actuals[idx] else '-' %}
+          {% set whr_act = (calib_data.models.whr.actuals[idx] * 100)|round(1) if calib_data.models.whr.actuals[idx] else '-' %}
+          {% set cnt = calib_data.models.glicko2_std.counts[idx] if calib_data.models.glicko2_std else 0 %}
+          <tr>
+            <td style="font-weight: 600; text-align: left;">{{ bin_lbl }}</td>
+            <td style="color: var(--text-muted);">{{ ideal }}%</td>
+            <td style="color: #e5a93c; font-weight: 600;">{{ std_act }}%</td>
+            <td style="color: #ef5350; font-weight: 600;">{{ mp_act }}%</td>
+            <td style="color: #4fc3f7; font-weight: 600;">{{ whr_act }}%</td>
+            <td>{{ "{:,}".format(cnt) }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const rawCalib = {{ calib_json|safe }};
+    const ctx = document.getElementById('deepCalibChart').getContext('2d');
+
+    const idealData = rawCalib.ideal.map(x => (x * 100).toFixed(1));
+    const stdData = rawCalib.models.glicko2_std ? rawCalib.models.glicko2_std.actuals.map(x => (x * 100).toFixed(1)) : [];
+    const mpData = rawCalib.models.glicko2_mp ? rawCalib.models.glicko2_mp.actuals.map(x => (x * 100).toFixed(1)) : [];
+    const whrData = rawCalib.models.whr ? rawCalib.models.whr.actuals.map(x => (x * 100).toFixed(1)) : [];
+
+    new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: rawCalib.labels,
+        datasets: [
+          {
+            label: 'Ideal 45° Calibration Line',
+            data: idealData,
+            borderColor: 'rgba(255, 255, 255, 0.4)',
+            borderDash: [6, 6],
+            borderWidth: 2,
+            pointRadius: 0,
+            fill: false
+          },
+          {
+            label: 'Glicko-2 Standard',
+            data: stdData,
+            borderColor: '#e5a93c',
+            backgroundColor: '#e5a93c',
+            borderWidth: 2.5,
+            pointRadius: 5,
+            tension: 0.1,
+            fill: false
+          },
+          {
+            label: 'Glicko-2 MP-Weighted',
+            data: mpData,
+            borderColor: '#ef5350',
+            backgroundColor: '#ef5350',
+            borderWidth: 2.5,
+            pointRadius: 5,
+            tension: 0.1,
+            fill: false
+          },
+          {
+            label: 'Whole-History Rating',
+            data: whrData,
+            borderColor: '#4fc3f7',
+            backgroundColor: '#4fc3f7',
+            borderWidth: 2.5,
+            pointRadius: 5,
+            tension: 0.1,
+            fill: false
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { labels: { color: '#f3e5c8', font: { family: "'Cinzel', serif", size: 12 } } },
+          tooltip: {
+            backgroundColor: 'rgba(28, 19, 13, 0.95)',
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + context.parsed.y + '% observed win rate';
+              }
+            }
+          }
+        },
+        scales: {
+          x: {
+            title: { display: true, text: 'Model Predicted Probability Bin', color: '#a89880' },
+            grid: { color: 'rgba(74, 53, 37, 0.25)' },
+            ticks: { color: '#a89880' }
+          },
+          y: {
+            title: { display: true, text: 'Actual Observed Win Rate (%)', color: '#a89880' },
+            min: 0,
+            max: 100,
+            grid: { color: 'rgba(74, 53, 37, 0.25)' },
+            ticks: { color: '#a89880', callback: val => val + '%' }
+          }
+        }
+      }
+    });
+  });
+</script>
+{% endblock %}

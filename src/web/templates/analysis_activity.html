@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Activity & Demographics | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<style>
+  .subpage-nav {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: rgba(18, 12, 8, 0.85);
+    padding: 0.4rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .subpage-btn {
+    padding: 0.4rem 1rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .subpage-btn:hover {
+    color: var(--text-main);
+    background: rgba(229, 169, 60, 0.12);
+  }
+  .subpage-btn.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+  .stats-grid-4 {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .metric-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .metric-number {
+    font-family: var(--font-heading);
+    font-size: 2.3rem;
+    font-weight: 700;
+    margin: 0.4rem 0;
+  }
+  .activity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    text-align: left;
+  }
+  .activity-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+    text-align: center;
+  }
+  .activity-table td {
+    padding: 0.65rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+    font-size: 0.92rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Subpage Navigation -->
+<div class="subpage-nav">
+  <a href="{{ url_for('analysis.index') }}" class="subpage-btn">Overview</a>
+  <a href="{{ url_for('analysis.calibration') }}" class="subpage-btn">Calibration &amp; Reliability</a>
+  <a href="{{ url_for('analysis.movers') }}" class="subpage-btn">Top Movers &amp; Divergence</a>
+  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn active">Activity &amp; Demographics</a>
+</div>
+
+<div class="analysis-hero-card">
+  <div>
+    <h1 class="analysis-hero-title">
+      Player Activity &amp; Community Demographics
+    </h1>
+    <p class="analysis-hero-desc">
+      Insights into active vs retired competitors, global distribution, match formats, and master title holders.
+    </p>
+  </div>
+</div>
+
+<!-- 4 Key Community Metrics -->
+<div class="stats-grid-4">
+  <div class="metric-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Active Players (12m)</div>
+    <div class="metric-number" style="color: #66bb6a;">{{ "{:,}".format(active_count) }}</div>
+    <div style="color: var(--text-muted); font-size: 0.8rem;">
+      {{ "%.1f"|format(active_count / total_players * 100) }}% active retention
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Inactive / Retired</div>
+    <div class="metric-number" style="color: #a89880;">{{ "{:,}".format(inactive_count) }}</div>
+    <div style="color: var(--text-muted); font-size: 0.8rem;">
+      {{ "%.1f"|format(inactive_count / total_players * 100) }}% inactive (&gt;12m)
+    </div>
+  </div>
+
+  <div class="metric-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">Total Matches Recorded</div>
+    <div class="metric-number" style="color: var(--accent-gold);">131,424</div>
+    <div style="color: var(--text-muted); font-size: 0.8rem;">Across 2017&ndash;2026 seasons</div>
+  </div>
+
+  <div class="metric-card">
+    <div style="color: var(--text-muted); font-size: 0.85rem; text-transform: uppercase;">All Recorded Competitors</div>
+    <div class="metric-number" style="color: #4fc3f7;">{{ "{:,}".format(total_players) }}</div>
+    <div style="color: var(--text-muted); font-size: 0.8rem;">Unique tournament players</div>
+  </div>
+</div>
+
+<!-- Two Column Layout: Format Breakdown & Titles -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
+  
+  <!-- Format Match Breakdown -->
+  <div class="rating-card" style="padding: 1.5rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin-bottom: 0.75rem;">
+      Matches by Game Format
+    </h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
+      Distribution of competitive tournaments across player counts.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      <div style="background: rgba(18, 12, 8, 0.7); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="color: var(--text-main); font-size: 1.05rem;">3-Player Games</strong>
+          <div style="color: var(--text-muted); font-size: 0.8rem;">Most popular tournament format (185,199 pairwise duels)</div>
+        </div>
+        <div style="font-family: var(--font-heading); font-size: 1.4rem; color: #ffde8a; font-weight: 700;">
+          {{ "{:,}".format(match_stats.get(3, 0)) }}
+        </div>
+      </div>
+
+      <div style="background: rgba(18, 12, 8, 0.7); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="color: var(--text-main); font-size: 1.05rem;">2-Player (Duels)</strong>
+          <div style="color: var(--text-muted); font-size: 0.8rem;">Pure 1v1 heads-up duels (45,384 pairwise games)</div>
+        </div>
+        <div style="font-family: var(--font-heading); font-size: 1.4rem; color: #ffde8a; font-weight: 700;">
+          {{ "{:,}".format(match_stats.get(2, 0)) }}
+        </div>
+      </div>
+
+      <div style="background: rgba(18, 12, 8, 0.7); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div>
+          <strong style="color: var(--text-main); font-size: 1.05rem;">4-Player Games</strong>
+          <div style="color: var(--text-muted); font-size: 0.8rem;">Full table political strategy (145,842 pairwise duels)</div>
+        </div>
+        <div style="font-family: var(--font-heading); font-size: 1.4rem; color: #ffde8a; font-weight: 700;">
+          {{ "{:,}".format(match_stats.get(4, 0)) }}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Title Distribution -->
+  <div class="rating-card" style="padding: 1.5rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin-bottom: 0.75rem;">
+      Official Tournament Titles
+    </h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
+      Awarded for top finishes in official World Championships &amp; continental championships.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 0.75rem;">
+      {% for t in titles %}
+      <div style="background: rgba(18, 12, 8, 0.7); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span class="badge badge-{{ t.title.lower() }}" style="font-size: 0.95rem; padding: 0.25rem 0.6rem;">
+            {{ t.title }}
+          </span>
+          <div>
+            <strong style="color: var(--text-main);">
+              {% if t.title == 'GM' %}Grandmaster{% elif t.title == 'M' %}Master{% else %}Platinum{% endif %}
+            </strong>
+          </div>
+        </div>
+        <div style="font-family: var(--font-heading); font-size: 1.4rem; color: var(--accent-gold); font-weight: 700;">
+          {{ t.count }} players
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<!-- Top Nations Table: 4 Sortable Rating Columns by Title -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem;">
+        Top 15 Countries by Player Participation &amp; Title Rating Depth
+      </h3>
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
+        Comparative average Glicko-2 ratings by official title status across the top 15 participating nations. Click headers to sort.
+      </p>
+    </div>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="activity-table" id="countryTable">
+      <thead>
+        <tr>
+          <th onclick="sortCountryTable(0)" style="cursor: pointer;">Rank &#8645;</th>
+          <th onclick="sortCountryTable(1)" style="text-align: left; cursor: pointer;">Country &#8645;</th>
+          <th onclick="sortCountryTable(2, true)" style="cursor: pointer;">Total Players &#8645;</th>
+          <th onclick="sortCountryTable(3, true)" style="cursor: pointer;" data-tooltip="Average rating of Grandmaster (GM) players in this country">Avg (GM) &#8645;</th>
+          <th onclick="sortCountryTable(4, true)" style="cursor: pointer;" data-tooltip="Average rating of Master or higher (GM + M) players in this country">Avg (M+) &#8645;</th>
+          <th onclick="sortCountryTable(5, true)" style="cursor: pointer;" data-tooltip="Average rating of Platinum or higher (GM + M + P) players in this country">Avg (Platinum+) &#8645;</th>
+          <th onclick="sortCountryTable(6, true)" style="cursor: pointer;" data-tooltip="Average rating across all registered players in this country">Avg (All) &#8645;</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for c in countries %}
+        <tr>
+          <td style="font-weight: 700; color: var(--text-muted);" data-sort="{{ loop.index }}">#{{ loop.index }}</td>
+          <td style="text-align: left; font-weight: 600;" data-sort="{{ c.country_code }}">
+            <span style="font-size: 1.4rem; margin-right: 0.4rem; vertical-align: middle;">{{ get_flag(c.country_code) }}</span>
+          </td>
+          <td style="font-weight: 700; color: var(--text-main);" data-sort="{{ c.total_count }}">{{ c.total_count }}</td>
+          <td style="color: #ffd54f; font-weight: 700;" data-sort="{{ c.avg_gm or 0 }}">
+            {{ c.avg_gm if c.avg_gm is not none else '-' }}
+          </td>
+          <td style="color: #ffde8a; font-weight: 600;" data-sort="{{ c.avg_m_plus or 0 }}">
+            {{ c.avg_m_plus if c.avg_m_plus is not none else '-' }}
+          </td>
+          <td style="color: #e5a93c; font-weight: 600;" data-sort="{{ c.avg_p_plus or 0 }}">
+            {{ c.avg_p_plus if c.avg_p_plus is not none else '-' }}
+          </td>
+          <td style="color: var(--text-main);" data-sort="{{ c.avg_all or 0 }}">
+            {{ c.avg_all if c.avg_all is not none else '-' }}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let sortDirections = {};
+  function sortCountryTable(colIdx, isNumeric = false) {
+    const table = document.getElementById('countryTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+    const asc = !sortDirections[colIdx];
+    sortDirections[colIdx] = asc;
+
+    rows.sort((a, b) => {
+      const cellA = a.children[colIdx].getAttribute('data-sort') || a.children[colIdx].innerText.trim();
+      const cellB = b.children[colIdx].getAttribute('data-sort') || b.children[colIdx].innerText.trim();
+      if (isNumeric) {
+        const valA = parseFloat(cellA) || 0;
+        const valB = parseFloat(cellB) || 0;
+        return asc ? valA - valB : valB - valA;
+      } else {
+        return asc ? cellA.localeCompare(cellB) : cellB.localeCompare(cellA);
+      }
+    });
+
+    rows.forEach(r => tbody.appendChild(r));
+  }
+</script>
+{% endblock %}

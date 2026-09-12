@@ -1,0 +1,445 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} - Tournament Achievements &amp; Records | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<style>
+  .achievements-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 1.25rem;
+    margin: 0.5rem auto 2rem auto;
+    max-width: 900px;
+  }
+  .player-identity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    gap: 0.6rem;
+  }
+  .player-name-h1 {
+    font-family: var(--font-heading);
+    font-size: 2.2rem;
+    color: var(--accent-gold);
+    letter-spacing: 1px;
+  }
+  .medals-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+  .medal-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.25rem 1.5rem;
+    text-align: center;
+    backdrop-filter: blur(4px);
+    transition: transform 0.2s, border-color 0.2s;
+  }
+  .medal-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-gold);
+  }
+  .medal-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0.35rem;
+  }
+  .medal-count {
+    font-family: var(--font-stats);
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  .medal-label {
+    font-family: var(--font-subheading);
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.2rem;
+  }
+  .gold-accent { color: #ffd700; }
+  .silver-accent { color: #cfd8dc; }
+  .bronze-accent { color: #cd7f32; }
+  .trophy-accent { color: #f0ba54; }
+
+  .achievements-pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-bottom: 2rem;
+  }
+  .ach-pill {
+    background: rgba(229, 169, 60, 0.12);
+    border: 1px solid rgba(229, 169, 60, 0.4);
+    color: #f7dfa5;
+    padding: 0.4rem 0.85rem;
+    border-radius: 20px;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .records-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    font-size: 0.92rem;
+  }
+  .records-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.75rem 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+    text-align: left;
+  }
+  .records-table td {
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+  }
+  .records-table tr:hover td {
+    background: rgba(229, 169, 60, 0.06);
+  }
+
+  .medal-badge-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+  }
+  .medal-gold { background: rgba(255, 215, 0, 0.2); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.5); }
+  .medal-silver { background: rgba(207, 216, 220, 0.2); color: #cfd8dc; border: 1px solid rgba(207, 216, 220, 0.5); }
+  .medal-bronze { background: rgba(205, 127, 50, 0.2); color: #cd7f32; border: 1px solid rgba(205, 127, 50, 0.5); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="achievements-header">
+  <div class="player-identity">
+    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
+      <h1 class="player-profile-name">{{ player.name }}</h1>
+      {% if player.title == 'GM' %}
+        <span class="badge badge-gm" title="Official Competitive Title: Grandmaster">Grandmaster</span>
+      {% elif player.title == 'M' %}
+        <span class="badge badge-m" title="Official Competitive Title: Master">Master</span>
+      {% elif player.title == 'P' %}
+        <span class="badge badge-p" title="Official Competitive Title: Platinum">Platinum</span>
+      {% elif player.title == 'G' %}
+        <span class="badge badge-g" title="Official Competitive Title: Gold">Gold</span>
+      {% endif %}
+    </div>
+    <div style="color: #1a0f08; font-family: var(--font-stats); font-size: 0.88rem; font-weight: 600; margin-top: 0.2rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; background: rgba(212, 163, 67, 0.28); padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(138, 90, 36, 0.45);">
+      <span title="Nationality / Flag">{{ get_flag(player.country_code) }}</span>
+      <span style="color: #5a3518;">&bull;</span>
+      <span>Tournament Records &amp; Career Hall of Fame Finishes &bull; Last Match: <strong style="color: #0c0603;">{{ player.last_played or 'N/A' }}</strong></span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.85rem; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 0.25rem;">
+    <a href="{{ url_for('player.profile', player_name=player.name) }}" class="btn-back-profile">
+      &laquo; Back to Player Profile
+    </a>
+    <a href="{{ url_for('leaderboard.index') }}" 
+       class="home-circle-btn tooltip-bottom tooltip-right" 
+       title="Return to Competitive Leaderboard" 
+       data-tooltip="Return to Competitive Leaderboard">
+      <img src="{{ url_for('static', filename='img/home_button_circle.png') }}" alt="Leaderboard" class="home-btn-img">
+    </a>
+  </div>
+</div>
+
+<!-- Career Medals Cards -->
+<div class="medals-grid">
+  <div class="medal-card">
+    <div class="medal-icon">🏆</div>
+    <div class="medal-count trophy-accent">{{ achievements.total_titles if achievements else 0 }}</div>
+    <div class="medal-label">Total Championships</div>
+  </div>
+  <div class="medal-card">
+    <div class="medal-icon">🥇</div>
+    <div class="medal-count gold-accent">{{ achievements.gold_medals if achievements else 0 }}</div>
+    <div class="medal-label">Gold Medals / 1st</div>
+  </div>
+  <div class="medal-card">
+    <div class="medal-icon">🥈</div>
+    <div class="medal-count silver-accent">{{ achievements.silver_medals if achievements else 0 }}</div>
+    <div class="medal-label">Silver Medals / 2nd</div>
+  </div>
+  <div class="medal-card">
+    <div class="medal-icon">🥉</div>
+    <div class="medal-count bronze-accent">{{ achievements.bronze_medals if achievements else 0 }}</div>
+    <div class="medal-label">Bronze Medals / 3rd</div>
+  </div>
+</div>
+
+<!-- Summary Narrative -->
+{% if achievements and achievements.summary_text %}
+<div class="rating-card" style="padding: 1.25rem 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--accent-gold);">
+  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin-bottom: 0.4rem;">
+    <span>🏅 Career Tournament Honor Roll</span>
+  </h3>
+  <p style="font-family: var(--font-body); font-size: 1.05rem; line-height: 1.6; color: var(--text-main);">
+    {{ achievements.summary_text }}
+  </p>
+</div>
+{% endif %}
+
+<!-- Top Career Accolades Pills -->
+{% if top_achievements %}
+<div style="margin-bottom: 1.5rem;">
+  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.1rem; margin-bottom: 0.75rem;">
+    Featured Career Accolades
+  </h3>
+  <div class="career-honors-grid">
+    {% for ach in top_achievements %}
+      <div class="career-honor-badge">
+        <span class="honor-star">★</span>
+        <span class="honor-text">{{ ach }}</span>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- Granular Tournament Records Table Card with Season vs Career Switch -->
+<div class="rating-card" style="padding: 1.5rem;">
+  <div style="display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;">
+    <div>
+      <h2 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.35rem; margin: 0 0 0.75rem 0;">
+        Historical Tournament Records
+      </h2>
+      <!-- Switch Selector -->
+      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+        <button id="tabBtnSeasons" class="faq-tab-btn active" onclick="switchRecordsTab('seasons')">
+          🏆 Individual Seasons &amp; Tournaments ({{ season_records|length }})
+        </button>
+        <button id="tabBtnCareer" class="faq-tab-btn" onclick="switchRecordsTab('career')">
+          🎖️ Career Totals &amp; Hall of Fame ({{ career_records|length }})
+        </button>
+      </div>
+    </div>
+    <input type="text" id="recordSearch" onkeyup="filterRecords()" placeholder="🔍 Filter tournaments, seasons..." class="input-antique" style="width: 260px; font-size: 0.85rem; padding: 0.4rem 0.8rem; background: rgba(14, 9, 6, 0.95); color: #f3e5c8;">
+  </div>
+
+  <!-- VIEW 1: Individual Seasons Table (Default) -->
+  <div id="seasonsView" style="overflow-x: auto;">
+    <p style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+      Standard View: Sorted chronologically by <strong>Date of Finish</strong> (newest to oldest). Click any column header to sort.
+    </p>
+    <table class="records-table" id="seasonsTable">
+      <thead>
+        <tr>
+          <th onclick="sortSeasonsTable(0)" style="cursor: pointer;" title="Click to sort by Date of Finish">Date of Finish <span id="s-arrow-0">▼</span></th>
+          <th onclick="sortSeasonsTable(1)" style="cursor: pointer;" title="Click to sort by Tournament">Tournament <span id="s-arrow-1"></span></th>
+          <th onclick="sortSeasonsTable(2)" style="cursor: pointer;" title="Click to sort by Season">Season / Stage <span id="s-arrow-2"></span></th>
+          <th onclick="sortSeasonsTable(3)" style="cursor: pointer;" title="Click to sort by Division">Division / Tier <span id="s-arrow-3"></span></th>
+          <th onclick="sortSeasonsTable(4)" style="cursor: pointer;" title="Click to sort by Placement">Placement / Standing <span id="s-arrow-4"></span></th>
+          <th onclick="sortSeasonsTable(5)" style="cursor: pointer;" title="Click to sort by Score">Score / Result <span id="s-arrow-5"></span></th>
+          <th onclick="sortSeasonsTable(6)" style="cursor: pointer;" title="Click to sort by Medal">Podium Medal <span id="s-arrow-6"></span></th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in season_records %}
+        <tr>
+          <td style="font-family: var(--font-stats); color: var(--accent-gold); white-space: nowrap; font-weight: 700;">{{ r.finish_date or 'N/A' }}</td>
+          <td style="font-weight: 700; color: #fff3db;">{{ r.tournament_name }}</td>
+          <td style="font-weight: 600;">{{ r.season }}</td>
+          <td>{{ r.division }}</td>
+          <td style="font-weight: 600;">{{ r.placement }}</td>
+          <td>{{ r.points or '-' }}</td>
+          <td>
+            {% if r.medal == 'gold' %}
+              <span class="medal-badge-inline medal-gold">🥇 Gold</span>
+            {% elif r.medal == 'silver' %}
+              <span class="medal-badge-inline medal-silver">🥈 Silver</span>
+            {% elif r.medal == 'bronze' %}
+              <span class="medal-badge-inline medal-bronze">🥉 Bronze</span>
+            {% else %}
+              <span style="color: var(--text-muted);">-</span>
+            {% endif %}
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.88rem;">{{ r.details }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="8" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+            No individual tournament seasons registered.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- VIEW 2: Career Totals & Hall of Fame Table -->
+  <div id="careerView" style="display: none; overflow-x: auto;">
+    <p style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+      Career View: Cumulative Hall of Fame standings, career title counts, and tournament medal tallies.
+    </p>
+    <table class="records-table" id="careerTable">
+      <thead>
+        <tr>
+          <th onclick="sortCareerTable(0)" style="cursor: pointer;">Tournament <span id="c-arrow-0">▲</span></th>
+          <th onclick="sortCareerTable(1)" style="cursor: pointer;">Career Scope <span id="c-arrow-1"></span></th>
+          <th onclick="sortCareerTable(2)" style="cursor: pointer;">Division / Honor <span id="c-arrow-2"></span></th>
+          <th onclick="sortCareerTable(3)" style="cursor: pointer;">Placement / Podium <span id="c-arrow-3"></span></th>
+          <th onclick="sortCareerTable(4)" style="cursor: pointer;">Points / Wins <span id="c-arrow-4"></span></th>
+          <th onclick="sortCareerTable(5)" style="cursor: pointer;">Podium Medal <span id="c-arrow-5"></span></th>
+          <th>Career Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in career_records %}
+        <tr>
+          <td style="font-weight: 700; color: var(--accent-gold);">{{ r.tournament_name }}</td>
+          <td style="font-weight: 600; color: #ffd54f;">{{ r.season }}</td>
+          <td>{{ r.division }}</td>
+          <td style="font-weight: 600;">{{ r.placement }}</td>
+          <td>{{ r.points or '-' }}</td>
+          <td>
+            {% if r.medal == 'gold' %}
+              <span class="medal-badge-inline medal-gold">🥇 Gold</span>
+            {% elif r.medal == 'silver' %}
+              <span class="medal-badge-inline medal-silver">🥈 Silver</span>
+            {% elif r.medal == 'bronze' %}
+              <span class="medal-badge-inline medal-bronze">🥉 Bronze</span>
+            {% else %}
+              <span style="color: var(--text-muted);">-</span>
+            {% endif %}
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.88rem;">{{ r.details }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 2rem;">
+            No career Hall of Fame records found for this player.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let activeTab = 'seasons';
+
+  function switchRecordsTab(tab) {
+    activeTab = tab;
+    const btnSeasons = document.getElementById('tabBtnSeasons');
+    const btnCareer = document.getElementById('tabBtnCareer');
+    const seasonsView = document.getElementById('seasonsView');
+    const careerView = document.getElementById('careerView');
+
+    if (tab === 'seasons') {
+      btnSeasons.classList.add('active');
+      btnCareer.classList.remove('active');
+      seasonsView.style.display = '';
+      careerView.style.display = 'none';
+    } else {
+      btnCareer.classList.add('active');
+      btnSeasons.classList.remove('active');
+      careerView.style.display = '';
+      seasonsView.style.display = 'none';
+    }
+    filterRecords();
+  }
+
+  function filterRecords() {
+    const input = document.getElementById('recordSearch');
+    const filter = input.value.toLowerCase();
+    const tableId = activeTab === 'seasons' ? '#seasonsTable' : '#careerTable';
+    const rows = document.querySelectorAll(tableId + ' tbody tr');
+    rows.forEach(row => {
+      const text = row.textContent || row.innerText;
+      row.style.display = text.toLowerCase().indexOf(filter) > -1 ? '' : 'none';
+    });
+  }
+
+  let sSortDirs = { 0: 'desc' };
+  function sortSeasonsTable(colIndex) {
+    const table = document.getElementById('seasonsTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    const currentDir = sSortDirs[colIndex] || 'asc';
+    const newDir = currentDir === 'asc' ? 'desc' : 'asc';
+    sSortDirs[colIndex] = newDir;
+
+    for (let i = 0; i <= 6; i++) {
+      const el = document.getElementById('s-arrow-' + i);
+      if (el) el.innerText = '';
+    }
+    const activeArrow = document.getElementById('s-arrow-' + colIndex);
+    if (activeArrow) activeArrow.innerText = newDir === 'asc' ? '▲' : '▼';
+
+    rows.sort((rowA, rowB) => {
+      const cellA = (rowA.cells[colIndex]?.innerText || '').trim();
+      const cellB = (rowB.cells[colIndex]?.innerText || '').trim();
+
+      const numA = parseFloat(cellA.replace(/[^0-9.-]/g, ''));
+      const numB = parseFloat(cellB.replace(/[^0-9.-]/g, ''));
+      if (!isNaN(numA) && !isNaN(numB) && cellA.match(/^[0-9]/) && cellB.match(/^[0-9]/) && colIndex !== 0) {
+        return newDir === 'asc' ? numA - numB : numB - numA;
+      }
+
+      return newDir === 'asc' 
+        ? cellA.localeCompare(cellB, undefined, {numeric: true, sensitivity: 'base'})
+        : cellB.localeCompare(cellA, undefined, {numeric: true, sensitivity: 'base'});
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
+
+  let cSortDirs = {};
+  function sortCareerTable(colIndex) {
+    const table = document.getElementById('careerTable');
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr'));
+
+    const currentDir = cSortDirs[colIndex] || 'asc';
+    const newDir = currentDir === 'asc' ? 'desc' : 'asc';
+    cSortDirs[colIndex] = newDir;
+
+    for (let i = 0; i <= 5; i++) {
+      const el = document.getElementById('c-arrow-' + i);
+      if (el) el.innerText = '';
+    }
+    const activeArrow = document.getElementById('c-arrow-' + colIndex);
+    if (activeArrow) activeArrow.innerText = newDir === 'asc' ? '▲' : '▼';
+
+    rows.sort((rowA, rowB) => {
+      const cellA = (rowA.cells[colIndex]?.innerText || '').trim();
+      const cellB = (rowB.cells[colIndex]?.innerText || '').trim();
+
+      const numA = parseFloat(cellA.replace(/[^0-9.-]/g, ''));
+      const numB = parseFloat(cellB.replace(/[^0-9.-]/g, ''));
+      if (!isNaN(numA) && !isNaN(numB) && cellA.match(/^[0-9]/) && cellB.match(/^[0-9]/)) {
+        return newDir === 'asc' ? numA - numB : numB - numA;
+      }
+
+      return newDir === 'asc' 
+        ? cellA.localeCompare(cellB, undefined, {numeric: true, sensitivity: 'base'})
+        : cellB.localeCompare(cellA, undefined, {numeric: true, sensitivity: 'base'});
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+  }
+</script>
+{% endblock %}
