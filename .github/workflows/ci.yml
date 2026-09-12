@@ -25,6 +25,10 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
+      - name: Ingest Raw Match Data into SQLite
+        run: |
+          python -c "from src.data.db import init_db; from src.data.loader import run_ingestion; init_db(); run_ingestion()"
+
       - name: Run Core Rating Algorithm & Engine Tests
         run: |
           pytest tests/test_glicko2.py tests/test_pairwise.py tests/test_whr.py -v
