@@ -5,16 +5,18 @@ from typing import Optional, Dict
 
 from src.data.db import get_connection
 from src.models.whr.engine import WHREngine
+from src.models.glicko2.calculator import get_tier_mean
 
 def compute_whr_ratings(
     w2_per_day: float = 0.005,
     player_count: int = 0,
     max_iter: int = 7,
     tol: float = 1e-3,
+    reset_mode: str = 'continuous',
     db_path: Optional[str] = None,
     verbose: bool = True
 ):
-    model_type = 'whr'
+    model_type = f"whr_{reset_mode}" if reset_mode != 'continuous' else 'whr'
     conn = get_connection(db_path)
 
     try:
@@ -26,13 +28,14 @@ def compute_whr_ratings(
             rows = conn.execute("""
                 SELECT date, player_a, player_b, outcome_a, weight
                 FROM pairwise_matches
-                WHERE player_count = ?
+                WHERE player_count = ? AND glicko_eligible = 1
                 ORDER BY date, pairwise_id
             """, (player_count,)).fetchall()
         else:
             rows = conn.execute("""
                 SELECT date, player_a, player_b, outcome_a, weight
                 FROM pairwise_matches
+                WHERE glicko_eligible = 1
                 ORDER BY date, pairwise_id
             """).fetchall()
 
@@ -80,12 +83,24 @@ def compute_whr_ratings(
 
         player_rankings = []
         history_records = []
+        max_day = whr.get_max_day()
 
         for p_name in whr.players:
-            cur = whr.get_current_rating(p_name)
+            cur = whr.get_current_rating(p_name, target_day=max_day)
             if not cur:
                 continue
             r_val, rd_val = cur
+            phi = 1.61803398875
+            lambda_soft = (1.0 - 1.0 / phi) * (1.0 / phi)  # phi^-3 ≈ 0.23606798
+            lambda_hard = 1.0 / phi                          # phi^-1 ≈ 0.61803399
+            if reset_mode == 'soft':
+                tier_mean = get_tier_mean(r_val)
+                r_val = (1.0 - lambda_soft) * r_val + lambda_soft * tier_mean
+                rd_val = min(350.0, rd_val * phi)
+            elif reset_mode == 'amplified':
+                tier_mean = get_tier_mean(r_val)
+                r_val = (1.0 - lambda_hard) * r_val + lambda_hard * tier_mean
+                rd_val = min(350.0, rd_val * (phi ** 2))
             c_val = r_val - 3.0 * rd_val
 
             st = player_stats.get(p_name)
@@ -124,6 +139,14 @@ def compute_whr_ratings(
                     sampled.append(p_history[-1])
 
             for d_str, hist_r, hist_rd in sampled:
+                if reset_mode == 'soft':
+                    tm = get_tier_mean(hist_r)
+                    hist_r = (1.0 - lambda_soft) * hist_r + lambda_soft * tm
+                    hist_rd = min(350.0, hist_rd * phi)
+                elif reset_mode == 'amplified':
+                    tm = get_tier_mean(hist_r)
+                    hist_r = (1.0 - lambda_hard) * hist_r + lambda_hard * tm
+                    hist_rd = min(350.0, hist_rd * (phi ** 2))
                 history_records.append((
                     model_type, player_count, p_name, d_str,
                     round(hist_r, 2), round(hist_rd, 2), round(hist_r - 3.0 * hist_rd, 2)

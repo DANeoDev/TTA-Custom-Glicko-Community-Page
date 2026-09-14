@@ -112,6 +112,80 @@
   .faq-list li {
     margin-bottom: 0.5rem;
   }
+  .case-study-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.6);
+  }
+  .case-study-title {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-family: var(--font-heading);
+    font-size: 1.35rem;
+    color: #f7d377;
+    margin: 0;
+  }
+  .case-study-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 0.75rem;
+    margin: 1rem 0;
+    background: rgba(14, 9, 6, 0.85);
+    padding: 0.85rem 1rem;
+    border-radius: 6px;
+    border: 1px solid rgba(74, 53, 37, 0.6);
+  }
+  .case-stat-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .case-stat-label {
+    font-family: var(--font-stats);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    letter-spacing: 0.5px;
+  }
+  .case-stat-val {
+    font-family: var(--font-stats);
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #f7dfa5;
+  }
+  .case-stat-sub {
+    font-family: var(--font-stats);
+    font-size: 0.8rem;
+    color: #a89880;
+  }
+  .case-analysis-block {
+    margin-top: 1rem;
+    line-height: 1.75;
+    font-family: var(--font-body);
+    font-size: 1.02rem;
+    color: #f1e4d0;
+  }
+  .case-analysis-block strong {
+    color: #ffde8a;
+  }
+  .faq-link {
+    color: #f7d377;
+    text-decoration: underline;
+    text-decoration-color: rgba(229, 169, 60, 0.5);
+    font-weight: 600;
+    transition: all 0.2s ease;
+  }
+  .faq-link:hover {
+    color: #fff;
+    text-decoration-color: var(--accent-gold);
+    text-shadow: 0 0 8px rgba(229, 169, 60, 0.6);
+  }
 </style>
 {% endblock %}
 
@@ -131,11 +205,13 @@
   <!-- Category Nav Tabs -->
   <div class="faq-nav">
     <button class="faq-tab-btn active" onclick="switchFaqTab('models', this)">Rating Models</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('casestudies', this)">Player Case Studies</button>
     <button class="faq-tab-btn" onclick="switchFaqTab('crating', this)">Conservative Rating (C)</button>
     <button class="faq-tab-btn" onclick="switchFaqTab('multiplayer', this)">Multiplayer Weighting</button>
     <button class="faq-tab-btn" onclick="switchFaqTab('formats', this)">2p / 3p / 4p Formats</button>
     <button class="faq-tab-btn" onclick="switchFaqTab('inactivity', this)">Inactivity &amp; Retirement</button>
     <button class="faq-tab-btn" onclick="switchFaqTab('titles', this)">Titles &amp; Badges</button>
+    <button class="faq-tab-btn" onclick="switchFaqTab('resets', this)">Season Resets &amp; Eligibility</button>
   </div>
 
   <!-- SECTION 1: MODELS -->
@@ -143,20 +219,20 @@
     <div class="faq-card">
       <h3>What are the three rating models, and how do they differ?</h3>
       <p>
-        The portal provides three state-of-the-art rating models computed on the same competitive dataset of over 131,000 matches:
+        The portal computes three distinct rating models on the exact same competitive dataset of over 131,000 matches:
       </p>
       <ul class="faq-list">
         <li>
           <strong style="color: var(--accent-gold);">Glicko-2 Standard:</strong>
-          The official online leaderboard baseline developed by Mark Glickman. It treats every multiplayer game as a set of independent naive 1v1 duels with full weight ($w=1.0$).
+          The classical online leaderboard benchmark created by <a href="http://www.glicko.net/glicko/glicko2.pdf" class="faq-link" target="_blank" rel="noopener noreferrer">Mark Glickman</a>. Think of Glicko-2 as an <strong>odometer</strong> moving forward trip-by-trip: each match immediately updates your rating, but past results are locked in stone forever. In multiplayer games, it treats every match as separate independent 1v1 duels at full weight ($w = 1.0$).
         </li>
         <li>
-          <strong style="color: var(--accent-gold);">Glicko-2 MP-Weighted (Coulom/Glickman Fractional):</strong>
-          Variance-calibrated for 3-player and 4-player games using Rémi Coulom's fractional match weight formula ($w = \frac{1}{N-1}$). This preserves correct physical evidence accumulation, preventing artificial variance shrinkage and premature overconfidence.
+          <strong style="color: var(--accent-gold);">Glicko-2 MP-Weighted (<a href="https://www.remi-coulom.fr/WHR/" class="faq-link" target="_blank" rel="noopener noreferrer">Coulom/Glickman Fractional Weighting</a>):</strong>
+          Variance-calibrated specifically for 3-player and 4-player games. In a 4-player game, a player's attention and tactical choices are split across 3 opponents. By scaling match weight ($w = \frac{1}{N-1}$), this model prevents rating deviation ($\mathrm{RD}$) from shrinking unnaturally fast, ensuring fair rating volatility across all formats.
         </li>
         <li>
           <strong style="color: var(--accent-gold);">Whole-History Rating (WHR):</strong>
-          Rémi Coulom's Bayesian state-space model that computes retrospective Maximum A Posteriori (MAP) skill estimates across each player's entire career. Crucially, <strong>WHR explicitly models skill change over time</strong> via daily Brownian motion drift ($\sigma^2$ variance expansion per day elapsed). WHR does not assume static ability; rather, it uses future games backwards in time to refine and smooth the historical skill trajectory, eliminating early noisy fluctuations and revealing a player's true career evolution.
+          Created by French AI researcher <a href="https://www.remi-coulom.fr/WHR/WHR.pdf" class="faq-link" target="_blank" rel="noopener noreferrer">Rémi Coulom (2008)</a>. Rather than an odometer advancing day by day, think of WHR as a <strong>retrospective biographer</strong> reviewing an entire career from beginning to end. Using a <a href="https://en.wikipedia.org/wiki/State-space_representation" class="faq-link" target="_blank" rel="noopener noreferrer">Bayesian state-space model</a> and <a href="https://en.wikipedia.org/wiki/Maximum_a_posteriori_estimation" class="faq-link" target="_blank" rel="noopener noreferrer">Maximum A Posteriori (MAP)</a> estimation, WHR models skill changing smoothly over time via continuous <a href="https://en.wikipedia.org/wiki/Wiener_process" class="faq-link" target="_blank" rel="noopener noreferrer">Brownian motion</a>. It uses future games backwards in time to clean up early noise and reveal a player's true career trajectory.
         </li>
       </ul>
     </div>
@@ -164,12 +240,12 @@
     <div class="faq-card">
       <h3>Whole-History Rating (WHR): How Does It Work and How Does It Differ From Glicko?</h3>
       <p>
-        <strong>Whole-History Rating (WHR)</strong>, developed by French computer scientist and Go AI pioneer <strong>Rémi Coulom (2008)</strong>, represents a fundamental paradigm shift from sequential rating systems like Elo and Glicko. Instead of maintaining a single running snapshot of ability, WHR models a player's <em>entire career skill trajectory</em> as a joint global optimization problem.
+        <strong>Whole-History Rating (WHR)</strong> represents a major philosophical evolution in competitive rating design. Traditional systems like Elo and Glicko evaluate games one-by-one in strict chronological sequence. Once a rating is stamped on day $t$, it is permanent—even if your opponent was completely unrated at the time and later went on to win the World Championship. WHR solves for every player's skill on every day simultaneously across the entire 10-year timeline.
       </p>
 
-      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">1. The Core Mathematical Model: Brownian Motion State-Space</h4>
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">1. The Core Model: Skill Drift Over Time (Brownian Motion)</h4>
       <p>
-        Traditional models assume a player's skill is either constant or changes only during discrete periods. In contrast, WHR treats skill $r(t)$ as a <strong>one-dimensional Wiener process (Brownian motion)</strong> continuously evolving across time. The variance of the skill change between day $t$ and day $t + \Delta t$ expands in direct proportion to elapsed days:
+        In real life, players don't wake up on day 100 with the exact same sharpness they had on day 1—they improve, change strategies, or get a bit rusty during breaks. WHR reflects this physical reality by modeling skill as a continuous <a href="https://en.wikipedia.org/wiki/Wiener_process" class="faq-link" target="_blank" rel="noopener noreferrer">one-dimensional Brownian motion (Wiener process)</a>. The uncertainty in skill drift between day $t$ and day $t + \Delta t$ expands in direct proportion to elapsed calendar days:
       </p>
 
       <div class="faq-formula">
@@ -181,12 +257,12 @@ $$
       </div>
 
       <p>
-        Here, $w^2$ is the daily process variance parameter (empirically calibrated to $w^2 = 0.0016$ for competitive TTA). If a player is absent for 100 days, their skill uncertainty expands smoothly by $100 \times w^2$, naturally reflecting temporal decay without biasing their expected ability.
+        Here, $w^2$ is the daily process variance ($w^2 = 0.0016$ for competitive TTA). If you take a 100-day hiatus, the system does not arbitrarily demote you—it simply widens its confidence margin ($100 \times w^2$), ready to snap back into sharp focus as soon as you sit down at the board again.
       </p>
 
-      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">2. Global Maximum A Posteriori (MAP) Estimation</h4>
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">2. The Career Biographer: Global Optimization (MAP Estimation)</h4>
       <p>
-        WHR does not evaluate games one-by-one. Instead, it places the entire competitive history (over <strong>131,424 matches</strong> and <strong>3,489 players</strong> across 2017–2026) into a unified posterior probability distribution and solves for the global mode:
+        Instead of updating a single number match-by-match, WHR pools all <strong>131,000+ matches</strong> and <strong>3,489 competitors</strong> across 2017–2026 into a joint posterior probability distribution and finds the most probable skill history for every player:
       </p>
 
       <div class="faq-formula">
@@ -198,7 +274,10 @@ $$
       </div>
 
       <p>
-        Using multidimensional <strong>Newton-Raphson optimization</strong> accelerated by a linear-time <strong>Thomas block-tridiagonal algorithm</strong>, WHR simultaneously converges on every player's exact skill trajectory on every single day of competitive play.
+        WHR solves this massive system using multidimensional <a href="https://en.wikipedia.org/wiki/Newton%27s_method" class="faq-link" target="_blank" rel="noopener noreferrer">Newton-Raphson optimization</a> accelerated by the linear-time <a href="https://en.wikipedia.org/wiki/Tridiagonal_matrix_algorithm" class="faq-link" target="_blank" rel="noopener noreferrer">Thomas block-tridiagonal algorithm</a>, operating as a mathematically optimal <a href="https://en.wikipedia.org/wiki/Kalman_filter#Smoothing" class="faq-link" target="_blank" rel="noopener noreferrer">Kalman smoother</a>.
+      </p>
+      <p>
+        <strong>In plain terms</strong>: If you beat an unrated player in 2021 who subsequently won 20 consecutive master tournaments, WHR recognizes in retrospect that your 2021 victory was achieved against someone genuinely world-class, rather than a fluke against a beginner.
       </p>
 
       <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">3. Key Differences: WHR vs. Glicko-2</h4>
@@ -215,35 +294,125 @@ $$
           <tbody>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Information Flow</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Unidirectional (Forward-Only)</strong>: Evaluates matches sequentially. Day $t$ only knows days $1 \dots t-1$.</td>
-              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Bidirectional (Retrospective)</strong>: Future matches inform past skill estimates (Kalman smoother).</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Forward-Only (Odometer)</strong>: Only past games count. Today's match cannot inform yesterday.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Bidirectional (Biographer)</strong>: Future matches inform past skill estimates via <a href="https://en.wikipedia.org/wiki/Kalman_filter#Smoothing" class="faq-link" target="_blank" rel="noopener noreferrer">Kalman smoothing</a>.</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Historical Corrections</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Permanent</strong>: Past ratings are immutable, even if early opponents were vastly underrated.</td>
-              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Self-Correcting</strong>: If an opponent you defeated years ago later becomes World Champion, that historical win retroactively increases in value.</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Permanent</strong>: Past ratings never update, even if opponents were grossly misrated.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Self-Correcting</strong>: Historical victories gain or lose value as opponents' true skill emerges.</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Time Continuity</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Discrete Periods</strong>: Matches are binned into arbitrary rating intervals.</td>
-              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Continuous Drift</strong>: Prior covariance scales directly with elapsed days ($\Delta t$) via Brownian motion.</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Discrete Periods</strong>: Matches are binned into fixed rating windows.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>Continuous Drift</strong>: Skill drift scales smoothly per calendar day ($\Delta t$) via Brownian motion.</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
-              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Match Order Invariance</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Order-Dependent</strong>: Changing the ingestion order of games within a period alters intermediate ratings.</td>
-              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>100% Order-Invariant</strong>: Operates on the complete static graph; match sequence order within days cannot alter the result.</td>
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Match Ingestion Order</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;"><strong>Order-Dependent</strong>: Changing match sequence inside a rating period shifts numbers.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;"><strong>100% Order-Invariant</strong>: Operates on the full graph; match upload order has zero effect.</td>
             </tr>
             <tr>
-              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Peak Detection</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Susceptible to temporary local rating spikes from short lucky streaks.</td>
-              <td style="padding: 0.75rem 1rem; color: #66bb6a;">Produces smooth, mathematically robust career peak evaluations stripped of high-frequency noise.</td>
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">Career Peaks</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Prone to artificial spikes from short lucky streaks against volatile opponents.</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;">Yields smooth, robust career peak trajectories stripped of short-term noise.</td>
             </tr>
           </tbody>
         </table>
       </div>
 
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">4. Custom Engine Innovation: The Golden Retrospective ($1/\phi$) &amp; A Concrete 3-Year Example</h4>
+      <p>
+        Textbook WHR (Coulom 2008) operates without horizon boundaries. While mathematically elegant, unbounded retrospective smoothers introduce a serious flaw: <strong>The Time Machine Problem</strong>.
+      </p>
+
+      <div style="background: rgba(14, 9, 6, 0.9); border: 1px solid rgba(229, 169, 60, 0.35); border-left: 4px solid var(--accent-gold); padding: 1rem 1.25rem; border-radius: 6px; margin: 1rem 0;">
+        <strong style="color: #ffd700; font-size: 1.05rem;">A Concrete 3-Year Scenario: Alice vs. Bob</strong>
+        <p style="margin: 0.5rem 0 0.5rem 0; font-size: 0.98rem; line-height: 1.7; color: #f1e4d0;">
+          Suppose that in <strong>2023</strong>, Alice plays a league match and defeats Bob. At that time, Bob is an inexperienced novice who makes elementary tactical blunders. Over the next three years (<strong>2024–2026</strong>), Bob studies high-level strategy, logs 500 competitive matches, and ascends to become a <strong>2100-rated World Champion</strong>.
+        </p>
+        <p style="margin: 0.5rem 0 0.5rem 0; font-size: 0.98rem; line-height: 1.7; color: #f1e4d0;">
+          Under textbook unbounded WHR, Bob's 2026 mastery leaks completely backward through time into 2023. The system retroactively treats Alice's 2023 victory as if she defeated a peak 2100 grandmaster! Alice receives an undeserved, massive rating boost for defeating someone who was actually a beginner on that day.
+        </p>
+        <p style="margin: 0.5rem 0 0; font-size: 0.98rem; line-height: 1.7; color: #81c784;">
+          <strong>How our Golden Retrospective Engine fixes this:</strong> We apply an exact exponential attenuation kernel based on the <a href="https://en.wikipedia.org/wiki/Golden_ratio" class="faq-link" target="_blank" rel="noopener noreferrer">Golden Ratio</a> ($\phi = \frac{1 + \sqrt{5}}{2} \approx 1.61803$):
+        </p>
+        <div class="faq-formula" style="margin: 0.75rem 0;">
+
+$$
+W(\Delta t) = \phi^{-2 \cdot \frac{\Delta t}{365.25}}
+$$
+
+        </div>
+        <p style="margin: 0.5rem 0 0; font-size: 0.98rem; line-height: 1.7; color: #f1e4d0;">
+          Because three full years elapsed between Alice's match and Bob's championship peak ($\Delta t \approx 1095$ days), the retrospective weight drops to $\phi^{-6} = (1/\phi)^6 \approx 0.090$ (only <strong>9.0% information leakage</strong>). Modern results cannot rewrite historical tournament eras. Alice is rated on Bob's genuine skill near the time they actually played, preserving historical reality while still smoothing out match-to-match noise.
+        </p>
+      </div>
+
+      <ul class="faq-list">
+        <li>
+          <strong>Annual Information Retention ($1/\phi \approx 0.618$):</strong>
+          Due to the golden ratio identity $1 - \frac{1}{\phi} = \frac{1}{\phi^2}$, each elapsed year retains exactly $\frac{1}{\phi} \approx 61.80\%$ of future calibration volume:
+          <ul style="margin-top: 0.35rem; margin-left: 1.25rem;">
+            <li><strong>Year 1:</strong> Retains $\frac{1}{\phi} \approx 61.80\%$ retrospective calibration volume.</li>
+            <li><strong>Year 2:</strong> Retains $\frac{1}{\phi^3} \approx 23.61\%$ retrospective calibration volume.</li>
+            <li><strong>Year 3:</strong> Retains $\frac{1}{\phi^5} \approx 9.02\%$ retrospective calibration volume.</li>
+            <li><strong>Year 4+:</strong> Long-tail leakage drops below $2.1\%$, completely preventing distant modern results from distorting historical eras.</li>
+            <li><strong>Mathematical Conservation:</strong> $\sum_{k=1}^\infty \frac{1}{\phi^{2k-1}} = 1.00000$ (100% total information conservation without ad-hoc cutoffs).</li>
+          </ul>
+        </li>
+        <li>
+          <strong>Active Leaderboard $t_{\mathrm{now}}$ Forward Projection:</strong>
+          On the active leaderboard, ratings are evaluated at the present day $t_{\mathrm{now}} = \max(t_{\mathrm{database}})$. When a player stops competing, daily Brownian motion continuously expands their uncertainty:
+          <div class="faq-formula">
+
+$$
+\sigma^2(t_{\mathrm{now}}) = \sigma^2(t_{\mathrm{last}}) + w^2 \cdot (t_{\mathrm{now}} - t_{\mathrm{last}})
+$$
+
+          </div>
+          Because the Conservative Rating subtracts $3 \times \mathrm{RD}(t_{\mathrm{now}})$, long-retired players gently step aside on the active ladder, while their <strong>peak historical ratings remain permanently honored in their career timeline</strong>.
+        </li>
+      </ul>
+
       <p style="margin-top: 0.85rem;">
-        <strong>Summary</strong>: While Glicko-2 is well-suited for live matchmaking queues requiring instant, one-pass incremental updates, WHR is universally acknowledged as the gold standard for retrospective historical analysis and definitive career skill evaluation.
+        <strong>Summary</strong>: While Glicko-2 is ideal for live matchmaking queues requiring instant, one-pass updates, our Golden Retrospective WHR is the gold standard for historical analysis, blending peak skill detection with era integrity and automated leaderboard defense.
+      </p>
+
+      <div style="background: rgba(45, 26, 12, 0.45); border-left: 3px solid var(--accent-gold); padding: 0.85rem 1.15rem; margin-top: 1rem; border-radius: 4px;">
+        <strong style="color: #ffde8a; font-family: var(--font-subheading); font-size: 1.05rem;">Case Study Note: Why do some WHR graphs exhibit step-like jumps or "wild swings" (e.g. SandHippo)?</strong>
+        <p style="margin: 0.4rem 0 0.5rem 0; font-size: 0.95rem; color: #cfbeab;">
+          WHR models skill as continuous Brownian motion across time. When players take multi-year tournament hiatuses (such as SandHippo's 790-day and 340-day breaks) and return in peak form, WHR decouples their active eras while sparse-match visual charts render flat interpolation lines.
+        </p>
+        <a href="javascript:void(0)" onclick="switchFaqTab('casestudies')" style="color: var(--accent-gold); font-weight: 600; font-size: 0.92rem; text-decoration: underline;">
+          Explore the SandHippo &amp; Community Case Studies &raquo;
+        </a>
+      </div>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.5rem 0 0.5rem 0;">5. Retrospective Smoothing vs. True Forward Prediction ($t+1$ Filter-Smoother Duality)</h4>
+      <p>
+        A frequent question from competitive players is: <em>"If WHR achieves lower calibration error on historical match logs, does that mean it also predicts tomorrow's games better than Glicko-2?"</em>
+      </p>
+      <p>
+        In signal processing and time-series statistics, the answer is an emphatic <strong>no</strong>. This is the classic distinction between an <strong>online filter</strong> and a <strong>fixed-interval smoother</strong>:
+      </p>
+      <ul class="faq-list">
+        <li>
+          <strong>Glicko-2 is an Online Filter:</strong> It only ever knows about games in the past ($\le t$). It updates forward in time with built-in Bayesian shrinkage ($g(\mathrm{RD})$), specifically designed to prevent overreacting to short-term variance.
+        </li>
+        <li>
+          <strong>WHR is a Retrospective Smoother:</strong> It calculates skill trajectories by finding a joint compromise across all games before <em>and</em> after $t$. When evaluated retrospectively on historical records, it benefits from having already seen future games.
+        </li>
+        <li>
+          <strong>The "Boundary Effect" at $t_{\mathrm{now}}$:</strong> At the present moment, WHR has no future matches to anchor its trajectory. If a player goes on a 4-game hot streak, WHR's unconstrained Newton update spikes their endpoint rating sharply upward. In our <strong>53-month walk-forward predictive benchmark (2022–2026)</strong>, this creates forward overconfidence:
+          <ul style="margin-top: 0.35rem; margin-left: 1.25rem;">
+            <li><strong>Glicko-2 MP-Weighted</strong> achieves an out-of-sample Brier score of <strong>0.2140</strong> and Expected Calibration Error of just <strong>1.16%</strong>.</li>
+            <li><strong>WHR</strong> trails with an out-of-sample Brier score of <strong>0.2185</strong> and an Expected Calibration Error of <strong>3.48%</strong> (3&times; higher error due to endpoint volatility).</li>
+          </ul>
+        </li>
+      </ul>
+      <p>
+        <strong>Conclusion:</strong> Use <strong>WHR</strong> for historical biography and peak career evaluation; use <strong>Glicko-2</strong> for live matchmaking, ladder ranking, and predicting tomorrow's tournament matchups.
       </p>
     </div>
 
@@ -258,7 +427,543 @@ $$
     </div>
   </div>
 
-  <!-- SECTION 2: C-RATING -->
+  <!-- SECTION 2: PLAYER CASE STUDIES -->
+  <div id="faq-casestudies" class="faq-section">
+    <div class="faq-card" style="border-left: 4px solid var(--accent-gold); background: linear-gradient(135deg, rgba(35, 20, 10, 0.95), rgba(20, 12, 6, 0.95)); margin-bottom: 1.5rem;">
+      <h3 style="color: #ffde8a; font-size: 1.35rem; margin-top: 0;">Player Case Studies: Model Dynamics in Practice</h3>
+      <p>
+        Comparing rating trajectories across <strong>Glicko-2 Standard</strong>, <strong>Glicko-2 MP-Weighted</strong>, and <strong>Whole-History Rating (WHR)</strong> provides deep insight into how different rating algorithms behave under real-world competitive conditions.
+      </p>
+      <p style="margin-bottom: 0.85rem;">
+        Below are 10 in-depth case studies of prominent players and community figures, examining foundational phenomena such as <em>burst-play hiatus plateaus and graph cliffs</em>, <em>asymptotic convergence across massive samples</em>, <em>multiplayer fractional variance weighting</em>, <em>global network transitivity</em>, and <em>inactivity variance expansion</em>.
+      </p>
+      <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid rgba(229, 169, 60, 0.35); border-left: 3px solid var(--accent-gold); padding: 0.75rem 1rem; border-radius: 4px; margin-top: 0.85rem;">
+        <strong style="color: #ffd700; font-family: var(--font-subheading); font-size: 0.95rem; display: block; margin-bottom: 0.25rem;">
+          📜 Note from the Webmaster
+        </strong>
+        <p style="margin: 0; font-size: 0.92rem; font-style: italic; color: #cfbeab; line-height: 1.6;">
+          &ldquo;Beware &ndash; this has been written by AI. I am not certain the explanations are overall coherent, but i thought it's still fun to leave this in. If you want a Casestudy made for yourself, just let me know.&rdquo;
+        </p>
+      </div>
+    </div>
+
+    <!-- 1. SandHippo -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('CN') }} SandHippo
+        </h4>
+        <a href="/player/SandHippo" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">61 Matches</span>
+          <span class="case-stat-sub">77.1% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">2034.64 &plusmn; 51.04</span>
+          <span class="case-stat-sub">C: 1881.52 &bull; Rank #13</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">2021.62 &plusmn; 54.19</span>
+          <span class="case-stat-sub">C: 1859.05 &bull; Rank #9</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val" style="color: #ffe082;">1965.19 &plusmn; 45.96</span>
+          <span class="case-stat-sub" style="color: #81c784;">C: 1827.30 &bull; Rank #8</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Burst-Play Temporal Decoupling, Hiatus Plateaus &amp; The "Wild Swings" Interpretation</strong>
+        <p>
+          SandHippo is one of the strongest competitors on the portal, boasting a phenomenal 77.1% win rate over 61 matches and ranking in the global elite (#8 active WHR, with a historical peak C-Rating of 1928.30). However, their WHR rating graph appears to feature steep steps and abrupt plateaus. How should this be interpreted?
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Burst-Play Cadence:</strong> SandHippo did not play an even, week-in week-out schedule. Instead, they competed in intensive, high-stakes tournament bursts separated by massive hiatuses (including an extended <strong>790-day hiatus</strong> and a 340-day hiatus).
+          </li>
+          <li>
+            <strong>Natural Uncertainty Growth (<a href="https://en.wikipedia.org/wiki/Wiener_process" class="faq-link" target="_blank" rel="noopener noreferrer">Brownian Motion</a>):</strong> WHR models skill drift via continuous Brownian motion:
+            <div class="faq-formula">
+              $$\mathrm{Var}(r_{t + \Delta t} - r_t) = w^2 \cdot \Delta t$$
+            </div>
+            Across 790 days of absence, skill uncertainty expands smoothly ($790 \times w^2$). With our Golden Attenuation Kernel, multi-year absences decouple earlier tournament eras from later ones. This allows WHR to evaluate their skill in each era independently, rather than forcing artificial inertia between them.
+          </li>
+          <li>
+            <strong>The Visual "Cliff" Artifact:</strong> Rating charts plot points on the specific dates games were played. When a player takes a 2-year break, the charting library draws a straight connecting line between the final match before the hiatus and the first match upon returning. What looks like a sudden "jump" or wild swing is simply the visual connection across 2+ years of unrecorded time where the player returned at world-class strength.
+          </li>
+          <li>
+            <strong>Sequential Lag vs. Retrospective Precision:</strong> In Glicko-2, post-hiatus uncertainty causes ratings to update cautiously, taking many games to catch up. WHR evaluates the whole career simultaneously: because SandHippo defeated top-tier rivals immediately upon returning, WHR rapidly confirms their world-class ability in that era.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 2. Weidenbaum -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('DE') }} Weidenbaum <span class="badge badge-gm">GM</span>
+        </h4>
+        <a href="/player/Weidenbaum" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">1,315 Matches</span>
+          <span class="case-stat-sub">67.0% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1966.57 &plusmn; 20.00</span>
+          <span class="case-stat-sub">C: 1906.57 &bull; Rank #5</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1968.34 &plusmn; 23.51</span>
+          <span class="case-stat-sub">C: 1897.82 &bull; Rank #2</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val">1929.78 &plusmn; 21.21</span>
+          <span class="case-stat-sub">C: 1866.15 &bull; Rank #3</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Large-Sample Asymptotic Convergence (The Law of Large Numbers in Rating Theory)</strong>
+        <p>
+          Weidenbaum provides empirical proof of rating system consistency. Across a staggering 1,315 opponent encounters with a 67.0% win rate and steady competitive activity:
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Model Agreement Across Paradigms:</strong> All three mathematical algorithms converge within a tight band:
+            <div class="faq-formula">
+              $$1966.57 \text{ (Glicko Std)} \;\approx\; 1968.34 \text{ (Glicko MP)} \;\approx\; 1929.78 \text{ (WHR)}$$
+            </div>
+          </li>
+          <li>
+            <strong>The Law of Large Numbers:</strong> Under the <a href="https://en.wikipedia.org/wiki/Law_of_large_numbers" class="faq-link" target="_blank" rel="noopener noreferrer">Law of Large Numbers</a>, when match volume is high and activity is consistent, sequential estimation (Glicko) and global retrospective smoothing (WHR) arrive at the exact same physical truth.
+          </li>
+          <li>
+            <strong>Uncertainty Floor:</strong> For all three models, Rating Deviation has reached its theoretical minimum floor ($\mathrm{RD} \approx 20.00$), confirming statistical certainty in Weidenbaum's standing as one of the greatest TTA players of all time.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 3. Martin_Pecheur -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('FR') }} Martin_Pecheur <span class="badge badge-gm">GM</span>
+        </h4>
+        <a href="/player/Martin_Pecheur" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">1,420 Matches</span>
+          <span class="case-stat-sub">65.7% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1963.24 &plusmn; 20.00</span>
+          <span class="case-stat-sub">C: 1903.24 &bull; Rank #7</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1955.47 &plusmn; 22.94</span>
+          <span class="case-stat-sub">C: 1886.66 &bull; Rank #5</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val" style="color: #ffe082;">1971.22 &plusmn; 12.29</span>
+          <span class="case-stat-sub" style="color: #81c784;">C: 1934.35 &bull; Rank #1</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Championship Playoff Density &amp; Global Skill Transitivity</strong>
+        <p>
+          Martin_Pecheur has 1,420 recorded matches with a 65.7% win rate. While their Glicko-2 ratings are virtually indistinguishable from Weidenbaum's (~1963 vs ~1966), WHR awards Martin_Pecheur <strong>1971.22 (#1 in the world in WHR)</strong>. Why does WHR give Martin_Pecheur the top crown?
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Evaluating Opponents of Opponents:</strong> Glicko-2 evaluates games period-by-period based solely on an opponent's rating at that moment. WHR constructs a global interconnected graph of all 131,000 matches.
+          </li>
+          <li>
+            <strong>Diamond Playoff Density:</strong> Martin_Pecheur's tournament history was concentrated against players in elite Diamond playoff brackets who themselves achieved dominant records against the rest of the world.
+          </li>
+          <li>
+            <strong>Strength of Schedule:</strong> When those playoff opponents went on to win other leagues, WHR retroactively confirmed their exceptional strength, recognizing that Martin_Pecheur faced the most demanding schedule of opponents in competitive TTA history.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 4. Ender_Wiggin -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('CN') }} Ender_Wiggin
+        </h4>
+        <a href="/player/Ender_Wiggin" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">66 Matches</span>
+          <span class="case-stat-sub">62.1% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1778.92 &plusmn; 51.47</span>
+          <span class="case-stat-sub">C: 1624.51 &bull; Rank #421</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1919.03 &plusmn; 59.80</span>
+          <span class="case-stat-sub">C: 1739.64 &bull; Rank #94</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val" style="color: #ffe082;">2076.74 &plusmn; 67.71</span>
+          <span class="case-stat-sub" style="color: #81c784;">Peak C: 1873.62 &bull; Active: #1074</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Historical Era Anchoring, The Time Machine Problem &amp; Golden Retrospective Decay ($1/\phi$)</strong>
+        <p>
+          Ender_Wiggin competed in 2022 and subsequently retired, providing the prime demonstration of why modern rating systems need <strong>retrospective lookahead attenuation</strong> and <strong>active leaderboard forward projection</strong>:
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>The Naive WHR Time Machine Trap:</strong> In 2022, Ender defeated developing talents (including SandHippo and vanishadow). When those opponents became 2100-rated titans years later in 2025–2026, standard unbounded WHR allowed that future mastery to leak backward into 2022, artificially boosting Ender's peak rating to 2164 as if Ender had beaten peak 2100 grandmasters.
+          </li>
+          <li>
+            <strong>The Golden Retrospective Solution:</strong> Using our <a href="https://en.wikipedia.org/wiki/Golden_ratio" class="faq-link" target="_blank" rel="noopener noreferrer">Golden Ratio</a> decay kernel $W(\Delta t) = \phi^{-2 \Delta t / 365.25}$, future lookahead leakage drops below $2.1\%$ after 4 years. This prevents distant modern results from distorting historical tournaments, accurately setting Ender's peak at <strong>2076.74 (Peak C: 1873.62)</strong>.
+          </li>
+          <li>
+            <strong>Automated Leaderboard Defense:</strong> Through $t_{\mathrm{now}}$ forward Brownian projection, Ender's active uncertainty naturally expands during retirement ($\mathrm{RD} \le 350.0$), placing their active standing at rank #1074 while permanently preserving their 2022 peak in their profile timeline.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 5. DANeo -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('DE') }} DANeo <span class="badge badge-gm">GM</span>
+        </h4>
+        <a href="/player/DANeo" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">716 Matches</span>
+          <span class="case-stat-sub">61.9% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1898.34 &plusmn; 21.65</span>
+          <span class="case-stat-sub">C: 1833.39 &bull; Rank #30</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1904.23 &plusmn; 25.80</span>
+          <span class="case-stat-sub">C: 1826.82 &bull; Rank #20</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val">1790.78 &plusmn; 53.57</span>
+          <span class="case-stat-sub">C: 1630.05 &bull; Rank #121</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: High-Volume Championship Play &amp; Retrospective Margin Recalibration</strong>
+        <p>
+          DANeo is an active competitive Through the Ages player, logging over 700 recorded opponent encounters across major leagues and International Championships with an impressive 61.9% win rate (440 wins, 270 losses).
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Sequential Momentum in Glicko-2:</strong> In sequential Glicko-2, deep tournament runs and sustained winning streaks compound forward in time. With low rating deviation ($\mathrm{RD} \approx 21.65$), DANeo holds elite global rankings of <strong>#20 (MP-Weighted)</strong> and <strong>#30 (Standard)</strong>.
+          </li>
+          <li>
+            <strong>Retrospective Global Balancing in WHR:</strong> WHR solves for every player's skill globally using a joint <a href="https://en.wikipedia.org/wiki/Hessian_matrix" class="faq-link" target="_blank" rel="noopener noreferrer">Hessian matrix</a>. Because DANeo regularly competes in large open championship fields against a broad range of opponent skill levels, WHR averages out short-term hot streaks to establish a conservative long-term baseline (#121 active ladder, with an all-time peak rating of 1858).
+          </li>
+          <li>
+            <strong>Distinct Model Roles:</strong> This contrast illustrates the different missions of the systems: Glicko-2 captures current tournament form and in-season momentum, while WHR establishes a conservative, retrospective career foundation.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 6. tianren4561367 (Tinaren) -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('CN') }} tianren4561367 (Tinaren)
+        </h4>
+        <a href="/player/tianren4561367" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">110 Matches</span>
+          <span class="case-stat-sub" style="color: #ffe082;">90.0% Win Rate (99-11)</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1940.45 &plusmn; 41.20</span>
+          <span class="case-stat-sub">C: 1816.84 &bull; Rank #41</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1935.88 &plusmn; 55.89</span>
+          <span class="case-stat-sub">C: 1768.20 &bull; Rank #67</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val" style="color: #ffe082;">1923.89 &plusmn; 44.30</span>
+          <span class="case-stat-sub" style="color: #81c784;">C: 1790.98 &bull; Rank #17</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Extreme Win-Rate Bayesian Acceleration</strong>
+        <p>
+          Achieving a <strong>90.0% win rate across 110 tournament matches</strong> (99 wins, only 11 losses) is an extraordinary statistical anomaly in Through the Ages.
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Glicko Period Limits:</strong> Glicko-2 uses a volatility limiter $\tau$ to prevent ratings from shooting up too quickly during short hot streaks. Because Tinaren played in concentrated bursts, Glicko-2's step limiter slowed down their climb, resulting in $\mathrm{RD} \approx 41.20$ and a Conservative rank of #41.
+          </li>
+          <li>
+            <strong>WHR Full-Dataset Recognition:</strong> Because WHR evaluates the entire dataset simultaneously, it recognizes that 99 wins in 110 games against competitive tournament fields cannot possibly be luck. WHR rapidly collapses uncertainty down to a peak $\mathrm{RD} = 17.41$, propelling their Conservative Rating to <strong>1871.68 (#17 on the active ladder)</strong>.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 7. pv4 -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('BE') }} pv4 <span class="badge badge-gm">GM</span>
+        </h4>
+        <a href="/player/pv4" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">1,025 Matches</span>
+          <span class="case-stat-sub">60.0% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1913.53 &plusmn; 20.78</span>
+          <span class="case-stat-sub">C: 1851.18 &bull; Rank #22</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val" style="color: #ffe082;">1920.02 &plusmn; 24.30</span>
+          <span class="case-stat-sub" style="color: #81c784;">C: 1847.13 &bull; Rank #14</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val">1778.83 &plusmn; 21.28</span>
+          <span class="case-stat-sub">C: 1715.00 &bull; Rank #48</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Multiplayer Pairwise Over-Counting vs. Fractional Variance Correction</strong>
+        <p>
+          pv4 is an elite competitor with over 1,000 matches, specializing heavily in 3-player and 4-player competitive formats.
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>The Fractional Weighting Advantage:</strong> In Standard Glicko-2, every 4-player match is split into 3 independent duels with full weight ($w=1.0$), artificially compressing rating deviation. When <a href="https://www.remi-coulom.fr/WHR/" class="faq-link" target="_blank" rel="noopener noreferrer">Coulom's fractional weighting</a> ($w = \frac{1}{N-1}$) is applied, pv4's ranking jumps from <strong>#22 up to #14</strong> globally.
+          </li>
+          <li>
+            <strong>Joint Multinomial Modeling in WHR:</strong> WHR applies joint multinomial <a href="https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model" class="faq-link" target="_blank" rel="noopener noreferrer">Bradley-Terry models</a> for multiplayer games rather than synthetic pairwise decomposition, properly accounting for multiplayer variance without over-counting outcomes.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 8. Lemmingsplayer -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('GB') }} Lemmingsplayer <span class="badge badge-gm">GM</span>
+        </h4>
+        <a href="/player/Lemmingsplayer" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">229 Matches</span>
+          <span class="case-stat-sub">76.0% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1921.05 &plusmn; 31.10</span>
+          <span class="case-stat-sub">C: 1827.75 &bull; Rank #32</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1922.35 &plusmn; 40.96</span>
+          <span class="case-stat-sub">C: 1799.47 &bull; Rank #32</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val">1578.15 &plusmn; 240.26</span>
+          <span class="case-stat-sub" style="color: #ef5350;">Peak C: 1296.11 &bull; Active: #1309</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Extended Inactivity Variance Expansion &amp; C-Rating Leaderboard Protection</strong>
+        <p>
+          Lemmingsplayer is a celebrated Grandmaster with a stellar 76.0% win rate across 229 matches. Yet while they sit at #32 in Glicko-2, their WHR Conservative Rating is at rank #1309 on the active ladder. Why?
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Daily Uncertainty Expansion:</strong> During a tournament hiatus, WHR expands uncertainty for every day elapsed without a game:
+            <div class="faq-formula">
+              $$\sigma^2(t_{\text{now}}) = \sigma^2(t_{\text{last}}) + w^2 \cdot \Delta t$$
+            </div>
+            At the present day ($t_{\mathrm{now}}$), this causes Lemmingsplayer's uncertainty to expand to $\mathrm{RD} \approx 240.26$.
+          </li>
+          <li>
+            <strong>Conservative Rating Penalty ($3 \times \mathrm{RD}$):</strong> Because Conservative Rating subtracts $3 \times \mathrm{RD}$, this uncertainty expansion deducts $720.8$ points ($1578.15 - 720.8 = 857.36$).
+          </li>
+          <li>
+            <strong>Leaderboard Defense vs. Historical Preservation:</strong> This demonstrates how WHR protects active competitive leaderboards from retired accounts "squatting" on top spots, while permanently preserving their peak historical ratings (Peak C: 1296.11) in their profile history.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 9. Lcfyx -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('FR') }} Lcfyx <span class="badge badge-m">M</span>
+        </h4>
+        <a href="/player/Lcfyx" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">801 Matches</span>
+          <span class="case-stat-sub">61.5% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1877.34 &plusmn; 22.01</span>
+          <span class="case-stat-sub">C: 1811.32 &bull; Rank #42</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1875.24 &plusmn; 26.26</span>
+          <span class="case-stat-sub">C: 1796.46 &bull; Rank #36</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val">1796.46 &plusmn; 30.12</span>
+          <span class="case-stat-sub">C: 1706.10 &bull; Rank #53</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: The Community Calibration Anchor (Robust Graph Connectivity)</strong>
+        <p>
+          With 801 recorded encounters and an exemplary 61.5% win rate, Master Lcfyx is an essential calibration anchor for the entire competitive rating ecosystem.
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>Bridging Tournament Communities:</strong> In rating systems, players who actively compete across diverse tournaments, seasons, and tiers provide the connective tissue that stabilizes comparisons between different player groups.
+          </li>
+          <li>
+            <strong>Cross-Model Alignment:</strong> Because Lcfyx plays against a broad cross-section of the player base, their ratings across Glicko-2 Standard (1877), Glicko-2 MP-Weighted (1875), and WHR (1796) remain closely aligned, demonstrating how high-connectivity competitors ground the entire system.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- 10. megumi -->
+    <div class="faq-card">
+      <div class="case-study-header">
+        <h4 class="case-study-title">
+          {{ get_flag('CN') }} megumi
+        </h4>
+        <a href="/player/megumi" class="btn btn-sm btn-outline-warning" style="padding: 0.25rem 0.75rem; font-size: 0.85rem; border-color: rgba(218, 165, 32, 0.5); color: #f7dfa5;">
+          View Full Profile &raquo;
+        </a>
+      </div>
+      <div class="case-study-stats-grid">
+        <div class="case-stat-box">
+          <span class="case-stat-label">Career Record</span>
+          <span class="case-stat-val">48 Matches</span>
+          <span class="case-stat-sub">68.8% Win Rate</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 Standard</span>
+          <span class="case-stat-val">1964.64 &plusmn; 55.94</span>
+          <span class="case-stat-sub">C: 1796.83 &bull; Rank #55</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Glicko-2 MP-Weighted</span>
+          <span class="case-stat-val">1964.54 &plusmn; 56.02</span>
+          <span class="case-stat-sub">C: 1796.49 &bull; Rank #35</span>
+        </div>
+        <div class="case-stat-box">
+          <span class="case-stat-label">Whole-History Rating</span>
+          <span class="case-stat-val">1778.54 &plusmn; 240.71</span>
+          <span class="case-stat-sub">Peak C: 1726.35 &bull; Active: #1025</span>
+        </div>
+      </div>
+      <div class="case-analysis-block">
+        <strong>Key Phenomenon: Sample Scarcity vs. Prior Information Propagation</strong>
+        <p>
+          megumi played a compact slate of 48 elite matches with an outstanding 68.8% win rate, illustrating how different models handle small samples against high-tier competition.
+        </p>
+        <ul class="faq-list">
+          <li>
+            <strong>High Uncertainty in Sequential Systems:</strong> With relatively few games, Glicko-2 retains a wide confidence margin ($\mathrm{RD} = 55.94$). As a result, although megumi's raw rating reaches 1964.64, their Conservative Rating is 1796.83.
+          </li>
+          <li>
+            <strong>Borrowing Certainty in WHR:</strong> WHR takes into account that megumi's opponents had hundreds of other matches defining their skills. By leveraging their established strength, WHR narrowed megumi's peak historical uncertainty to $\mathrm{RD} = 17.40$ (Peak C: 1726.35).
+          </li>
+          <li>
+            <strong>Active Ladder Forward Drift:</strong> Because megumi has not competed recently, forward Brownian motion naturally expands their live uncertainty to $\mathrm{RD} \approx 240.71$, illustrating objective leaderboard defense without erasing historical achievement.
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- SECTION 3: C-RATING -->
   <div id="faq-crating" class="faq-section">
     <div class="faq-card">
       <h3>What is the Conservative Rating (C-Rating)?</h3>
@@ -289,19 +994,19 @@ $$
     <div class="faq-card">
       <h3>What is the "multiplayer fractional weighting" problem?</h3>
       <p>
-        In Through the Ages, matches are played with 2, 3, or 4 players. When a 4-player game is decomposed into 1v1 duels, it creates $\binom{4}{2} = 6$ pairwise matches.
+        In Through the Ages, matches are played with 2, 3, or 4 players. When a 4-player game is decomposed into pairwise encounters under standard <a href="https://en.wikipedia.org/wiki/Bradley%E2%80%93Terry_model" class="faq-link" target="_blank" rel="noopener noreferrer">Bradley-Terry</a> assumptions, it generates $\binom{4}{2} = 6$ pairwise comparisons.
       </p>
       <p>
-        In naive Glicko-2, each player is treated as if they played 3 separate 1v1 duels in a single game. This accumulates 3 times more statistical evidence than physically occurred, causing the Rating Deviation (RD) to collapse 3 times too fast!
+        In naive Glicko-2, each player is treated as if they fought 3 completely independent, full-length 1v1 duels. This accumulates <strong>3 times more statistical evidence</strong> than physically occurred in a single board game! As a result, Rating Deviation ($\mathrm{RD}$) collapses unnaturally fast, making the engine artificially overconfident in players who primarily play 4-player games.
       </p>
       <div class="faq-formula">
-        $$\text{Coulom Match Weight:} \quad w = \frac{1}{N - 1}$$
+        $$\text{Coulom Fractional Weight:} \quad w = \frac{1}{N - 1}$$
         $$\text{For 2-player duel:} \quad w = \frac{1}{2 - 1} = 1.00$$
         $$\text{For 3-player game:} \quad w = \frac{1}{3 - 1} = 0.50$$
         $$\text{For 4-player game:} \quad w = \frac{1}{4 - 1} = 0.333$$
       </div>
       <p>
-        By weighting each encounter by $1/(N-1)$, the total information gained from an $N$-player game exactly equals that of an authentic 1v1 duel.
+        By weighting each encounter by $w = \frac{1}{N-1}$ as formulated by <a href="https://www.remi-coulom.fr/WHR/" class="faq-link" target="_blank" rel="noopener noreferrer">Rémi Coulom</a>, the total evidence accumulated across an $N$-player match exactly equals that of an authentic 1v1 duel. This levels the playing field between duel specialists and multiplayer competitors.
       </p>
     </div>
   </div>
@@ -342,6 +1047,7 @@ $$
         Titles are awarded for distinguished finishes in official TTA World Championships and elite tournament divisions:
       </p>
       <ul class="faq-list">
+        <li><span class="badge badge-wc">WC</span> <strong>World Champion:</strong> Winner of the official Through the Ages World Championship (2023: Weidenbaum, 2024: Martin_Pecheur, 2025: a440). Currently held by reigning champion <strong>a440</strong>.</li>
         <li><span class="badge badge-gm">GM</span> <strong>Grandmaster:</strong> Top-flight division champions, multiple major tournament victories, or World Championship podium finishes.</li>
         <li><span class="badge badge-m">M</span> <strong>Master:</strong> Established top-tier competitive tournament finalists and continental champions.</li>
         <li><span class="badge badge-p">P</span> <strong>Platinum:</strong> High-performing competitive tournament contenders and division winners.</li>
@@ -374,6 +1080,117 @@ $$
       </p>
     </div>
   </div>
+
+  <!-- SECTION 8: SEASON RESETS & ELIGIBILITY -->
+  <div id="faq-resets" class="faq-section">
+    <div class="faq-card">
+      <h3>Why Introduce Season Resets? Career Inertia vs. Seasonal Stakes</h3>
+      <p>
+        In traditional continuous rating systems, a player who has competed in over 1,000 matches accumulates a very narrow Rating Deviation ($\mathrm{RD} \approx 30$). While this provides exceptional historical precision, it can introduce <strong>career legacy inertia</strong>: recent performance during a stellar calendar year only shifts their rating by a few points, while newer active contenders struggle to displace inactive veterans who established high ratings years ago.
+      </p>
+      <p>
+        To preserve historical depth while rewarding active seasonal form, the portal introduces two optional, mathematically unified <strong>Golden Ratio ($\phi \approx 1.618034$)</strong> season reset mechanisms:
+      </p>
+      <ul class="faq-list">
+        <li><strong>Continuous (Standard):</strong> Uninterrupted lifetime ratings (the traditional baseline).</li>
+        <li><strong>Soft Season Reset ($\phi^1$ Inflation, $\phi^{-3}$ Tier Reversion):</strong> Gentle annual refresh preserving career hierarchy while giving active seasonal form greater weight.</li>
+        <li><strong>Hard Season Reset (&ldquo;Amplified&rdquo;, $\phi^2$ Inflation, $\phi^{-1}$ Tier Reversion):</strong> Dynamic seasonal reset allowing the top active tournament performers of each season to surge to the summit of the leaderboard.</li>
+      </ul>
+    </div>
+
+    <div class="faq-card">
+      <h3>Mathematical Formulations: Pure Golden Ratio ($\phi$) Harmonization</h3>
+      <p>
+        Both reset modes operate at every calendar year boundary (e.g. crossing from 2024 to 2025, and 2025 to 2026), applying mathematical transformations derived strictly from powers of the Golden Ratio ($\phi = \frac{1 + \sqrt{5}}{2} \approx 1.61803398875$):
+      </p>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">1. Soft Season Reset Formula</h4>
+      <p>
+        Uncertainty is expanded by a factor of $\phi$, while ratings gently shrink toward the mean of their International Championship competitive tier by $\lambda_{\text{soft}} = \left(1 - \frac{1}{\phi}\right) \cdot \frac{1}{\phi} = \frac{1}{\phi^3} \approx 0.236068$ (approximately $23.61\%$):
+      </p>
+
+      <div class="faq-formula">
+
+$$
+\mathrm{RD}_{\text{new}} = \min(350.0, \;\mathrm{RD} \cdot \phi^1)
+$$
+
+      </div>
+      <div class="faq-formula">
+
+$$
+\mu_{\text{new}} = (1 - \phi^{-3})\,\mu + \phi^{-3}\,\mu_{\text{tier}} \approx 0.7639\,\mu + 0.2361\,\mu_{\text{tier}}
+$$
+
+      </div>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">2. Hard Season Reset (&ldquo;Amplified&rdquo;) Formula</h4>
+      <p>
+        Uncertainty is expanded by $\phi^2 \approx 2.618034$, while ratings strongly revert toward their competitive tier mean by $\lambda_{\text{hard}} = \frac{1}{\phi} = \phi^{-1} \approx 0.618034$ ($61.80\%$):
+      </p>
+
+      <div class="faq-formula">
+
+$$
+\mathrm{RD}_{\text{new}} = \min(350.0, \;\mathrm{RD} \cdot \phi^2)
+$$
+
+      </div>
+      <div class="faq-formula">
+
+$$
+\mu_{\text{new}} = (1 - \phi^{-1})\,\mu + \phi^{-1}\,\mu_{\text{tier}} \approx 0.3820\,\mu + 0.6180\,\mu_{\text{tier}}
+$$
+
+      </div>
+
+      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">3. Calibrated Tier Means ($\mu_{\text{tier}}$)</h4>
+      <p>
+        Rather than collapsing everyone toward an arbitrary novice baseline of 1500, players revert toward the established mean of their competitive International Championship division:
+      </p>
+      <div style="overflow-x: auto; margin: 0.75rem 0;">
+        <table style="width: 100%; border-collapse: collapse; font-family: var(--font-stats); font-size: 0.9rem; background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 4px;">
+          <thead>
+            <tr style="background: rgba(30, 20, 14, 0.95); color: var(--accent-gold); text-align: left;">
+              <th style="padding: 0.6rem 1rem;">Division / Tier</th>
+              <th style="padding: 0.6rem 1rem;">Rating Bracket</th>
+              <th style="padding: 0.6rem 1rem;">Target Mean ($\mu_{\text{tier}}$)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);"><td style="padding: 0.6rem 1rem; color: #ffd700; font-weight: 700;">Premier Division</td><td style="padding: 0.6rem 1rem;">Rating &ge; 1850</td><td style="padding: 0.6rem 1rem; font-weight: 700;">1900</td></tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);"><td style="padding: 0.6rem 1rem; color: #e5a93c; font-weight: 700;">Division 1</td><td style="padding: 0.6rem 1rem;">1700 &le; Rating &lt; 1850</td><td style="padding: 0.6rem 1rem; font-weight: 700;">1750</td></tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);"><td style="padding: 0.6rem 1rem; color: #cfbeab; font-weight: 700;">Division 2</td><td style="padding: 0.6rem 1rem;">1550 &le; Rating &lt; 1700</td><td style="padding: 0.6rem 1rem; font-weight: 700;">1625</td></tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);"><td style="padding: 0.6rem 1rem; color: #b87333; font-weight: 700;">Division 3</td><td style="padding: 0.6rem 1rem;">1400 &le; Rating &lt; 1550</td><td style="padding: 0.6rem 1rem; font-weight: 700;">1475</td></tr>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);"><td style="padding: 0.6rem 1rem; color: #a89880;">Division 4</td><td style="padding: 0.6rem 1rem;">1250 &le; Rating &lt; 1400</td><td style="padding: 0.6rem 1rem; font-weight: 700;">1325</td></tr>
+            <tr><td style="padding: 0.6rem 1rem; color: #786855;">Division 5 / Novice</td><td style="padding: 0.6rem 1rem;">Rating &lt; 1250</td><td style="padding: 0.6rem 1rem; font-weight: 700;">1175</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="faq-card">
+      <h3>Tournament Rating Eligibility Policy (&ldquo;Glicko-Eligible&rdquo;)</h3>
+      <p>
+        Not all competitive events in the TTA ecosystem share the same structural format. Some community tournaments (such as fast-paced Swiss <em>Quick &amp; Dirty</em> cups or exhibition events) have unorthodox tiebreakers or differing turn clocks that the community prefers not to factor into official Elo/Glicko ratings.
+      </p>
+      <p>
+        To support complete transparency without polluting rating integrity:
+      </p>
+      <ul class="faq-list">
+        <li>Every completed tournament match is preserved in the comprehensive match ledger (<code>matches</code> and <code>pairwise_matches</code>).</li>
+        <li>Tournaments marked as <strong>non-Glicko eligible</strong> remain fully visible on player match histories and are included in the rolling <em>Community Leaderboard</em> sanity checks.</li>
+        <li>The Glicko-2 and Whole-History Rating calculators strictly filter on <code>WHERE glicko_eligible = 1</code>, ensuring exhibition matches never distort official competitive skill ratings.</li>
+      </ul>
+    </div>
+
+    <div class="faq-card">
+      <h3>Webmaster &ldquo;Last Update&rdquo; Deltas</h3>
+      <p>
+        When inspecting leaderboard deltas, selecting <strong>Last Update</strong> evaluates rating movement relative to the exact snapshot preceding the latest batch of tournament matches committed by the Webmaster. This provides an immediate, distortion-free view of how the most recent tournament results altered the global standings.
+      </p>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -387,7 +1204,31 @@ $$
     }
     if (btn) {
       btn.classList.add('active');
+    } else {
+      const matchBtn = document.querySelector('.faq-tab-btn[onclick*="\'' + tabId + '\'"]');
+      if (matchBtn) {
+        matchBtn.classList.add('active');
+      }
+    }
+    if (history.pushState) {
+      history.pushState(null, null, '#' + tabId);
+    } else {
+      window.location.hash = tabId;
     }
   }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById('faq-' + hash)) {
+      switchFaqTab(hash);
+    }
+  });
+
+  window.addEventListener('hashchange', function() {
+    const hash = window.location.hash.replace('#', '');
+    if (hash && document.getElementById('faq-' + hash)) {
+      switchFaqTab(hash);
+    }
+  });
 </script>
 {% endblock %}

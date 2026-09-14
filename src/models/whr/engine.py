@@ -10,8 +10,16 @@ from src.models.whr.solver import solve_tridiagonal
 
 GLICKO2_SCALE = 173.7178
 DEFAULT_RATING = 1500.0
+DEFAULT_RD = 350.0
 DEFAULT_W2_PER_DAY = 0.005
 DEFAULT_PRIOR_VAR = 2.0  # prior variance on initial skill (~245 RD)
+
+# Golden Retrospective Decay Constants (3-Year Informational Half-Life)
+# Golden ratio phi = (1 + sqrt(5)) / 2 ≈ 1.6180339887
+# Continuous decay rate: lambda = ln(phi) / (3.0 * 365.25) ≈ 0.00043917 day^-1
+PHI = (1.0 + math.sqrt(5.0)) / 2.0
+GOLDEN_RATIO_INV = 1.0 / PHI
+GOLDEN_LAMBDA = math.log(PHI) / (3.0 * 365.25)
 
 @dataclass
 class PlayerDay:
@@ -40,12 +48,16 @@ class WHREngine:
         self.w2 = w2_per_day
         self.players: Dict[str, WHRPlayer] = {}
         self.min_date: Optional[datetime] = None
+        self.max_day: int = 0
 
     def _date_to_day(self, date_str: str) -> int:
         dt = datetime.strptime(date_str[:10], "%Y-%m-%d")
         if self.min_date is None:
             self.min_date = dt
-        return (dt - self.min_date).days
+        d = (dt - self.min_date).days
+        if d > self.max_day:
+            self.max_day = d
+        return d
 
     def add_game(self, date_str: str, p1: str, p2: str, outcome_p1: float, weight: float = 1.0):
         d = self._date_to_day(date_str)
@@ -97,7 +109,7 @@ class WHREngine:
                     grad_lik[i] += weight * (outcome - p_win)
                     hess_lik[i] += weight * (p_win * (1.0 - p_win))
 
-            # 2. Prior precision matrix (tridiagonal) for random walk
+            # 2. Prior precision matrix (tridiagonal) with Golden Retrospective Retention
             diag_prior = np.zeros(n, dtype=float)
             off_prior = np.zeros(n - 1, dtype=float)
 
@@ -106,8 +118,10 @@ class WHREngine:
             else:
                 for k in range(n - 1):
                     dt = max(1, days[k + 1] - days[k])
-                    sigma2 = self.w2 * dt
-                    inv_sigma2 = 1.0 / sigma2
+                    # Golden retrospective retention kernel: phi^(-dt / (3.0 * 365.25))
+                    # Retains 1/phi (~61.803%) per 3-year half-life
+                    retention = math.pow(PHI, -1.0 * dt / (3.0 * 365.25))
+                    inv_sigma2 = retention / (self.w2 * dt)
 
                     diag_prior[k] += inv_sigma2
                     diag_prior[k + 1] += inv_sigma2
@@ -146,6 +160,9 @@ class WHREngine:
             if max_delta < tol:
                 break
 
+    def get_max_day(self) -> int:
+        return self.max_day
+
     def get_ratings(self, player_name: str) -> List[Tuple[str, float, float]]:
         if player_name not in self.players:
             return []
@@ -158,12 +175,19 @@ class WHREngine:
             res.append((pday.date_str, r_scale, rd_scale))
         return res
 
-    def get_current_rating(self, player_name: str) -> Optional[Tuple[float, float]]:
+    def get_current_rating(self, player_name: str, target_day: Optional[int] = None) -> Optional[Tuple[float, float]]:
         if player_name not in self.players or not self.players[player_name].ordered_days:
             return None
         p = self.players[player_name]
         last_d = p.ordered_days[-1]
         pday = p.days[last_d]
         r_scale = pday.r * GLICKO2_SCALE + DEFAULT_RATING
-        rd_scale = math.sqrt(pday.var) * GLICKO2_SCALE
+        var = pday.var
+
+        # Forward Brownian projection into target_day (t_now) for active leaderboard
+        if target_day is not None and target_day > last_d:
+            dt = target_day - last_d
+            var += self.w2 * dt
+
+        rd_scale = min(DEFAULT_RD, math.sqrt(var) * GLICKO2_SCALE)
         return (r_scale, rd_scale)

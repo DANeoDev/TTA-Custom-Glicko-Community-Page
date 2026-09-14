@@ -116,11 +116,27 @@
       <strong>Glicko-2 MP-Weighted</strong> (Coulom/Glickman multiplayer fractional variance weighting), and <strong>Whole-History Rating</strong> (retrospective MAP Brownian motion).
     </p>
   </div>
+</div>
+
+<!-- Format & Reset Mode Selectors Toolbar (Positioned directly above active graphs & statistics) -->
+<div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
+  <!-- Reset Engine Selector -->
+  <div class="format-bar" style="margin: 0; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+    <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.25rem;">Reset Mode:</span>
+    {% for rm_key, rm_info in reset_modes.items() %}
+      <a href="?format={{ active_format }}&reset_mode={{ rm_key }}"
+         class="format-btn {% if active_reset_mode == rm_key %}active{% endif %}"
+         data-tooltip="{{ rm_info.desc }}">
+        {{ rm_info.name }}
+      </a>
+    {% endfor %}
+  </div>
 
   <!-- Format Switcher -->
-  <div class="format-bar">
+  <div class="format-bar" style="margin: 0; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+    <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.25rem;">Format:</span>
     {% for f_id, f_name in formats.items() %}
-      <a href="?format={{ f_id }}" 
+      <a href="?format={{ f_id }}&reset_mode={{ active_reset_mode }}" 
          class="format-btn {% if active_format == f_id %}active{% endif %}"
          data-tooltip="Filter statistical properties for {{ f_name }}">
         {{ f_name }}
@@ -167,72 +183,141 @@
   {% endfor %}
 </div>
 
-<!-- Cross-Model Agreement Matrix (Fixed Descriptor) -->
+<!-- 9-Engine Comprehensive Agreement Heatmap Matrix -->
 <div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem; margin-bottom: 0.5rem;">
-    Cross-Model Agreement Matrix (Sample: {{ correlations.sample_size }} active players)
-  </h3>
-  <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
-    Evaluates rank agreement (Spearman Rank Correlation <span data-tooltip="Spearman's Rank Correlation (ρ): Measures ordinal rank agreement between two rating systems (-1.0 to +1.0). 1.0 represents identical leaderboard standings."><em>&rho;</em></span>) and absolute rating scale alignment (Pearson Correlation <span data-tooltip="Pearson Correlation (r): Measures linear correlation between rating numbers assigned to players (-1.0 to +1.0)."><em>r</em></span>) across players with at least 15 competitive encounters.
-  </p>
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.35rem; margin: 0 0 0.25rem 0;">
+        9-Engine Comprehensive Agreement Matrix (Cross-Model Agreement Matrix)
+      </h3>
+      <span style="color: var(--text-muted); font-size: 0.85rem;">
+        Empirical evaluation across all 3 Rating Models &times; 3 Reset Modes (Sample: {{ matrix_9x9.sample_size }} qualified players with &ge; 15 encounters)
+      </span>
+    </div>
 
-  <table class="matrix-table">
-    <thead>
-      <tr>
-        <th style="text-align: left;">Model Pair</th>
-        <th>
-          <span data-tooltip="Spearman's Rank Correlation (ρ): Non-parametric measure of statistical rank agreement between models (-1.0 to +1.0). 1.0 indicates identical leaderboard rankings.">
-            Spearman Rank Correlation (&rho;)
-          </span>
-        </th>
-        <th>
-          <span data-tooltip="Pearson Correlation (r): Measures linear correlation between the ratings assigned by two models (-1.0 to +1.0).">
-            Pearson Rating Correlation (r)
-          </span>
-        </th>
-        <th>Interpretation</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td style="text-align: left; font-weight: 600;">Glicko-2 Standard &harr; Glicko-2 MP-Weighted</td>
-        <td class="high-corr">{{ correlations.spearman_std_mp }}</td>
-        <td class="high-corr">{{ correlations.pearson_std_mp }}</td>
-        <td style="color: var(--text-muted); font-size: 0.85rem;">Very high agreement; divergence concentrated among heavy 4-player participants.</td>
-      </tr>
-      <tr>
-        <td style="text-align: left; font-weight: 600;">Glicko-2 Standard &harr; Whole-History Rating</td>
-        <td class="high-corr">{{ correlations.spearman_std_whr }}</td>
-        <td class="high-corr">{{ correlations.pearson_std_whr }}</td>
-        <td style="color: var(--text-muted); font-size: 0.85rem;">Strong correlation; WHR smooths early career volatility and incorporates retrospective knowledge.</td>
-      </tr>
-      <tr>
-        <td style="text-align: left; font-weight: 600;">Glicko-2 MP-Weighted &harr; Whole-History Rating</td>
-        <td class="high-corr">{{ correlations.spearman_mp_whr }}</td>
-        <td class="high-corr">{{ correlations.pearson_mp_whr }}</td>
-        <td style="color: var(--text-muted); font-size: 0.85rem;">Optimal calibration; both models prevent multiplayer overconfidence.</td>
-      </tr>
-    </tbody>
-  </table>
+    <!-- Toggle between Spearman ρ and Pearson r -->
+    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+      <span style="font-size: 0.78rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.25rem;">Metric:</span>
+      <button type="button" id="btnMetricSpearman" class="format-btn active" onclick="switchMatrixMetric('spearman')" style="font-size: 0.8rem; padding: 0.25rem 0.65rem;">
+        Spearman Rank (&rho;)
+      </button>
+      <button type="button" id="btnMetricPearson" class="format-btn" onclick="switchMatrixMetric('pearson')" style="font-size: 0.8rem; padding: 0.25rem 0.65rem;">
+        Pearson Rating (r)
+      </button>
+    </div>
+  </div>
+
+  <!-- Educational Explainer Cards for r and rho -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin: 1rem 0 1.25rem 0;">
+    <div style="background: rgba(229, 169, 60, 0.06); border: 1px solid rgba(229, 169, 60, 0.2); border-left: 3px solid var(--accent-gold); border-radius: 4px; padding: 0.75rem 1rem;">
+      <div style="font-weight: 700; color: var(--accent-gold); font-size: 0.88rem; margin-bottom: 0.25rem;">
+        <span>📊</span> Spearman Rank Correlation (&rho; &ndash; "Leaderboard Order")
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0; line-height: 1.45;">
+        Measures whether two engines <strong>agree on who is ranked ahead of whom</strong>. &rho; = 1.0 means identical leaderboard ranks, regardless of numerical rating gaps.
+      </p>
+    </div>
+    <div style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); border-left: 3px solid #38bdf8; border-radius: 4px; padding: 0.75rem 1rem;">
+      <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem; margin-bottom: 0.25rem;">
+        <span>📈</span> Pearson Linear Correlation (r &ndash; "Numerical Proportionality")
+      </div>
+      <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0; line-height: 1.45;">
+        Measures whether the <strong>actual rating numbers scale linearly</strong> between engines. r = 1.0 means an exact straight-line relationship between rating values.
+      </p>
+    </div>
+  </div>
+
+  <!-- 9x9 Heatmap Table Container -->
+  <div style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 6px; background: rgba(0,0,0,0.25);">
+    <table class="matrix-table" style="margin-top: 0; font-size: 0.85rem;">
+      <thead>
+        <tr>
+          <th style="text-align: left; padding: 0.6rem 0.8rem; width: 140px;">Engine</th>
+          {% for eng in matrix_9x9.engines %}
+          <th style="font-size: 0.75rem; padding: 0.5rem 0.35rem; white-space: nowrap;">{{ eng.short }}</th>
+          {% endfor %}
+        </tr>
+      </thead>
+      <tbody id="matrix9x9Body">
+        <!-- Rendered dynamically by JavaScript switchMatrixMetric() -->
+      </tbody>
+    </table>
+  </div>
 </div>
+
+<script>
+  const matrixData = {{ matrix_9x9|tojson }};
+  let currentMetric = 'spearman';
+
+  function getHeatmapColor(val) {
+    if (val >= 0.98) return 'background: rgba(34, 197, 94, 0.35); color: #4ade80; font-weight: 800;';
+    if (val >= 0.90) return 'background: rgba(34, 197, 94, 0.20); color: #86efac; font-weight: 700;';
+    if (val >= 0.80) return 'background: rgba(234, 179, 8, 0.18); color: #fde047; font-weight: 600;';
+    if (val >= 0.70) return 'background: rgba(249, 115, 22, 0.18); color: #fdba74; font-weight: 600;';
+    return 'background: rgba(239, 68, 68, 0.18); color: #fca5a5; font-weight: 600;';
+  }
+
+  function render9x9Matrix() {
+    const tbody = document.getElementById('matrix9x9Body');
+    if (!tbody || !matrixData || !matrixData.engines) return;
+    const vals = currentMetric === 'spearman' ? matrixData.spearman : matrixData.pearson;
+    
+    let html = '';
+    matrixData.engines.forEach((eng, i) => {
+      html += '<tr>';
+      html += `<td style="text-align: left; font-weight: 700; color: #ffd54f; font-size: 0.82rem; padding: 0.6rem 0.8rem; white-space: nowrap; border-right: 1px solid var(--border-subtle);">${eng.name}</td>`;
+      vals[i].forEach((score, j) => {
+        const style = i === j ? 'background: rgba(229, 169, 60, 0.25); color: #fff; font-weight: 800;' : getHeatmapColor(score);
+        html += `<td style="padding: 0.5rem 0.35rem; font-family: var(--font-stats); ${style}">${score.toFixed(4)}</td>`;
+      });
+      html += '</tr>';
+    });
+    tbody.innerHTML = html;
+  }
+
+  function switchMatrixMetric(metric) {
+    currentMetric = metric;
+    document.getElementById('btnMetricSpearman').classList.toggle('active', metric === 'spearman');
+    document.getElementById('btnMetricPearson').classList.toggle('active', metric === 'pearson');
+    render9x9Matrix();
+  }
+
+  document.addEventListener('DOMContentLoaded', () => {
+    render9x9Matrix();
+  });
+</script>
+
+
+
 
 <!-- Two Charts in Grid: Rating Density & Calibration Curves -->
 <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
   
   <!-- Chart 1: Calibration & Reliability Diagram -->
   <div class="rating-card" style="padding: 1.5rem;">
-    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem;">
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem;">
+    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0;">
         Model Calibration Curve (Reliability Diagram)
       </h3>
-      <a href="{{ url_for('analysis.calibration', format=active_format) }}" style="color: var(--accent-gold); font-size: 0.85rem; text-decoration: none;">
-        Full Breakdown &raquo;
+      <a href="{{ url_for('analysis.calibration', format=active_format, reset_mode=active_reset_mode) }}" style="color: #fff; background: rgba(229, 169, 60, 0.15); border: 1px solid var(--accent-gold); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; transition: background 0.2s;">
+        <span>🎯</span> Full Breakdown &raquo;
       </a>
     </div>
-    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-      Predicted win probability vs actual observed win rate. A perfectly calibrated model falls exactly along the 45&deg; dashed diagonal.
+
+    <!-- Dynamic Curve Selector -->
+    <div style="display: flex; gap: 0.35rem; align-items: center; margin: 0.5rem 0 0.8rem 0; flex-wrap: wrap;">
+      <span style="font-family: var(--font-heading); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">View:</span>
+      <button type="button" class="format-btn active calib-btn" onclick="selectCalibCurve('active', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">Active ({{ reset_modes[active_reset_mode].name }})</button>
+      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('glicko_std_all', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">Glicko Std Resets</button>
+      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('whr_all', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">WHR Resets</button>
+      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('all_cont', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">All Continuous</button>
+      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('all_soft', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">All Soft (φ)</button>
+    </div>
+
+    <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.75rem;">
+      Predicted win probability vs actual observed win rate for the favored competitor (&ge; 50%). A perfectly calibrated model falls along the 45&deg; dashed diagonal.
     </p>
-    <div style="position: relative; height: 320px; width: 100%;">
+    <div style="position: relative; height: 310px; width: 100%;">
       <canvas id="calibChart"></canvas>
     </div>
   </div>
@@ -360,56 +445,80 @@
     const rawCalib = {{ calib_json|safe }};
     const ctxCalib = document.getElementById('calibChart').getContext('2d');
 
-    const idealData = rawCalib.ideal.map(x => (x * 100).toFixed(1));
-    const stdData = rawCalib.models.glicko2_std ? rawCalib.models.glicko2_std.actuals.map(x => (x * 100).toFixed(1)) : [];
-    const mpData = rawCalib.models.glicko2_mp ? rawCalib.models.glicko2_mp.actuals.map(x => (x * 100).toFixed(1)) : [];
-    const whrData = rawCalib.models.whr ? rawCalib.models.whr.actuals.map(x => (x * 100).toFixed(1)) : [];
+    const idealDataset = {
+      label: 'Ideal 45° Diagonal',
+      data: rawCalib.ideal.map(x => (x * 100).toFixed(1)),
+      borderColor: 'rgba(255, 255, 255, 0.4)',
+      borderDash: [6, 6],
+      borderWidth: 2,
+      pointRadius: 0,
+      fill: false
+    };
 
-    new Chart(ctxCalib, {
+    const modelStyles = {
+      'glicko2_std': { name: 'Glicko-2 Std (Cont)', color: '#e5a93c' },
+      'glicko2_mp': { name: 'Glicko-2 MP (Cont)', color: '#ef5350' },
+      'whr': { name: 'WHR (Cont)', color: '#4fc3f7' },
+      'glicko2_std_soft': { name: 'Glicko-2 Std (Soft φ)', color: '#ffd54f' },
+      'glicko2_mp_soft': { name: 'Glicko-2 MP (Soft φ)', color: '#ff8a80' },
+      'whr_soft': { name: 'WHR (Soft φ)', color: '#80d8ff' },
+      'glicko2_std_amplified': { name: 'Glicko-2 Std (Amp φ²)', color: '#ffb300' },
+      'glicko2_mp_amplified': { name: 'Glicko-2 MP (Amp φ²)', color: '#d32f2f' },
+      'whr_amplified': { name: 'WHR (Amp φ²)', color: '#0288d1' }
+    };
+
+    function buildModelDataset(mKey) {
+      const m = rawCalib.models && rawCalib.models[mKey];
+      if (!m) return null;
+      const st = modelStyles[mKey] || { name: mKey, color: '#e5a93c' };
+      return {
+        label: `${st.name} (Brier: ${m.brier})`,
+        data: m.actuals.map(x => (x * 100).toFixed(1)),
+        borderColor: st.color,
+        backgroundColor: st.color,
+        borderWidth: 2,
+        pointRadius: 4,
+        tension: 0.15,
+        fill: false
+      };
+    }
+
+    const activeKeys = {
+      'soft': ['glicko2_std_soft', 'glicko2_mp_soft', 'whr_soft'],
+      'amplified': ['glicko2_std_amplified', 'glicko2_mp_amplified', 'whr_amplified'],
+      'continuous': ['glicko2_std', 'glicko2_mp', 'whr']
+    };
+
+    function getDatasetsForView(viewKey) {
+      let keys = [];
+      if (viewKey === 'active') {
+        const curMode = '{{ active_reset_mode }}';
+        keys = activeKeys[curMode] || activeKeys['continuous'];
+      } else if (viewKey === 'glicko_std_all') {
+        keys = ['glicko2_std', 'glicko2_std_soft', 'glicko2_std_amplified'];
+      } else if (viewKey === 'whr_all') {
+        keys = ['whr', 'whr_soft', 'whr_amplified'];
+      } else if (viewKey === 'all_cont') {
+        keys = ['glicko2_std', 'glicko2_mp', 'whr'];
+      } else if (viewKey === 'all_soft') {
+        keys = ['glicko2_std_soft', 'glicko2_mp_soft', 'whr_soft'];
+      } else {
+        keys = ['glicko2_std', 'glicko2_mp', 'whr'];
+      }
+
+      const list = [idealDataset];
+      keys.forEach(k => {
+        const ds = buildModelDataset(k);
+        if (ds) list.push(ds);
+      });
+      return list;
+    }
+
+    const calibChartInstance = new Chart(ctxCalib, {
       type: 'line',
       data: {
         labels: rawCalib.labels,
-        datasets: [
-          {
-            label: 'Ideal 45° Diagonal',
-            data: idealData,
-            borderColor: 'rgba(255, 255, 255, 0.4)',
-            borderDash: [6, 6],
-            borderWidth: 2,
-            pointRadius: 0,
-            fill: false
-          },
-          {
-            label: 'Glicko-2 Standard (Brier: ' + (rawCalib.models.glicko2_std ? rawCalib.models.glicko2_std.brier : '') + ')',
-            data: stdData,
-            borderColor: '#e5a93c',
-            backgroundColor: '#e5a93c',
-            borderWidth: 2,
-            pointRadius: 4,
-            tension: 0.15,
-            fill: false
-          },
-          {
-            label: 'Glicko-2 MP-Weighted (Brier: ' + (rawCalib.models.glicko2_mp ? rawCalib.models.glicko2_mp.brier : '') + ')',
-            data: mpData,
-            borderColor: '#ef5350',
-            backgroundColor: '#ef5350',
-            borderWidth: 2,
-            pointRadius: 4,
-            tension: 0.15,
-            fill: false
-          },
-          {
-            label: 'Whole-History Rating (Brier: ' + (rawCalib.models.whr ? rawCalib.models.whr.brier : '') + ')',
-            data: whrData,
-            borderColor: '#4fc3f7',
-            backgroundColor: '#4fc3f7',
-            borderWidth: 2,
-            pointRadius: 4,
-            tension: 0.15,
-            fill: false
-          }
-        ]
+        datasets: getDatasetsForView('active')
       },
       options: {
         responsive: true,
@@ -427,13 +536,13 @@
         },
         scales: {
           x: {
-            title: { display: true, text: 'Predicted Win Probability Bin', color: '#a89880' },
+            title: { display: true, text: 'Favored Player Predicted Probability Bin (≥ 50%)', color: '#a89880' },
             grid: { color: 'rgba(74, 53, 37, 0.25)' },
             ticks: { color: '#a89880' }
           },
           y: {
             title: { display: true, text: 'Actual Empirical Win Rate (%)', color: '#a89880' },
-            min: 0,
+            min: 50,
             max: 100,
             grid: { color: 'rgba(74, 53, 37, 0.25)' },
             ticks: { color: '#a89880', callback: val => val + '%' }
@@ -441,6 +550,13 @@
         }
       }
     });
+
+    window.selectCalibCurve = function(viewKey, btn) {
+      document.querySelectorAll('.calib-btn').forEach(b => b.classList.remove('active'));
+      if (btn) btn.classList.add('active');
+      calibChartInstance.data.datasets = getDatasetsForView(viewKey);
+      calibChartInstance.update();
+    };
   });
 </script>
 {% endblock %}
