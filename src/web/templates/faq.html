@@ -228,7 +228,7 @@
         </li>
         <li>
           <strong style="color: var(--accent-gold);">Glicko-2 MP-Weighted (<a href="https://www.remi-coulom.fr/WHR/" class="faq-link" target="_blank" rel="noopener noreferrer">Coulom/Glickman Fractional Weighting</a>):</strong>
-          Variance-calibrated specifically for 3-player and 4-player games. In a 4-player game, a player's attention and tactical choices are split across 3 opponents. By scaling match weight ($w = \frac{1}{N-1}$), this model prevents rating deviation ($\mathrm{RD}$) from shrinking unnaturally fast, ensuring fair rating volatility across all formats.
+          Variance-calibrated specifically for 3-player and 4-player games. When an $N$-player match is decomposed into $N-1$ pairwise subgames, scaling the match weight ($w = \frac{1}{N-1}$) ensures that the match contributes exactly one match's worth of statistical evidence to both the rating shift ($\Delta \mu$) and the rating deviation ($\mathrm{RD}$) shrinkage, preventing artificial overconfidence and runaway rating inflation in multiplayer formats.
         </li>
         <li>
           <strong style="color: var(--accent-gold);">Whole-History Rating (WHR):</strong>
@@ -1006,7 +1006,7 @@ $$
         $$\text{For 4-player game:} \quad w = \frac{1}{4 - 1} = 0.333$$
       </div>
       <p>
-        By weighting each encounter by $w = \frac{1}{N-1}$ as formulated by <a href="https://www.remi-coulom.fr/WHR/" class="faq-link" target="_blank" rel="noopener noreferrer">Rémi Coulom</a>, the total evidence accumulated across an $N$-player match exactly equals that of an authentic 1v1 duel. This levels the playing field between duel specialists and multiplayer competitors.
+        By weighting each encounter by $w = \frac{1}{N-1}$ as formulated by <a href="https://www.remi-coulom.fr/WHR/" class="faq-link" target="_blank" rel="noopener noreferrer">Rémi Coulom</a>, the weight scales <strong>both</strong> the rating adjustment ($\Delta \mu$) and the uncertainty shrinkage ($1/v$). This ensures that an $N$-player game provides the statistical weight of <strong>exactly one match</strong> rather than $N-1$ separate matches, preventing both runaway rating inflation and unnatural $\mathrm{RD}$ collapse in multiplayer tournaments.
       </p>
     </div>
   </div>
