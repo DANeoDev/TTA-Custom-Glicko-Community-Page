@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+
+{% block title %}Edit {{ t.folder }} - Through the Ages{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 1000px; margin: 2rem auto; padding: 0 1.5rem;">
+
+  <!-- Header Panel -->
+  <div class="analysis-hero-card" style="margin-bottom: 2rem;">
+    <div>
+      <div style="font-size: 0.82rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.25rem;">
+        Tracked Tournament Management
+      </div>
+      <h2 class="analysis-hero-title">Edit Tournament: {{ t.folder }}</h2>
+      <p class="analysis-hero-desc">
+        Modify directory name, update source URLs, configure online standings, or remove from tracked directories.
+      </p>
+    </div>
+    <div>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-antique" style="font-size: 0.88rem;">
+        &larr; Return to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div style="padding: 1rem 1.25rem; border-radius: 6px; margin-bottom: 1.5rem; font-size: 0.92rem;
+                    {% if category == 'success' %}background: rgba(14, 38, 20, 0.96); border: 1.5px solid #66bb6a; color: #f1f8e9;
+                    {% elif category == 'error' %}background: rgba(45, 12, 12, 0.96); border: 1.5px solid #ef5350; color: #ffebee;
+                    {% else %}background: rgba(12, 28, 48, 0.96); border: 1.5px solid #42a5f5; color: #e3f2fd;{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Edit Form -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.75rem; margin-bottom: 2rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 1.25rem;">
+      Tournament Configuration &amp; Sources
+    </h3>
+
+    <form method="POST" action="{{ url_for('admin.edit_tournament', folder=t.folder) }}">
+      <div style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-size: 0.9rem; color: #f5eedb; margin-bottom: 0.35rem; font-weight: 600;">
+          Directory / Folder Name
+        </label>
+        <input type="text" name="folder_name" value="{{ t.folder }}" required
+               style="width: 100%; padding: 0.65rem 0.85rem; background: rgba(18, 12, 8, 0.95); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.95rem; font-family: monospace;">
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
+          Directory location: <code>data/tournaments/{{ t.folder }}/</code>. Renaming will safely move this directory on disk.
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.25rem;">
+        <label style="display: block; font-size: 0.9rem; color: #f5eedb; margin-bottom: 0.35rem; font-weight: 600;">
+          Live Online Standings Page URL (Google Sheet or Results Link)
+        </label>
+        <input type="url" name="standings_url" value="{{ t.standings_url or '' }}" placeholder="https://docs.google.com/spreadsheets/d/..."
+               style="width: 100%; padding: 0.65rem 0.85rem; background: rgba(18, 12, 8, 0.95); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.95rem;">
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
+          Used by the <strong>Sanity &amp; Consistency Check</strong> to verify match outcomes and point totals directly against live standings.
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.5rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.35rem;">
+          <label style="font-size: 0.9rem; color: #f5eedb; font-weight: 600;">
+            Sources File Content (<code>{{ t.source_file or 'sources.md' }}</code>)
+          </label>
+          <span style="font-size: 0.78rem; color: var(--text-muted);">
+            One URL per line (CGE tournament URLs, Google Sheets, external links)
+          </span>
+        </div>
+        <textarea name="sources_content" rows="8"
+                  style="width: 100%; padding: 0.75rem 0.85rem; background: rgba(18, 12, 8, 0.95); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.88rem; font-family: monospace; line-height: 1.5;">{{ t.sources_content }}</textarea>
+        <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.35rem;">
+          CGE detail IDs found in this file will automatically appear as scrape targets.
+        </div>
+      </div>
+
+      {% if t.result_files %}
+      <div style="margin-bottom: 1.5rem; background: rgba(18, 12, 8, 0.6); padding: 0.85rem; border-radius: 5px; border: 1px solid rgba(255,255,255,0.06);">
+        <div style="font-size: 0.82rem; color: var(--accent-gold); font-weight: 600; margin-bottom: 0.25rem;">
+          Local Result Files Present:
+        </div>
+        <div style="font-size: 0.85rem; color: #81c784; font-family: monospace;">
+          {{ t.result_files|join(', ') }}
+        </div>
+      </div>
+      {% endif %}
+
+      <div style="display: flex; gap: 1rem; align-items: center;">
+        <button type="submit" class="btn-antique" style="font-size: 0.95rem; padding: 0.65rem 1.5rem;">
+          &#10004; Save Changes
+        </button>
+        <a href="{{ url_for('admin.dashboard') }}" style="color: var(--text-muted); font-size: 0.88rem; text-decoration: underline;">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+
+  <!-- Danger Zone: Delete Tournament -->
+  <div style="background: rgba(35, 14, 14, 0.85); border: 1.5px solid #ef5350; border-radius: 8px; padding: 1.5rem;">
+    <h4 style="font-family: var(--font-heading); color: #ef5350; font-size: 1.15rem; margin: 0 0 0.5rem 0;">
+      Danger Zone: Delete Tournament Directory
+    </h4>
+    <p style="color: #ffcdd2; font-size: 0.85rem; margin-bottom: 1rem; line-height: 1.5;">
+      Deleting this tournament will remove its directory (<code>data/tournaments/{{ t.folder }}/</code>), its source configuration, and its local match files. Historical matches already merged into <code>all_matches.csv</code> will remain preserved in the historical baseline.
+    </p>
+    <form method="POST" action="{{ url_for('admin.delete_tournament', folder=t.folder) }}"
+          onsubmit="return confirm('Are you sure you want to completely delete the tournament directory \'{{ t.folder }}\'? This action cannot be undone.');">
+      <button type="submit" style="background: #c62828; color: #fff; border: 1px solid #ef5350; padding: 0.55rem 1.25rem; border-radius: 5px; font-weight: 600; font-size: 0.88rem; cursor: pointer;">
+        &#128465; Delete '{{ t.folder }}' Directory
+      </button>
+    </form>
+  </div>
+
+</div>
+{% endblock %}

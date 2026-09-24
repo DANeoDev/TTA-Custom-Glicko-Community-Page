@@ -7,11 +7,11 @@ import urllib.request
 import urllib.error
 from pathlib import Path
 
-# Add src to python path
 ROOT_DIR = Path(__file__).resolve().parent
-sys.path.insert(0, str(ROOT_DIR / 'src'))
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
 
-from data.parse_tournaments import parse_all_tournaments
+from src.data.parse_tournaments import parse_all_tournaments
 
 DATA_DIR = ROOT_DIR / 'data'
 TOURNAMENTS_DIR = DATA_DIR / 'tournaments'

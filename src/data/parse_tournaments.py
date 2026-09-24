@@ -153,6 +153,7 @@ def parse_all_tournaments(db_path=None):
             CREATE TABLE player_achievements (
                 player_name TEXT PRIMARY KEY,
                 total_titles INTEGER DEFAULT 0,
+                world_titles INTEGER DEFAULT 0,
                 international_titles INTEGER DEFAULT 0,
                 intermezzo_titles INTEGER DEFAULT 0,
                 royal_league_titles INTEGER DEFAULT 0,
@@ -199,6 +200,7 @@ def parse_all_tournaments(db_path=None):
             player_stats[pname] = {
                 'player_name': pname,
                 'total_titles': 0,
+                'world_titles': 0,
                 'international_titles': 0,
                 'intermezzo_titles': 0,
                 'royal_league_titles': 0,
@@ -214,6 +216,60 @@ def parse_all_tournaments(db_path=None):
             }
         return player_stats[pname]
 
+    # Official World Champions:
+    # 2023: Weidenbaum
+    # 2024: Martin_Pecheur
+    # 2025: a440 (Current Reigning World Champion)
+    world_champs = [
+        {
+            'name': 'Weidenbaum',
+            'year': '2023',
+            'finish_date': '2023-12-15',
+            'achievement': 'World Champion (2023)',
+            'details': 'Through the Ages World Championship 2023 Winner & World Champion',
+            'is_reigning': False
+        },
+        {
+            'name': 'Martin_Pecheur',
+            'year': '2024',
+            'finish_date': '2024-12-15',
+            'achievement': 'World Champion (2024)',
+            'details': 'Through the Ages World Championship 2024 Winner & World Champion',
+            'is_reigning': False
+        },
+        {
+            'name': 'a440',
+            'year': '2025',
+            'finish_date': '2025-12-15',
+            'achievement': 'World Champion (2025) - Reigning World Champion',
+            'details': 'Through the Ages World Championship 2025 Winner & Reigning World Champion',
+            'is_reigning': True
+        }
+    ]
+    for wc in world_champs:
+        pname = normalize_name(wc['name'], canonical_map)
+        st = get_stats(pname)
+        st['world_titles'] += 1
+        st['total_titles'] += 1
+        st['gold_medals'] += 1
+        st['top_achievements'].insert(0, wc['achievement'])
+        rec = {
+            'player_name': pname,
+            'tournament_name': 'World Championship',
+            'season': wc['year'],
+            'division': 'Championship Final',
+            'placement': '1 / 4',
+            'points': 'Gold Medal & World Title',
+            'medal': 'gold',
+            'details': wc['details'],
+            'finish_date': wc['finish_date'],
+            'is_career_total': 0
+        }
+        records.append(rec)
+        official_rec_idx[(pname, 'World Championship', wc['year'])] = rec
+        official_rec_idx[(pname, f"World Championship {wc['year']}", 'Championship')] = rec
+        official_rec_idx[(pname, f"World Championship {wc['year']}", wc['year'])] = rec
+
     # 1. Parse Hall of Fame.xlsx
     hof_path = TOURNAMENTS_DIR / 'Hall of Fame.xlsx'
     if hof_path.exists():
@@ -222,6 +278,32 @@ def parse_all_tournaments(db_path=None):
         # 1a. International Championship
         if 'International Championship' in wb.sheetnames:
             ws = wb['International Championship']
+
+            # Pre-scan season columns to determine player counts and standings
+            season_scores_intl = {}
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                raw_name = row[3] if len(row) > 3 else None
+                if not raw_name or 'ordered by' in str(raw_name).lower() or '*' in str(raw_name):
+                    continue
+                pname = normalize_name(raw_name, canonical_map)
+                for col_idx in range(11, min(len(row), 44)):
+                    val = row[col_idx]
+                    if val is not None and str(val).strip() not in ('', '*', '-'):
+                        try:
+                            sc = float(str(val).strip())
+                            if col_idx not in season_scores_intl:
+                                season_scores_intl[col_idx] = []
+                            season_scores_intl[col_idx].append((pname, sc))
+                        except ValueError:
+                            pass
+
+            season_ranks_intl = {}
+            for col_idx, p_list in season_scores_intl.items():
+                p_list.sort(key=lambda x: x[1], reverse=True)
+                total_in_season = len(p_list)
+                for r_idx, (pname, sc) in enumerate(p_list, 1):
+                    season_ranks_intl[(pname, col_idx)] = (r_idx, total_in_season, sc)
+
             for row in ws.iter_rows(min_row=2, values_only=True):
                 raw_name = row[3] if len(row) > 3 else None
                 if not raw_name or 'ordered by' in str(raw_name).lower() or '*' in str(raw_name):
@@ -270,15 +352,16 @@ def parse_all_tournaments(db_path=None):
                     if season_val is not None and str(season_val).strip() not in ('', '*', '-'):
                         s_num = col_idx - 8
                         s_date = INTL_DATES.get(s_num, "2026-01-01")
+                        rank, total_cnt, sc = season_ranks_intl.get((pname, col_idx), (1, 1, float(season_val) if str(season_val).replace('.','',1).isdigit() else 0.0))
                         s_rec = {
                             'player_name': pname,
                             'tournament_name': 'International Championship',
                             'season': f'Season {s_num}',
-                            'division': 'Competitive Division',
-                            'placement': f'{season_val} pts finish',
-                            'points': f'{season_val} pts',
-                            'medal': 'gold' if str(season_val) in ('28', '28.0', '30', '30.0', '36', '36.0') else '',
-                            'details': f'Season {s_num} International Championship Standing',
+                            'division': 'Grandmaster',
+                            'placement': f'{rank} / {total_cnt}',
+                            'points': f'{sc:g} pts',
+                            'medal': 'gold' if rank == 1 else ('silver' if rank == 2 else ('bronze' if rank == 3 else '')),
+                            'details': f'Season {s_num} International Championship Standing ({rank} of {total_cnt})',
                             'finish_date': s_date,
                             'is_career_total': 0
                         }
@@ -288,6 +371,32 @@ def parse_all_tournaments(db_path=None):
         # 1b. Intermezzo Championship
         if 'Intermezzo Championship' in wb.sheetnames:
             ws = wb['Intermezzo Championship']
+
+            # Pre-scan season columns to determine player counts and standings
+            season_scores_inter = {}
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                raw_name = row[3] if len(row) > 3 else None
+                if not raw_name or 'ordered by' in str(raw_name).lower() or '*' in str(raw_name):
+                    continue
+                pname = normalize_name(raw_name, canonical_map)
+                for col_idx in range(11, min(len(row), 42)):
+                    val = row[col_idx]
+                    if val is not None and str(val).strip() not in ('', '*', '-'):
+                        try:
+                            sc = float(str(val).strip())
+                            if col_idx not in season_scores_inter:
+                                season_scores_inter[col_idx] = []
+                            season_scores_inter[col_idx].append((pname, sc))
+                        except ValueError:
+                            pass
+
+            season_ranks_inter = {}
+            for col_idx, p_list in season_scores_inter.items():
+                p_list.sort(key=lambda x: x[1], reverse=True)
+                total_in_season = len(p_list)
+                for r_idx, (pname, sc) in enumerate(p_list, 1):
+                    season_ranks_inter[(pname, col_idx)] = (r_idx, total_in_season, sc)
+
             for row in ws.iter_rows(min_row=2, values_only=True):
                 raw_name = row[3] if len(row) > 3 else None
                 if not raw_name or 'ordered by' in str(raw_name).lower() or '*' in str(raw_name):
@@ -334,15 +443,16 @@ def parse_all_tournaments(db_path=None):
                     if season_val is not None and str(season_val).strip() not in ('', '*', '-'):
                         s_num = col_idx - 10
                         s_date = INTER_DATES.get(s_num, "2026-01-01")
+                        rank, total_cnt, sc = season_ranks_inter.get((pname, col_idx), (1, 1, float(season_val) if str(season_val).replace('.','',1).isdigit() else 0.0))
                         s_rec = {
                             'player_name': pname,
                             'tournament_name': 'Intermezzo Championship',
                             'season': f'Season {s_num}',
-                            'division': 'Competitive Division',
-                            'placement': f'{season_val} pts finish',
-                            'points': f'{season_val} pts',
-                            'medal': '',
-                            'details': f'Season {s_num} Intermezzo Standing',
+                            'division': 'Grandmaster',
+                            'placement': f'{rank} / {total_cnt}',
+                            'points': f'{sc:g} pts',
+                            'medal': 'gold' if rank == 1 else ('silver' if rank == 2 else ('bronze' if rank == 3 else '')),
+                            'details': f'Season {s_num} Intermezzo Standing ({rank} of {total_cnt})',
                             'finish_date': s_date,
                             'is_career_total': 0
                         }
@@ -377,7 +487,7 @@ def parse_all_tournaments(db_path=None):
                             'tournament_name': 'Royal League',
                             'season': season_name,
                             'division': 'Emperor',
-                            'placement': '1st (Champion)',
+                            'placement': '1 / 8',
                             'points': 'Gold Medal',
                             'medal': 'gold',
                             'details': f'Royal League Emperor Division Winner ({season_name})',
@@ -396,7 +506,7 @@ def parse_all_tournaments(db_path=None):
                             'tournament_name': 'Royal League',
                             'season': season_name,
                             'division': 'Emperor',
-                            'placement': '2nd (Runner-up)',
+                            'placement': '2 / 8',
                             'points': 'Silver Medal',
                             'medal': 'silver',
                             'details': f'Royal League Emperor Division Runner-up ({season_name})',
@@ -415,7 +525,7 @@ def parse_all_tournaments(db_path=None):
                             'tournament_name': 'Royal League',
                             'season': season_name,
                             'division': 'Emperor',
-                            'placement': '3rd Place',
+                            'placement': '3 / 8',
                             'points': 'Bronze Medal',
                             'medal': 'bronze',
                             'details': f'Royal League Emperor Division 3rd Place ({season_name})',
@@ -425,8 +535,11 @@ def parse_all_tournaments(db_path=None):
                         records.append(rec)
                         official_rec_idx[(b, 'Royal League', season_name)] = rec
 
-    # 3. Parse Royal League S1 CSV
-    rl_s1_csv = TOURNAMENTS_DIR / 'Royal_League' / 'TtA Royal League - S_01.csv'
+    # 3. Parse Royal League S1 CSV (now in matches/ subfolder)
+    rl_s1_csv = TOURNAMENTS_DIR / 'Royal_League' / 'matches' / 'RL_s01.csv'
+    if not rl_s1_csv.exists():
+        # Fallback to old path for migration period
+        rl_s1_csv = TOURNAMENTS_DIR / 'Royal_League' / 'TtA Royal League - S_01.csv'
     if rl_s1_csv.exists():
         with open(rl_s1_csv, 'r', encoding='utf-8', errors='replace') as f:
             reader = csv.reader(f)
@@ -573,8 +686,11 @@ def parse_all_tournaments(db_path=None):
                                 'is_career_total': 1
                             })
 
-    # 7. Parse Australian Open 2026
-    ao_csv = TOURNAMENTS_DIR / 'Australien_Open' / 'Aussie Open 2026 - AussieOpen2026.csv'
+    # 7. Parse Australian Open 2026 (now in matches/ subfolder)
+    ao_csv = TOURNAMENTS_DIR / 'Australien_Open' / 'matches' / 'AO_s01.csv'
+    if not ao_csv.exists():
+        # Fallback to old path for migration period
+        ao_csv = TOURNAMENTS_DIR / 'Australien_Open' / 'Aussie Open 2026 - AussieOpen2026.csv'
     if ao_csv.exists():
         with open(ao_csv, 'r', encoding='utf-8', errors='replace') as f:
             reader = csv.reader(f)
@@ -613,70 +729,130 @@ def parse_all_tournaments(db_path=None):
         FROM matches
     """).fetchall()
 
-    player_campaigns = {}
+    campaign_groups = {}
     for row in match_rows:
         t_raw, m_date, p1, sc1, p2, sc2, p3, sc3, p4, sc4, p_cnt = row
         t_name, s_name, div_name = normalize_campaign(t_raw)
 
+        key = (t_name, s_name, div_name)
+        if key not in campaign_groups:
+            campaign_groups[key] = {
+                'matches': [],
+                'all_players': set(),
+                't_name': t_name,
+                's_name': s_name,
+                'div_name': div_name
+            }
+        cg = campaign_groups[key]
+
         players = [p1, p2, p3, p4][:p_cnt]
         scores = [sc1, sc2, sc3, sc4][:p_cnt]
-        max_sc = max((s for s in scores if s is not None), default=0)
 
+        match_players = []
         for p, sc in zip(players, scores):
-            if not p:
-                continue
-            pname = canonical_map.get(p.strip().lower(), p.strip())
-            is_win = 1 if sc is not None and sc >= max_sc else 0
+            if p:
+                pname = canonical_map.get(p.strip().lower(), p.strip())
+                cg['all_players'].add(pname)
+                match_players.append((pname, sc if sc is not None else 0))
 
-            c_key = (pname, t_name, s_name)
-            if c_key not in player_campaigns:
-                player_campaigns[c_key] = {
-                    'division': div_name,
-                    'games': 0,
-                    'wins': 0,
-                    'finish_date': m_date
-                }
-            c_entry = player_campaigns[c_key]
-            c_entry['games'] += 1
-            c_entry['wins'] += is_win
-            if m_date > c_entry['finish_date']:
-                c_entry['finish_date'] = m_date
-                c_entry['division'] = div_name
+        match_players.sort(key=lambda x: x[1], reverse=True)
+        max_sc = match_players[0][1] if match_players else 0
 
-    # Merge match campaigns with existing official records or add new ones
-    for (pname, t_name, s_name), stats in player_campaigns.items():
-        st = get_stats(pname)
-        g = stats['games']
-        w = stats['wins']
-        l = g - w
-        wr = round(w / max(1, g) * 100.0, 1)
-        f_date = get_finish_date(t_name, s_name, stats['finish_date'])
+        cg['matches'].append({
+            'date': m_date,
+            'p_cnt': p_cnt,
+            'players': match_players,
+            'max_sc': max_sc
+        })
 
-        if (pname, t_name, s_name) in official_rec_idx:
-            exist = official_rec_idx[(pname, t_name, s_name)]
-            if stats['division'] and stats['division'] != 'Main':
-                exist['division'] = stats['division']
-            exist['details'] = f"{exist['details']} &bull; Record: {w}W - {l}L ({wr}% win rate)"
-            if exist['finish_date'] == '2026-01-01' or not exist['finish_date']:
-                exist['finish_date'] = f_date
+    for (t_name, s_name, div_name), cg in campaign_groups.items():
+        total_group_players = len(cg['all_players'])
+        is_ladder = any(kw in t_name.lower() or kw in div_name.lower() for kw in ['ladder', 'tcl', 'mercurial', 'sodium'])
+
+        p_campaign = {}
+        for m in cg['matches']:
+            m_p_cnt = m['p_cnt']
+            for r_idx, (pname, sc) in enumerate(m['players'], 1):
+                if pname not in p_campaign:
+                    p_campaign[pname] = {
+                        'games': 0,
+                        'wins': 0,
+                        'total_score': 0,
+                        'last_score': sc,
+                        'last_rank_in_game': r_idx,
+                        'last_game_p_cnt': m_p_cnt,
+                        'finish_date': m['date']
+                    }
+                pc = p_campaign[pname]
+                pc['games'] += 1
+                is_win = 1 if sc >= m['max_sc'] and sc > 0 else (1 if r_idx == 1 else 0)
+                pc['wins'] += is_win
+                pc['total_score'] += sc
+                pc['last_score'] = sc
+                pc['last_rank_in_game'] = r_idx
+                pc['last_game_p_cnt'] = m_p_cnt
+                if m['date'] > pc['finish_date']:
+                    pc['finish_date'] = m['date']
+
+        # Determine division rankings for multi-player tournament divisions
+        if not is_ladder and total_group_players > 1 and len(cg['matches']) > 1:
+            ranked_players = sorted(
+                p_campaign.keys(),
+                key=lambda p: (p_campaign[p]['wins'], p_campaign[p]['total_score']),
+                reverse=True
+            )
+            division_ranks = {p: idx + 1 for idx, p in enumerate(ranked_players)}
         else:
-            rec = {
-                'player_name': pname,
-                'tournament_name': t_name,
-                'season': s_name,
-                'division': stats['division'],
-                'placement': f"{w}W - {l}L ({wr}%)",
-                'points': f"{wr}% WR",
-                'medal': 'gold' if wr >= 80.0 and g >= 6 else ('silver' if wr >= 65.0 and g >= 6 else ''),
-                'details': f"Competed in {stats['division']}: {g} matches played, {w} victories ({wr}% win rate)",
-                'finish_date': f_date,
-                'is_career_total': 0
-            }
-            records.append(rec)
+            division_ranks = {}
+
+        for pname, pc in p_campaign.items():
+            g = pc['games']
+            w = pc['wins']
+            l = g - w
+            wr = round(w / max(1, g) * 100.0, 1)
+            f_date = get_finish_date(t_name, s_name, pc['finish_date'])
+
+            if is_ladder or g == 1 or len(cg['matches']) == 1:
+                # Ladder game: placement is rank in game / player_count of the game
+                placement = f"{pc['last_rank_in_game']} / {pc['last_game_p_cnt']}"
+                if pc['last_score'] > 0:
+                    points = f"{pc['last_score']:g} pts"
+                else:
+                    points = f"{w}W - {l}L"
+            else:
+                div_rank = division_ranks.get(pname, 1)
+                placement = f"{div_rank} / {total_group_players}"
+                points = f"{w}W - {l}L ({wr}%)"
+
+            medal = 'gold' if (placement.startswith('1 /') and (g >= 5 or total_group_players >= 4)) else ''
+
+            if (pname, t_name, s_name) in official_rec_idx:
+                exist = official_rec_idx[(pname, t_name, s_name)]
+                if div_name and div_name != 'Main':
+                    exist['division'] = div_name
+                exist['details'] = f"{exist['details']} &bull; Record: {w}W - {l}L ({wr}% win rate)"
+                if exist['finish_date'] == '2026-01-01' or not exist['finish_date']:
+                    exist['finish_date'] = f_date
+            else:
+                rec = {
+                    'player_name': pname,
+                    'tournament_name': t_name,
+                    'season': s_name,
+                    'division': div_name,
+                    'placement': placement,
+                    'points': points,
+                    'medal': medal,
+                    'details': f"Competed in {div_name}: {g} matches played, {w} victories ({wr}% win rate)",
+                    'finish_date': f_date,
+                    'is_career_total': 0
+                }
+                records.append(rec)
 
     # Finalize summary texts for player_achievements
     for pname, st in player_stats.items():
         titles_won = []
+        if st.get('world_titles', 0) > 0:
+            titles_won.append(f"{st['world_titles']} World Championship{'s' if st['world_titles'] > 1 else ''}")
         if st['international_titles'] > 0:
             titles_won.append(f"{st['international_titles']} International Championship{'s' if st['international_titles'] > 1 else ''}")
         if st['intermezzo_titles'] > 0:
@@ -688,7 +864,14 @@ def parse_all_tournaments(db_path=None):
 
         total_podiums = st['gold_medals'] + st['silver_medals'] + st['bronze_medals']
 
-        if titles_won:
+        if st.get('world_titles', 0) > 0:
+            if pname.lower() == 'a440':
+                narrative = f"{pname} is the Reigning Through the Ages World Champion (2025), holding the highest competitive honor in the game alongside {total_podiums} career podium finishes."
+            else:
+                other_titles = [t for t in titles_won if 'World' not in t]
+                other_str = f" alongside {', '.join(other_titles)}" if other_titles else ""
+                narrative = f"{pname} is a Through the Ages World Champion{other_str}, amassing {total_podiums} career podium finishes."
+        elif titles_won:
             narrative = f"{pname} is a premier competitor with {', '.join(titles_won)}, amassing {total_podiums} career podium finishes."
         elif total_podiums > 0:
             podium_details = []
@@ -710,13 +893,14 @@ def parse_all_tournaments(db_path=None):
         for st in player_stats.values():
             conn.execute("""
                 INSERT INTO player_achievements (
-                    player_name, total_titles, international_titles, intermezzo_titles,
+                    player_name, total_titles, world_titles, international_titles, intermezzo_titles,
                     royal_league_titles, other_titles, gold_medals, silver_medals,
                     bronze_medals, summary_text, top_achievements_json
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """, (
                 st['player_name'],
                 st['total_titles'],
+                st.get('world_titles', 0),
                 st['international_titles'],
                 st['intermezzo_titles'],
                 st['royal_league_titles'],
@@ -746,9 +930,206 @@ def parse_all_tournaments(db_path=None):
                 rec.get('is_career_total', 0)
             ) for rec in records
         ])
+        conn.execute("UPDATE players SET title = 'WC' WHERE LOWER(name) = 'a440'")
+
+    # Ingest Community Standard Leaderboard
+    ingest_community_leaderboard(conn, canonical_map)
 
     conn.close()
     print(f"Successfully ingested {len(player_stats)} player achievement summaries and {len(records)} tournament records into {db_file}!")
+
+
+def ingest_community_leaderboard(conn, canonical_map):
+    cl_dir = TOURNAMENTS_DIR / 'Community_Leaderboard'
+    if not cl_dir.exists():
+        cl_dir = TOURNAMENTS_DIR
+
+    editions = [
+        ('2026', ['TTA_Leaderboard_Q2_2026.csv', 'TTA Leaderboard - Q2 2026.csv']),
+        ('2025', ['TTA_Leaderboard_2025.csv', 'TTA Leaderboard - 2025.csv']),
+        ('2024', ['TTA_Leaderboard_2024.csv', 'TTA Leaderboard - 2024.csv']),
+        ('race26', ['TTA_Leaderboard_Race_26.csv', 'TTA Leaderboard - Race 26.csv']),
+    ]
+
+    print("Setting up community_leaderboard_entries table...")
+    conn.execute("DROP TABLE IF EXISTS community_leaderboard_entries;")
+    conn.execute("""
+        CREATE TABLE community_leaderboard_entries (
+            edition TEXT NOT NULL,
+            rank INTEGER NOT NULL,
+            player_name TEXT NOT NULL,
+            points REAL NOT NULL,
+            tourneys_played INTEGER NOT NULL,
+            scores_json TEXT NOT NULL,
+            counting_cols_json TEXT NOT NULL,
+            PRIMARY KEY (edition, player_name)
+        );
+    """)
+    conn.execute("CREATE INDEX idx_cle_edition_rank ON community_leaderboard_entries(edition, rank);")
+    conn.execute("CREATE INDEX idx_cle_player ON community_leaderboard_entries(player_name);")
+
+    # Ingest each edition
+    for edition, fnames in editions:
+        csv_path = None
+        for fn in fnames:
+            p = cl_dir / fn
+            if p.exists():
+                csv_path = p
+                break
+        if not csv_path:
+            print(f"No CSV found for edition {edition}")
+            continue
+
+        print(f"Ingesting Community Leaderboard ({edition}) from {csv_path.name}...")
+        with open(csv_path, 'r', encoding='utf-8', errors='replace') as f:
+            reader = csv.reader(f)
+            row1 = next(reader)
+            cols = []
+            for i in range(6, len(row1)):
+                c_name = row1[i].strip()
+                if c_name:
+                    cols.append((i, c_name))
+
+            entries = []
+            for r in reader:
+                if len(r) < 5 or not r[3].strip():
+                    continue
+                try:
+                    rank = int(r[2].strip())
+                except Exception:
+                    continue
+                raw_player = r[3].strip()
+                player = canonical_map.get(raw_player.lower(), raw_player)
+                pts_str = r[4].replace('\xa0', '').replace(' ', '').replace(',', '.').strip()
+                if not pts_str:
+                    continue
+                try:
+                    pts = float(pts_str)
+                except ValueError:
+                    continue
+
+                col_vals = {}
+                valid_scores = []
+                for col_idx, col_name in cols:
+                    if col_idx < len(r):
+                        val_str = r[col_idx].replace('\xa0', '').replace(' ', '').replace(',', '.').strip()
+                        if val_str:
+                            try:
+                                score_val = float(val_str)
+                                col_vals[col_name] = score_val
+                                valid_scores.append((col_name, score_val))
+                            except ValueError:
+                                col_vals[col_name] = None
+                        else:
+                            col_vals[col_name] = None
+                    else:
+                        col_vals[col_name] = None
+
+                num = int(r[5].strip()) if len(r) > 5 and r[5].strip().isdigit() else len(valid_scores)
+                valid_scores.sort(key=lambda x: x[1], reverse=True)
+                counting_cols = [x[0] for x in valid_scores[:8]]
+
+                entries.append((
+                    edition, rank, player, pts, num,
+                    json.dumps(col_vals),
+                    json.dumps(counting_cols)
+                ))
+
+        with conn:
+            conn.executemany("""
+                INSERT OR REPLACE INTO community_leaderboard_entries (
+                    edition, rank, player_name, points, tourneys_played,
+                    scores_json, counting_cols_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, entries)
+        print(f"Ingested {len(entries)} players for edition '{edition}'!")
+
+    # Maintain backwards compatibility for legacy community_leaderboard table (Q2 2026)
+    csv_2026 = cl_dir / 'TTA_Leaderboard_Q2_2026.csv'
+    if not csv_2026.exists():
+        csv_2026 = cl_dir / 'TTA Leaderboard - Q2 2026.csv'
+    if not csv_2026.exists():
+        csv_2026 = TOURNAMENTS_DIR / 'TTA Leaderboard - Q2 2026.csv'
+
+    if csv_2026.exists():
+        conn.execute("DROP TABLE IF EXISTS community_leaderboard;")
+        conn.execute("""
+            CREATE TABLE community_leaderboard (
+                rank INTEGER NOT NULL,
+                player_name TEXT NOT NULL PRIMARY KEY,
+                points REAL NOT NULL,
+                tourneys_played INTEGER NOT NULL,
+                wrld REAL,
+                ic_30 REAL, ic_31 REAL, ic_32 REAL, ic_33 REAL,
+                im_27 REAL, im_28 REAL, im_29 REAL, im_30 REAL,
+                rl_05 REAL, rl_06 REAL, rl_07 REAL, rl_08 REAL,
+                wmbl REAL, aus REAL, sl REAL, ml REAL, eif REAL, qd REAL,
+                counting_cols_json TEXT
+            );
+        """)
+        conn.execute("CREATE INDEX idx_cl_rank ON community_leaderboard(rank);")
+        conn.execute("CREATE INDEX idx_cl_player ON community_leaderboard(player_name);")
+
+        with open(csv_2026, 'r', encoding='utf-8', errors='replace') as f:
+            reader = csv.reader(f)
+            header = next(reader)
+            cols = header[6:]
+            rows_to_insert = []
+            for r in reader:
+                if len(r) < 5 or not r[3].strip():
+                    continue
+                try:
+                    rank = int(r[2].strip())
+                except Exception:
+                    continue
+                raw_player = r[3].strip()
+                player = canonical_map.get(raw_player.lower(), raw_player)
+                pts_str = r[4].replace('\xa0', '').replace(' ', '').replace(',', '.').strip()
+                if not pts_str:
+                    continue
+                pts = float(pts_str)
+
+                col_vals = {}
+                valid_scores = []
+                for c, v in zip(cols, r[6:]):
+                    clean_v = v.replace('\xa0', '').replace(' ', '').replace(',', '.').strip()
+                    if clean_v:
+                        try:
+                            val = float(clean_v)
+                            col_vals[c] = val
+                            valid_scores.append((c, val))
+                        except Exception:
+                            col_vals[c] = None
+                    else:
+                        col_vals[c] = None
+
+                num = int(r[5].strip()) if len(r) > 5 and r[5].strip().isdigit() else len(valid_scores)
+                valid_scores.sort(key=lambda x: x[1], reverse=True)
+                counting_cols = [x[0] for x in valid_scores[:8]]
+
+                rows_to_insert.append((
+                    rank, player, pts, num,
+                    col_vals.get('wrld'),
+                    col_vals.get('ic_30'), col_vals.get('ic_31'), col_vals.get('ic_32'), col_vals.get('ic_33'),
+                    col_vals.get('im_27'), col_vals.get('im_28'), col_vals.get('im_29'), col_vals.get('im_30'),
+                    col_vals.get('rl_05'), col_vals.get('rl_06'), col_vals.get('rl_07'), col_vals.get('rl_08'),
+                    col_vals.get('wmbl'), col_vals.get('aus'), col_vals.get('sl'), col_vals.get('ml'),
+                    col_vals.get('eif'), col_vals.get('qd'),
+                    json.dumps(counting_cols)
+                ))
+
+        with conn:
+            conn.executemany("""
+                INSERT INTO community_leaderboard (
+                    rank, player_name, points, tourneys_played,
+                    wrld, ic_30, ic_31, ic_32, ic_33,
+                    im_27, im_28, im_29, im_30,
+                    rl_05, rl_06, rl_07, rl_08,
+                    wmbl, aus, sl, ml, eif, qd,
+                    counting_cols_json
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, rows_to_insert)
+        print(f"Ingested {len(rows_to_insert)} players into legacy community_leaderboard table!")
 
 
 if __name__ == '__main__':

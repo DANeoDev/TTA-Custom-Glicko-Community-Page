@@ -3,560 +3,978 @@
 {% block title %}Model Analysis & Diagnostics | Through the Ages{% endblock %}
 
 {% block extra_head %}
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<!-- Markdown parsing for webmaster notes -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <style>
-  .subpage-nav {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-    background: rgba(18, 12, 8, 0.85);
-    padding: 0.4rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-  }
-  .subpage-btn {
-    padding: 0.4rem 1rem;
-    border-radius: 4px;
-    font-family: var(--font-stats);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-  }
-  .subpage-btn:hover {
-    color: var(--text-main);
-    background: rgba(229, 169, 60, 0.12);
-  }
-  .subpage-btn.active {
-    background: var(--accent-gold);
-    color: #1c130d;
-    font-weight: 700;
-    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
-  }
-  .analysis-grid {
+  /* Two-column layout pairing Graph + Ranked Table with Sticky Drawer */
+  /* Two-column layout pairing Graph + Ranked Table with Sticky Drawer */
+  .analysis-layout-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    grid-template-columns: 1fr 310px;
     gap: 1.5rem;
+    align-items: stretch;
     margin-bottom: 2rem;
   }
-  .stat-card {
+
+  @media (max-width: 1100px) {
+    .analysis-layout-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .analysis-main-column {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+
+  .analysis-sidebar-column {
+    position: relative;
+    height: 100%;
+  }
+
+  .graph-main-card {
     background: var(--surface-panel);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  .eval-table-card {
+    background: var(--surface-panel);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.25rem 1.5rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
+  }
+
+  .options-sticky-panel {
+    position: sticky;
+    top: calc(var(--header-height, 68px) + 1.25rem);
+    max-height: calc(100vh - var(--header-height, 68px) - 2.5rem);
+    overflow-y: auto;
+    background: rgba(22, 14, 10, 0.96);
+    border: 1.5px solid var(--accent-gold);
+    border-radius: 8px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    z-index: 10;
+  }
+
+  .opt-section-title {
+    font-family: var(--font-heading);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    color: var(--accent-gold);
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+
+  .opt-btn-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+  .opt-toggle-btn {
+    display: inline-block;
+    padding: 0.4rem 0.65rem;
+    border-radius: 4px;
+    background: rgba(255,255,255,0.04);
     border: 1px solid var(--border-subtle);
+    color: #e2d9c8;
+    text-decoration: none;
+    font-family: var(--font-stats);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .opt-toggle-btn:hover {
+    background: rgba(229, 169, 60, 0.15);
+    border-color: var(--accent-gold);
+    color: #ffd700;
+  }
+  .opt-toggle-btn.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    border-color: #ffd700;
+    font-weight: 700;
+    box-shadow: 0 2px 8px rgba(229, 169, 60, 0.3);
+  }
+
+  /* Commentary Box */
+  .commentary-card {
+    background: rgba(24, 16, 11, 0.96);
+    border: 1px solid var(--border-subtle);
+    border-left: 4px solid var(--accent-gold);
     border-radius: 6px;
     padding: 1.5rem;
-    backdrop-filter: blur(4px);
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
-  .stat-card h3 {
+  .commentary-card h3, .commentary-card h4 {
     font-family: var(--font-heading);
     color: var(--accent-gold);
-    font-size: 1.2rem;
-    margin-bottom: 1rem;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.6);
-    padding-bottom: 0.5rem;
+    margin-top: 0;
   }
-  .stat-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.4rem 0;
-    font-family: var(--font-stats);
+  .commentary-body {
     font-size: 0.92rem;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.2);
+    line-height: 1.65;
+    color: #ded6c5;
   }
-  .stat-row:last-child { border-bottom: none; }
-  .stat-label { color: var(--text-muted); }
-  .stat-val { font-weight: 600; color: #ffde8a; }
+  .commentary-body p { margin-bottom: 0.75rem; }
+  .commentary-body p:last-child { margin-bottom: 0; }
+  .commentary-body ul { padding-left: 1.25rem; margin-bottom: 0.75rem; }
+  .commentary-body li { margin-bottom: 0.35rem; }
 
-  .matrix-table {
+  /* 4-Metric Ranked Table */
+  .ranked-table {
     width: 100%;
     border-collapse: collapse;
     font-family: var(--font-stats);
-    margin-top: 0.75rem;
+    font-size: 0.88rem;
+    margin-top: 0.5rem;
   }
-  .matrix-table th {
+  .ranked-table th {
     background: rgba(30, 20, 14, 0.95);
     color: var(--accent-gold);
-    padding: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: 0.85rem;
+    padding: 0.65rem 0.6rem;
+    font-family: var(--font-subheading);
+    font-size: 0.8rem;
     text-transform: uppercase;
     border-bottom: 2px solid var(--border-subtle);
-    text-align: center;
+    text-align: right;
   }
-  .matrix-table td {
-    padding: 0.75rem;
-    text-align: center;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
-    font-size: 0.95rem;
+  .ranked-table th:first-child, .ranked-table th:nth-child(2) { text-align: left; }
+  .ranked-table th:last-child { text-align: left; }
+  .ranked-table td {
+    padding: 0.65rem 0.6rem;
+    text-align: right;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.3);
+    transition: background 0.2s ease;
   }
-  .high-corr {
-    color: #66bb6a;
+  .ranked-table td:first-child, .ranked-table td:nth-child(2) { text-align: left; }
+  .ranked-table td:last-child { text-align: left; font-size: 0.82rem; }
+
+  .ranked-eval-row.active-highlight {
+    background: rgba(229, 169, 60, 0.12) !important;
+    border-left: 3px solid var(--accent-gold);
+  }
+  .ranked-eval-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+  }
+
+  .score-badge {
+    display: inline-block;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
     font-weight: 700;
+    font-family: var(--font-stats);
+    font-size: 0.92rem;
   }
+
+  /* Correlation summary cards */
+  .corr-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1.25rem;
+    margin-top: 1rem;
+  }
+  .corr-card {
+    background: rgba(18, 12, 8, 0.85);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+    padding: 1.15rem;
+  }
+  .corr-pair-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.25);
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+  }
+  .corr-pair-row:last-child { border-bottom: none; }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Subpage Navigation -->
 <div class="subpage-nav">
-  <a href="{{ url_for('analysis.index', format=active_format) }}" class="subpage-btn active">Overview</a>
-  <a href="{{ url_for('analysis.calibration', format=active_format) }}" class="subpage-btn">Calibration &amp; Reliability</a>
-  <a href="{{ url_for('analysis.movers', format=active_format) }}" class="subpage-btn">Top Movers &amp; Divergence</a>
-  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn">Activity &amp; Demographics</a>
+  <a href="{{ url_for('analysis.index') }}" class="subpage-btn active">&#128200; Overview &amp; Calibration</a>
+  <a href="{{ url_for('analysis.movers', format=active_format) }}" class="subpage-btn">&#9878; Multi-Engine Player Comparison</a>
+  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn">&#127758; Activity &amp; Demographics</a>
 </div>
 
-<div class="analysis-hero-card">
+{% set an_hero = get_cms('analysis', 'hero_diagnostics', 'Model Calibration & Predictive Diagnostics') %}
+<div class="analysis-hero-card cms-card" data-page="analysis" data-block="hero_diagnostics" style="margin-bottom: 1.5rem;">
   <div>
-    <h1 class="analysis-hero-title">
-      Model Diagnostics &amp; Comparative Analysis
+    <h1 class="analysis-hero-title cms-title">
+      {{ an_hero.title }}
     </h1>
-    <p class="analysis-hero-desc">
-      Empirical statistical validation across <strong>Glicko-2 Standard</strong> (naive pairwise),
-      <strong>Glicko-2 MP-Weighted</strong> (Coulom/Glickman multiplayer fractional variance weighting), and <strong>Whole-History Rating</strong> (retrospective MAP Brownian motion).
-    </p>
+    <div class="cms-content">
+      {% if an_hero.is_custom %}
+        {{ an_hero.content }}
+      {% else %}
+        <p class="analysis-hero-desc">
+          Empirical statistical validation across <strong>Glicko-2 MP-Weighted</strong>, <strong>Glicko-2 Standard</strong>, and <strong>Whole-History Rating (WHR)</strong> comparing in-sample match calibration against leak-free out-of-sample forward predictability.
+        </p>
+      {% endif %}
+    </div>
   </div>
 </div>
 
-<!-- Format & Reset Mode Selectors Toolbar (Positioned directly above active graphs & statistics) -->
-<div style="display: flex; justify-content: space-between; align-items: center; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem;">
-  <!-- Reset Engine Selector -->
-  <div class="format-bar" style="margin: 0; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-    <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.25rem;">Reset Mode:</span>
-    {% for rm_key, rm_info in reset_modes.items() %}
-      <a href="?format={{ active_format }}&reset_mode={{ rm_key }}"
-         class="format-btn {% if active_reset_mode == rm_key %}active{% endif %}"
-         data-tooltip="{{ rm_info.desc }}">
-        {{ rm_info.name }}
-      </a>
-    {% endfor %}
-  </div>
+<!-- MAIN GRID: Left (Hero Graph + 4-Metric Evaluation Table) | Right (Sticky Options Drawer) -->
+<div class="analysis-layout-grid">
+  
+  <!-- LEFT COLUMN -->
+  <div class="analysis-main-column">
+    
+    <!-- 1. HERO CALIBRATION CURVE GRAPH -->
+    <div class="graph-main-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.2rem; margin: 0;">
+            Reliability Calibration Diagram
+          </h3>
+          <span style="font-size: 0.82rem; color: var(--text-muted);" id="graph_subtitle">
+            Predicted Win Probability vs. Observed Win Rate across 10 Probability Bins
+          </span>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <span id="active_mode_badge" style="font-size: 0.82rem; background: rgba(229, 169, 60, 0.12); border: 1px solid var(--accent-gold); padding: 3px 8px; border-radius: 4px; color: #ffd700;">
+            {{ eval_modes[active_eval_mode].name }}
+          </span>
+          <span id="active_format_badge" style="font-size: 0.82rem; background: rgba(129, 199, 132, 0.12); border: 1px solid #81c784; padding: 3px 8px; border-radius: 4px; color: #81c784;">
+            {{ formats[active_format] }}
+          </span>
+        </div>
+      </div>
 
-  <!-- Format Switcher -->
-  <div class="format-bar" style="margin: 0; display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
-    <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.25rem;">Format:</span>
-    {% for f_id, f_name in formats.items() %}
-      <a href="?format={{ f_id }}&reset_mode={{ active_reset_mode }}" 
-         class="format-btn {% if active_format == f_id %}active{% endif %}"
-         data-tooltip="Filter statistical properties for {{ f_name }}">
-        {{ f_name }}
-      </a>
-    {% endfor %}
-  </div>
-</div>
-
-<!-- 3 Models Statistical Properties -->
-<div class="analysis-grid">
-  {% for m_id, m_name in models.items() %}
-    {% set st = stats.get(m_id, {}) %}
-    <div class="stat-card">
-      <h3>{{ m_name }}</h3>
-      <div class="stat-row">
-        <span class="stat-label">Active Players:</span>
-        <span class="stat-val">{{ "{:,}".format(st.get('count', 0)) }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Mean Rating:</span>
-        <span class="stat-val">{{ st.get('mean_rating', '-') }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Median Rating:</span>
-        <span class="stat-val">{{ st.get('median_rating', '-') }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Rating Std Dev (&sigma;):</span>
-        <span class="stat-val">{{ st.get('std_rating', '-') }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Mean Rating Deviation (RD):</span>
-        <span class="stat-val" style="color: #4fc3f7;">&plusmn;{{ st.get('mean_rd', '-') }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Mean Conservative (C):</span>
-        <span class="stat-val" style="color: var(--accent-gold);">{{ st.get('mean_c_rating', '-') }}</span>
-      </div>
-      <div class="stat-row">
-        <span class="stat-label">Min / Max Rating:</span>
-        <span class="stat-val">{{ st.get('min_rating', '-') }} &mdash; {{ st.get('max_rating', '-') }}</span>
+      <div style="position: relative; height: 420px; width: 100%;">
+        <canvas id="heroCalibrationChart"></canvas>
       </div>
     </div>
-  {% endfor %}
+
+    <!-- 2. FOUR-METRIC RANKED MODEL EVALUATION TABLE -->
+    <div class="eval-table-card">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+        <div>
+          <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin: 0;">
+            Overall Predictive Model Rankings (4-Metric Evaluation)
+          </h3>
+          <div style="font-size: 0.8rem; color: var(--text-muted);" id="table_subtitle">
+            Models ranked from best to worst by Composite Predictive Score ($S \in [0, 100]$) under active evaluation mode
+          </div>
+        </div>
+      </div>
+
+      <div style="overflow-x: auto;">
+        <table class="ranked-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;">Rank</th>
+              <th>Rating Model &amp; Season Mode</th>
+              <th data-tooltip="Expected Calibration Error: Mean percentage gap between predicted win chance & actual outcome. Lower is better.">ECE &darr;</th>
+              <th data-tooltip="Brier Score (Mean Squared Error): Overall probabilistic forecast loss. Lower is better (0.0 = perfect, 0.25 = random).">Brier &darr;</th>
+              <th data-tooltip="Log Loss (Cross-Entropy): Information-theoretic penalty for confident mispredictions. Lower is better.">Log Loss &darr;</th>
+              <th data-tooltip="Accuracy &amp; Ist vs. Soll: Vergleicht die tatsächliche Siegquote des Favoriten (Ist) mit der im Schnitt vorhergesagten Siegchance (Soll).">Favorite Win% (Ist vs. Soll) &uarr;</th>
+              <th data-tooltip="Composite Predictive Score (0–100): Gewichteter Index für Vorhersagegüte = Brier Score MSE (35%) + Expected Calibration Error ECE (35%) + Log Loss Cross-Entropy (15%) + Favoriten-Treffsicherheit Accuracy (15%). Höher = Besserer Prädiktor.">Score &#9432;</th>
+              <th>Evaluation Verdict &amp; Profile</th>
+            </tr>
+          </thead>
+          <tbody id="ranked_table_body">
+            {% for rm in ranked_models %}
+            <tr id="row-{{ rm.key }}" class="ranked-eval-row {% if rm.reset == 'continuous' %}active-highlight{% endif %}" data-key="{{ rm.key }}" data-family="{{ rm.family }}" data-reset="{{ rm.reset }}">
+              <td style="font-weight: 700; color: #ffd700;">#{{ rm.rank }}</td>
+              <td>
+                <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: {{ rm.color }}; margin-right: 6px;"></span>
+                <strong style="color: #f5eedb;">{{ rm.name }}</strong>
+              </td>
+              <td style="color: {% if rm.ece_pct < 1.5 %}#81c784{% elif rm.ece_pct < 2.5 %}#ffd54f{% else %}#ef5350{% endif %}; font-weight: 600;">
+                {{ "%.2f"|format(rm.ece_pct) }}%
+              </td>
+              <td style="color: #ffd700; font-weight: 600;">{{ "%.4f"|format(rm.brier) }}</td>
+              <td style="color: #81d4fa;">{{ "%.4f"|format(rm.log_loss) }}</td>
+              <td style="color: #ce93d8;">
+                <span style="font-weight: 600;">{{ "%.1f"|format(rm.p_ist_pct) }}%</span>
+                <span style="font-size: 0.75rem; color: {% if rm.p_delta_pct >= 0 %}#81c784{% else %}#ffb74d{% endif %};">(Soll: {{ "%.1f"|format(rm.p_soll_pct) }}%)</span>
+              </td>
+              <td>
+                <span class="score-badge" style="background: {{ rm.bg }}; color: {{ rm.color }}; border: 1px solid {{ rm.color }};">
+                  {{ "%.1f"|format(rm.composite) }}
+                </span>
+              </td>
+              <td style="color: #cfc6b6; line-height: 1.4;">{{ rm.verdict }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT COLUMN: STICKY OPTIONS DRAWER -->
+  <div class="analysis-sidebar-column">
+    <div class="options-sticky-panel">
+      <div style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.05rem; padding-bottom: 0.4rem; border-bottom: 1px solid rgba(229, 169, 60, 0.3); display: flex; align-items: center; justify-content: space-between;">
+        <span>&#9881; Analysis Selector</span>
+        <button type="button" onclick="resetAllFilters()" style="background: transparent; border: 1px solid var(--border-subtle); color: var(--text-muted); font-size: 0.72rem; padding: 2px 6px; border-radius: 3px; cursor: pointer;">Reset All</button>
+      </div>
+
+      <!-- 1. Evaluation Mode Toggle -->
+      <div>
+        <div class="opt-section-title">&#128302; Evaluation Mode</div>
+        <div class="opt-btn-grid">
+          <button type="button" class="opt-toggle-btn {% if active_eval_mode == 'standard' %}active{% endif %}" onclick="setEvalMode('standard', this)" data-tooltip="Standard match-time in-sample evaluation">Standard</button>
+          <button type="button" class="opt-toggle-btn {% if active_eval_mode == 'walk_forward' %}active{% endif %}" onclick="setEvalMode('walk_forward', this)" data-tooltip="Strict out-of-sample monthly freeze testing">Walk-Forward</button>
+        </div>
+      </div>
+
+      <!-- 2. Player Format Toggle -->
+      <div>
+        <div class="opt-section-title">&#127918; Player Format</div>
+        <div class="opt-btn-grid">
+          <button type="button" class="opt-toggle-btn {% if active_format == 0 %}active{% endif %}" onclick="setFormat(0, this)">All Formats</button>
+          <button type="button" class="opt-toggle-btn {% if active_format == 2 %}active{% endif %}" onclick="setFormat(2, this)">2-Player</button>
+          <button type="button" class="opt-toggle-btn {% if active_format == 3 %}active{% endif %}" onclick="setFormat(3, this)">3-Player</button>
+          <button type="button" class="opt-toggle-btn {% if active_format == 4 %}active{% endif %}" onclick="setFormat(4, this)">4-Player</button>
+        </div>
+      </div>
+
+      <!-- 3. Engine / Model Family Filter (Multi-select) -->
+      <div>
+        <div class="opt-section-title">&#127941; Rating Engine Family</div>
+        <div class="opt-btn-grid" style="grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));">
+          <button type="button" id="btn_family_all" class="opt-toggle-btn active" onclick="toggleEngineFamily('all', this)">All Engines</button>
+          <button type="button" id="btn_family_glicko2_daneo" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_daneo', this)" style="border-left: 3px solid #8b5cf6;">👑 GlickoD*</button>
+          <button type="button" id="btn_family_glicko2_mp" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_mp', this)" style="border-left: 3px solid #ef5350;">G2 MP</button>
+          <button type="button" id="btn_family_glicko2_adapt" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_adapt', this)" style="border-left: 3px solid #22c55e;">G2 Adapt</button>
+          <button type="button" id="btn_family_glicko2_std" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_std', this)" style="border-left: 3px solid #ffca28;">G2 Std</button>
+          <button type="button" id="btn_family_whr" class="opt-toggle-btn active" onclick="toggleEngineFamily('whr', this)" style="border-left: 3px solid #29b6f6;">WHR</button>
+        </div>
+      </div>
+
+      <!-- 4. Season Reset Mode Filter (Multi-select) -->
+      <div>
+        <div class="opt-section-title">&#8635; Season Reset Mode</div>
+        <div class="opt-btn-grid">
+          <button type="button" id="btn_reset_all" class="opt-toggle-btn" onclick="toggleResetMode('all', this)">All Resets</button>
+          <button type="button" id="btn_reset_continuous" class="opt-toggle-btn active" onclick="toggleResetMode('continuous', this)">Continuous</button>
+          <button type="button" id="btn_reset_softer" class="opt-toggle-btn" onclick="toggleResetMode('softer', this)">Season Reset</button>
+        </div>
+      </div>
+
+      <!-- 5. Prior Calibration Lever (Option A: 15-Game Emergent Prior) -->
+      <div>
+        <div class="opt-section-title">&#9889; Prior Calibration Lever</div>
+        <div class="opt-btn-grid">
+          <button type="button" id="btn_prior_all" class="opt-toggle-btn" onclick="setPriorFilter('all', this)" data-tooltip="Show both standard and retro-calibrated priors">All Priors</button>
+          <button type="button" id="btn_prior_standard" class="opt-toggle-btn active" onclick="setPriorFilter('standard', this)" data-tooltip="Standard initial priors (1500 / 350 RD)">Standard (1500)</button>
+          <button type="button" id="btn_prior_retro" class="opt-toggle-btn" onclick="setPriorFilter('retro', this)" data-tooltip="Two-pass 15-game emergent calibration with initial freeze (Option A)">15G Retro (★)</button>
+        </div>
+      </div>
+
+      <!-- Active Curves Legend / Counter -->
+      <div style="border-top: 1px solid rgba(229, 169, 60, 0.3); padding-top: 0.65rem; font-size: 0.78rem; color: var(--text-muted); display: flex; justify-content: space-between; align-items: center;">
+        <span>Active Curves: <strong id="active_curves_count" style="color: var(--accent-gold);">4</strong></span>
+        <span style="color: #81c784;">Live Reactivity &#10004;</span>
+      </div>
+    </div>
+  </div>
+
 </div>
 
-<!-- 9-Engine Comprehensive Agreement Heatmap Matrix -->
-<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem;">
+<!-- WEBMASTER EDITORIAL COMMENTARY CARD (Beneath Graph and Table) -->
+<div class="commentary-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+    <h3 id="commentary_title_display" style="margin: 0; font-size: 1.15rem; color: var(--accent-gold);">
+      {{ webmaster_notes.title }}
+    </h3>
+    <div style="display: flex; gap: 0.5rem; align-items: center;">
+      <span style="font-size: 0.78rem; color: var(--text-muted);">
+        Last edited: {{ webmaster_notes.updated_at }}
+      </span>
+      {% if session.is_admin %}
+        <button type="button" onclick="toggleEditNotes()" class="btn-antique" style="font-size: 0.78rem; padding: 3px 8px;">
+          &#9998; Edit Commentary
+        </button>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Rendered Markdown Body -->
+  <div id="commentary_rendered" class="commentary-body"></div>
+
+  {% if session.is_admin %}
+    <!-- In-place Editor for Webmaster -->
+    <div id="commentary_editor_box" style="display: none; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-subtle);">
+      <div style="margin-bottom: 0.5rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">Title:</label>
+        <input type="text" id="edit_note_title" value="{{ webmaster_notes.title }}" style="width: 100%; padding: 0.4rem 0.6rem; background: rgba(10,7,5,0.8); border: 1px solid var(--border-subtle); color: #fff; border-radius: 4px; font-size: 0.9rem;">
+      </div>
+      <div style="margin-bottom: 0.75rem;">
+        <label style="font-size: 0.8rem; color: var(--text-muted); display: block; margin-bottom: 0.2rem;">Markdown &amp; LaTeX Commentary:</label>
+        <textarea id="edit_note_content" rows="10" style="width: 100%; padding: 0.6rem; background: rgba(10,7,5,0.9); border: 1px solid var(--border-subtle); color: #f5eedb; border-radius: 4px; font-family: monospace; font-size: 0.85rem; line-height: 1.5;">{{ webmaster_notes.content }}</textarea>
+      </div>
+      <div style="display: flex; gap: 0.5rem; justify-content: flex-end;">
+        <button type="button" onclick="toggleEditNotes()" class="btn-antique" style="font-size: 0.82rem; padding: 4px 10px; background: rgba(255,255,255,0.08);">Cancel</button>
+        <button type="button" onclick="saveWebmasterNotes()" class="btn-antique" style="background: var(--accent-gold); color: #1c130d; font-weight: 700; font-size: 0.82rem; padding: 4px 12px;">Save Commentary</button>
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- RATING DISTRIBUTION DENSITY GRAPH -->
+<div style="background: var(--surface-panel); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
     <div>
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.35rem; margin: 0 0 0.25rem 0;">
-        9-Engine Comprehensive Agreement Matrix (Cross-Model Agreement Matrix)
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin: 0;">
+        Rating Distribution Density Curves
       </h3>
-      <span style="color: var(--text-muted); font-size: 0.85rem;">
-        Empirical evaluation across all 3 Rating Models &times; 3 Reset Modes (Sample: {{ matrix_9x9.sample_size }} qualified players with &ge; 15 encounters)
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Player rating distribution across 100-point skill bins for active format (<strong>{{ formats[active_format] }}</strong>)
+      </div>
+    </div>
+    <!-- Model Mean Indicators -->
+    <div id="density_means_bar" style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-family: var(--font-stats); font-size: 0.8rem;">
+      <span style="color: #ffd700; background: rgba(229, 169, 60, 0.15); border: 1px solid rgba(229, 169, 60, 0.4); padding: 2px 7px; border-radius: 4px;" title="GlickoD* (All Players: {{ hist_data.means.daneo if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.daneo if hist_data.active_means else 1500.0 }})">
+        👑 GlickoD*: <strong>{{ hist_data.means.daneo if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.daneo if hist_data.active_means else 1500.0 }})</span>
+      </span>
+      <span style="color: #86efac; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); padding: 2px 7px; border-radius: 4px;" title="G2 Adapt (All Players: {{ hist_data.means.adapt if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.adapt if hist_data.active_means else 1500.0 }})">
+        G2 Adapt: <strong>{{ hist_data.means.adapt if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.adapt if hist_data.active_means else 1500.0 }})</span>
+      </span>
+      <span style="color: #fca5a5; background: rgba(239, 83, 80, 0.15); border: 1px solid rgba(239, 83, 80, 0.4); padding: 2px 7px; border-radius: 4px;" title="G2 MP (All Players: {{ hist_data.means.mp if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.mp if hist_data.active_means else 1500.0 }})">
+        G2 MP: <strong>{{ hist_data.means.mp if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.mp if hist_data.active_means else 1500.0 }})</span>
+      </span>
+      <span style="color: #fde047; background: rgba(255, 202, 40, 0.15); border: 1px solid rgba(255, 202, 40, 0.4); padding: 2px 7px; border-radius: 4px;" title="G2 Std (All Players: {{ hist_data.means.std if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.std if hist_data.active_means else 1500.0 }})">
+        G2 Std: <strong>{{ hist_data.means.std if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.std if hist_data.active_means else 1500.0 }})</span>
+      </span>
+      <span style="color: #7dd3fc; background: rgba(41, 182, 246, 0.15); border: 1px solid rgba(41, 182, 246, 0.4); padding: 2px 7px; border-radius: 4px;" title="WHR (All Players: {{ hist_data.means.whr if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.whr if hist_data.active_means else 1500.0 }})">
+        WHR: <strong>{{ hist_data.means.whr if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.whr if hist_data.active_means else 1500.0 }})</span>
       </span>
     </div>
-
-    <!-- Toggle between Spearman ρ and Pearson r -->
-    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
-      <span style="font-size: 0.78rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.25rem;">Metric:</span>
-      <button type="button" id="btnMetricSpearman" class="format-btn active" onclick="switchMatrixMetric('spearman')" style="font-size: 0.8rem; padding: 0.25rem 0.65rem;">
-        Spearman Rank (&rho;)
-      </button>
-      <button type="button" id="btnMetricPearson" class="format-btn" onclick="switchMatrixMetric('pearson')" style="font-size: 0.8rem; padding: 0.25rem 0.65rem;">
-        Pearson Rating (r)
-      </button>
-    </div>
   </div>
 
-  <!-- Educational Explainer Cards for r and rho -->
-  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin: 1rem 0 1.25rem 0;">
-    <div style="background: rgba(229, 169, 60, 0.06); border: 1px solid rgba(229, 169, 60, 0.2); border-left: 3px solid var(--accent-gold); border-radius: 4px; padding: 0.75rem 1rem;">
-      <div style="font-weight: 700; color: var(--accent-gold); font-size: 0.88rem; margin-bottom: 0.25rem;">
-        <span>📊</span> Spearman Rank Correlation (&rho; &ndash; "Leaderboard Order")
-      </div>
-      <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0; line-height: 1.45;">
-        Measures whether two engines <strong>agree on who is ranked ahead of whom</strong>. &rho; = 1.0 means identical leaderboard ranks, regardless of numerical rating gaps.
-      </p>
-    </div>
-    <div style="background: rgba(56, 189, 248, 0.06); border: 1px solid rgba(56, 189, 248, 0.2); border-left: 3px solid #38bdf8; border-radius: 4px; padding: 0.75rem 1rem;">
-      <div style="font-weight: 700; color: #38bdf8; font-size: 0.88rem; margin-bottom: 0.25rem;">
-        <span>📈</span> Pearson Linear Correlation (r &ndash; "Numerical Proportionality")
-      </div>
-      <p style="color: var(--text-muted); font-size: 0.82rem; margin: 0; line-height: 1.45;">
-        Measures whether the <strong>actual rating numbers scale linearly</strong> between engines. r = 1.0 means an exact straight-line relationship between rating values.
-      </p>
-    </div>
-  </div>
-
-  <!-- 9x9 Heatmap Table Container -->
-  <div style="overflow-x: auto; border: 1px solid var(--border-subtle); border-radius: 6px; background: rgba(0,0,0,0.25);">
-    <table class="matrix-table" style="margin-top: 0; font-size: 0.85rem;">
-      <thead>
-        <tr>
-          <th style="text-align: left; padding: 0.6rem 0.8rem; width: 140px;">Engine</th>
-          {% for eng in matrix_9x9.engines %}
-          <th style="font-size: 0.75rem; padding: 0.5rem 0.35rem; white-space: nowrap;">{{ eng.short }}</th>
-          {% endfor %}
-        </tr>
-      </thead>
-      <tbody id="matrix9x9Body">
-        <!-- Rendered dynamically by JavaScript switchMatrixMetric() -->
-      </tbody>
-    </table>
+  <div style="position: relative; height: 300px; width: 100%;">
+    <canvas id="ratingDensityChart"></canvas>
   </div>
 </div>
 
-<script>
-  const matrixData = {{ matrix_9x9|tojson }};
-  let currentMetric = 'spearman';
-
-  function getHeatmapColor(val) {
-    if (val >= 0.98) return 'background: rgba(34, 197, 94, 0.35); color: #4ade80; font-weight: 800;';
-    if (val >= 0.90) return 'background: rgba(34, 197, 94, 0.20); color: #86efac; font-weight: 700;';
-    if (val >= 0.80) return 'background: rgba(234, 179, 8, 0.18); color: #fde047; font-weight: 600;';
-    if (val >= 0.70) return 'background: rgba(249, 115, 22, 0.18); color: #fdba74; font-weight: 600;';
-    return 'background: rgba(239, 68, 68, 0.18); color: #fca5a5; font-weight: 600;';
-  }
-
-  function render9x9Matrix() {
-    const tbody = document.getElementById('matrix9x9Body');
-    if (!tbody || !matrixData || !matrixData.engines) return;
-    const vals = currentMetric === 'spearman' ? matrixData.spearman : matrixData.pearson;
-    
-    let html = '';
-    matrixData.engines.forEach((eng, i) => {
-      html += '<tr>';
-      html += `<td style="text-align: left; font-weight: 700; color: #ffd54f; font-size: 0.82rem; padding: 0.6rem 0.8rem; white-space: nowrap; border-right: 1px solid var(--border-subtle);">${eng.name}</td>`;
-      vals[i].forEach((score, j) => {
-        const style = i === j ? 'background: rgba(229, 169, 60, 0.25); color: #fff; font-weight: 800;' : getHeatmapColor(score);
-        html += `<td style="padding: 0.5rem 0.35rem; font-family: var(--font-stats); ${style}">${score.toFixed(4)}</td>`;
-      });
-      html += '</tr>';
-    });
-    tbody.innerHTML = html;
-  }
-
-  function switchMatrixMetric(metric) {
-    currentMetric = metric;
-    document.getElementById('btnMetricSpearman').classList.toggle('active', metric === 'spearman');
-    document.getElementById('btnMetricPearson').classList.toggle('active', metric === 'pearson');
-    render9x9Matrix();
-  }
-
-  document.addEventListener('DOMContentLoaded', () => {
-    render9x9Matrix();
-  });
-</script>
-
-
-
-
-<!-- Two Charts in Grid: Rating Density & Calibration Curves -->
-<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr)); gap: 1.5rem; margin-bottom: 2rem;">
-  
-  <!-- Chart 1: Calibration & Reliability Diagram -->
-  <div class="rating-card" style="padding: 1.5rem;">
-    <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem;">
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0;">
-        Model Calibration Curve (Reliability Diagram)
-      </h3>
-      <a href="{{ url_for('analysis.calibration', format=active_format, reset_mode=active_reset_mode) }}" style="color: #fff; background: rgba(229, 169, 60, 0.15); border: 1px solid var(--accent-gold); padding: 0.3rem 0.75rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 0.35rem; transition: background 0.2s;">
-        <span>🎯</span> Full Breakdown &raquo;
-      </a>
-    </div>
-
-    <!-- Dynamic Curve Selector -->
-    <div style="display: flex; gap: 0.35rem; align-items: center; margin: 0.5rem 0 0.8rem 0; flex-wrap: wrap;">
-      <span style="font-family: var(--font-heading); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;">View:</span>
-      <button type="button" class="format-btn active calib-btn" onclick="selectCalibCurve('active', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">Active ({{ reset_modes[active_reset_mode].name }})</button>
-      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('glicko_std_all', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">Glicko Std Resets</button>
-      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('whr_all', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">WHR Resets</button>
-      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('all_cont', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">All Continuous</button>
-      <button type="button" class="format-btn calib-btn" onclick="selectCalibCurve('all_soft', this)" style="font-size: 0.78rem; padding: 0.2rem 0.55rem;">All Soft (φ)</button>
-    </div>
-
-    <p style="color: var(--text-muted); font-size: 0.82rem; margin-bottom: 0.75rem;">
-      Predicted win probability vs actual observed win rate for the favored competitor (&ge; 50%). A perfectly calibrated model falls along the 45&deg; dashed diagonal.
-    </p>
-    <div style="position: relative; height: 310px; width: 100%;">
-      <canvas id="calibChart"></canvas>
-    </div>
-  </div>
-
-  <!-- Chart 2: Rating Distribution Histogram -->
-  <div class="rating-card" style="padding: 1.5rem;">
-    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 0.75rem;">
-      Rating Distribution Density by Model
-    </h3>
-    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-      Frequency histogram of skill ratings across 100-point buckets in {{ formats.get(active_format, 'All Formats') }}.
-    </p>
-    <div style="position: relative; height: 320px; width: 100%;">
-      <canvas id="histChart"></canvas>
-    </div>
-  </div>
-</div>
-
-<!-- Title Rating Benchmark & Skill Tier Distribution Matrix -->
-<div class="rating-card" style="padding: 1.5rem;">
-  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 0.75rem;">
+<!-- AGREEMENT & CORRELATION INSIGHTS CARD -->
+<div style="background: var(--surface-panel); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
     <div>
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem;">
-        Official Title Rating Benchmarks &amp; Skill Tier Calibration
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin: 0;">
+        Engine Agreement &amp; Ranking Correlation Insights
       </h3>
-      <p style="color: var(--text-muted); font-size: 0.88rem; margin-top: 0.2rem;">
-        Empirical rating distributions and win rates across official competitive TTA title tiers in {{ formats.get(active_format, 'All Formats') }} (min. 15 matches).
-      </p>
+      <div style="font-size: 0.8rem; color: var(--text-muted);">
+        Spearman Rank ($r_s$) &amp; Pearson ($r$) Correlation Benchmark across All 9 Model Configurations ($N = {{ correlation_summary.sample_size }}$ active players)
+      </div>
     </div>
-    <a href="{{ url_for('analysis.movers', format=active_format) }}" class="btn-antique" style="text-decoration: none; font-size: 0.85rem; display: inline-flex; align-items: center; gap: 0.4rem;">
-      <span>🚀</span> Explore Top Movers Subpage &raquo;
-    </a>
   </div>
 
-  <div style="overflow-x: auto;">
-    <table class="matrix-table" style="text-align: left;">
-      <thead>
-        <tr>
-          <th style="text-align: left;">Competitive Tier</th>
-          <th>Qualified Players</th>
-          <th>Mean Glicko-2 Std</th>
-          <th>Mean MP-Weighted</th>
-          <th>Mean WHR</th>
-          <th>Median C-Rating</th>
-          <th>Average Win %</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for b in title_benchmarks %}
-        <tr>
-          <td style="font-weight: 600; text-align: left;">
-            <span class="badge {{ b.badge_cls }}" style="margin-right: 0.4rem;">{{ b.code }}</span>
-            <span style="color: var(--text-main);">{{ b.label }}</span>
-          </td>
-          <td style="text-align: center; font-weight: 700; color: #ffd54f;">{{ b.count }}</td>
-          <td style="text-align: center;">{{ "%.1f"|format(b.mean_std) }}</td>
-          <td style="text-align: center; color: var(--accent-gold); font-weight: 700;">{{ "%.1f"|format(b.mean_mp) }}</td>
-          <td style="text-align: center; color: #4fc3f7;">{{ "%.1f"|format(b.mean_whr) }}</td>
-          <td style="text-align: center; color: #ffde8a; font-weight: 600;">{{ "%.1f"|format(b.median_c) }}</td>
-          <td style="text-align: center;">
-            <strong style="color: {% if b.mean_win_rate >= 55 %}#66bb6a{% elif b.mean_win_rate >= 50 %}#ffa726{% else %}#ef5350{% endif %};">
-              {{ "%.1f"|format(b.mean_win_rate) }}%
-            </strong>
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <div class="corr-grid">
+    <!-- Top Agreements -->
+    <div class="corr-card">
+      <div style="font-family: var(--font-subheading); color: #81c784; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+        &#10004; Strongest Agreement Pairs
+      </div>
+      {% for pair in correlation_summary.top_agreements %}
+      <div class="corr-pair-row">
+        <div>
+          <span style="color: #f5eedb; font-weight: 600;">{{ pair.name1 }}</span>
+          <span style="color: var(--text-muted); font-size: 0.78rem;"> &harr; </span>
+          <span style="color: #f5eedb; font-weight: 600;">{{ pair.name2 }}</span>
+        </div>
+        <div style="font-weight: 700; color: #81c784;">
+          r = {{ "%.4f"|format(pair.spearman) }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <!-- Weakest / Divergent Pairs -->
+    <div class="corr-card">
+      <div style="font-family: var(--font-subheading); color: #ffd54f; font-size: 0.85rem; text-transform: uppercase; margin-bottom: 0.5rem; letter-spacing: 0.5px;">
+        &#9888; Divergent &amp; Seasonal Mobility Pairs
+      </div>
+      {% for pair in correlation_summary.weakest_agreements %}
+      <div class="corr-pair-row">
+        <div>
+          <span style="color: #f5eedb; font-weight: 600;">{{ pair.name1 }}</span>
+          <span style="color: var(--text-muted); font-size: 0.78rem;"> &harr; </span>
+          <span style="color: #f5eedb; font-weight: 600;">{{ pair.name2 }}</span>
+        </div>
+        <div style="font-weight: 700; color: #ffd54f;">
+          r = {{ "%.4f"|format(pair.spearman) }}
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Explanatory Commentary -->
+  <div style="margin-top: 1rem; padding: 0.85rem 1rem; background: rgba(18, 12, 8, 0.7); border-radius: 6px; border: 1px solid rgba(74, 53, 37, 0.3); font-size: 0.85rem; line-height: 1.55; color: #cfc6b6;">
+    <strong style="color: var(--accent-gold);">&#128161; What do these correlation metrics tell us?</strong><br>
+    High Spearman rank correlation ($r_s > 0.95$) demonstrates that different engines independently converge on the same relative skill hierarchy at the top of the leaderboard. Lower correlation values between <em>Continuous (Career)</em> and <em>Hard Reset</em> models reflect the deliberate annual mobility of seasonal ladders, where active title contenders can ascend past inactive veterans.
   </div>
 </div>
 
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    // 1. Histogram Chart
-    const rawHist = {{ hist_json|safe }};
-    const ctxHist = document.getElementById('histChart').getContext('2d');
+  // Global Calibration Data Matrix
+  const ALL_CALIB_MATRIX = {{ all_calib_matrix_json | safe }};
+  const MODEL_METADATA = {{ model_metadata_json | safe }};
+  
+  // Client-Side Active State (Default: All Engines, All Formats, Continuous Only)
+  let currentEvalMode = '{{ active_eval_mode }}';
+  let currentFormat = {{ active_format }};
+  let selectedEngines = new Set(['glicko2_daneo', 'glicko2_mp', 'glicko2_adapt', 'glicko2_std', 'whr']);
+  let selectedResets = new Set(['continuous']);
+  let selectedPrior = 'standard';
 
-    new Chart(ctxHist, {
+  let calibChartInstance = null;
+
+  // Render Webmaster Commentary
+  const rawNotes = {{ webmaster_notes.content | tojson }};
+  function renderCommentary(content) {
+    if (typeof marked !== 'undefined') {
+      document.getElementById('commentary_rendered').innerHTML = marked.parse(content);
+    } else {
+      document.getElementById('commentary_rendered').innerText = content;
+    }
+  }
+  renderCommentary(rawNotes);
+
+  function toggleEditNotes() {
+    const box = document.getElementById('commentary_editor_box');
+    if (box) {
+      box.style.display = (box.style.display === 'none') ? 'block' : 'none';
+    }
+  }
+
+  async function saveWebmasterNotes() {
+    const title = document.getElementById('edit_note_title').value;
+    const content = document.getElementById('edit_note_content').value;
+
+    const formData = new FormData();
+    formData.append('key', 'analysis_overview');
+    formData.append('title', title);
+    formData.append('content', content);
+
+    try {
+      const resp = await fetch('{{ url_for("analysis.save_notes") }}', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await resp.json();
+      if (data.status === 'success') {
+        document.getElementById('commentary_title_display').innerText = title;
+        renderCommentary(content);
+        toggleEditNotes();
+        alert('Webmaster commentary updated successfully!');
+      } else {
+        alert('Error: ' + data.message);
+      }
+    } catch (e) {
+      alert('Failed to save notes: ' + e);
+    }
+  }
+
+  // Determine Active Model Keys based on engine, reset, and prior sets
+  function getActiveModelKeys() {
+    const keys = [];
+    for (const [mKey, meta] of Object.entries(MODEL_METADATA)) {
+      if (selectedEngines.has(meta.family) && selectedResets.has(meta.reset)) {
+        if (meta.family === 'glicko2_daneo' || meta.family === 'whr' || selectedPrior === 'all' || (selectedPrior === 'retro' && meta.retro) || (selectedPrior === 'standard' && !meta.retro)) {
+          keys.push(mKey);
+        }
+      }
+    }
+    return keys;
+  }
+
+  // Update URL state smoothly without page jump
+  function updateUrlState() {
+    if (window.history && window.history.replaceState) {
+      const params = new URLSearchParams(window.location.search);
+      params.set('eval_mode', currentEvalMode);
+      params.set('format', currentFormat);
+      window.history.replaceState(null, '', '?' + params.toString());
+    }
+  }
+
+  // Re-render Chart and Table Highlights
+  function refreshAnalysisView() {
+    const calibPayload = ALL_CALIB_MATRIX[currentEvalMode][currentFormat];
+    const calibData = calibPayload.calib_data;
+    const rankedModels = calibPayload.ranked_models;
+    const activeKeys = new Set(getActiveModelKeys());
+
+    // 1. Update Subtitles & Badges
+    document.getElementById('active_mode_badge').innerText = (currentEvalMode === 'walk_forward') ? 'Walk-Forward (Out-of-Sample)' : 'Standard (Match-Time)';
+    const fmtNames = {0: 'All Formats', 2: '2-Player (Duel)', 3: '3-Player', 4: '4-Player'};
+    document.getElementById('active_format_badge').innerText = fmtNames[currentFormat] || 'All Formats';
+    document.getElementById('active_curves_count').innerText = activeKeys.size;
+
+    // 2. Build Chart.js Datasets
+    const datasets = [
+      {
+        label: 'Ideal Benchmark (Perfect Calibration)',
+        data: calibData.ideal,
+        borderColor: 'rgba(255, 255, 255, 0.4)',
+        borderDash: [6, 6],
+        pointRadius: 0,
+        fill: false,
+        borderWidth: 2,
+        order: 99
+      }
+    ];
+
+    for (const [mKey, meta] of Object.entries(MODEL_METADATA)) {
+      if (activeKeys.has(mKey)) {
+        const stats = calibData.models[mKey] || { actuals: calibData.ideal };
+        datasets.push({
+          label: meta.name,
+          data: stats.actuals,
+          borderColor: meta.color,
+          backgroundColor: meta.color,
+          pointRadius: (meta.reset === 'continuous') ? 6 : 5,
+          pointHoverRadius: 8,
+          borderWidth: (meta.reset === 'continuous') ? 3 : 2.2,
+          borderDash: (meta.retro) ? [2, 2] : ((meta.reset === 'softer') ? [4, 2] : []),
+          tension: 0.2,
+          order: 1
+        });
+      }
+    }
+
+    if (calibChartInstance) {
+      calibChartInstance.data.labels = calibData.labels;
+      calibChartInstance.data.datasets = datasets;
+      calibChartInstance.update();
+    }
+
+    // 3. Update Ranked Evaluation Table Rows
+    const tbody = document.getElementById('ranked_table_body');
+    tbody.innerHTML = '';
+
+    rankedModels.forEach(rm => {
+      const isVisible = (rm.family === 'glicko2_daneo') || (rm.family === 'whr') || (selectedPrior === 'all') || (selectedPrior === 'retro' && rm.retro) || (selectedPrior === 'standard' && !rm.retro);
+      if (!isVisible && !activeKeys.has(rm.key)) {
+        return;
+      }
+
+      const isHighlighted = activeKeys.has(rm.key);
+      const tr = document.createElement('tr');
+      tr.id = 'row-' + rm.key;
+      tr.className = 'ranked-eval-row' + (isHighlighted ? ' active-highlight' : '');
+      tr.setAttribute('data-key', rm.key);
+      tr.setAttribute('data-family', rm.family);
+      tr.setAttribute('data-reset', rm.reset);
+      tr.setAttribute('data-retro', rm.retro ? '1' : '0');
+
+      const eceColor = (rm.ece_pct < 1.5) ? '#81c784' : (rm.ece_pct < 2.5) ? '#ffd54f' : '#ef5350';
+      const deltaColor = (rm.p_delta_pct >= 0) ? '#81c784' : '#ffb74d';
+
+      tr.innerHTML = `
+        <td style="font-weight: 700; color: #ffd700;">#${rm.rank}</td>
+        <td>
+          <span style="display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: ${rm.color}; margin-right: 6px;"></span>
+          <strong style="color: #f5eedb;">${rm.name}</strong>
+        </td>
+        <td style="color: ${eceColor}; font-weight: 600;">${rm.ece_pct.toFixed(2)}%</td>
+        <td style="color: #ffd700; font-weight: 600;">${rm.brier.toFixed(4)}</td>
+        <td style="color: #81d4fa;">${rm.log_loss.toFixed(4)}</td>
+        <td style="color: #ce93d8;">
+          <span style="font-weight: 600;">${rm.p_ist_pct.toFixed(1)}%</span>
+          <span style="font-size: 0.75rem; color: ${deltaColor};">(Soll: ${rm.p_soll_pct.toFixed(1)}%)</span>
+        </td>
+        <td>
+          <span class="score-badge" style="background: ${rm.bg}; color: ${rm.color}; border: 1px solid ${rm.color};">
+            ${rm.composite.toFixed(1)}
+          </span>
+        </td>
+        <td style="color: #cfc6b6; line-height: 1.4;">${rm.verdict}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    updateUrlState();
+  }
+
+  // Filter Button Handlers (Zero page reload / Zero jump)
+  function setEvalMode(mode, btn) {
+    currentEvalMode = mode;
+    btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshAnalysisView();
+  }
+
+  function setFormat(fmt, btn) {
+    currentFormat = fmt;
+    btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshAnalysisView();
+  }
+
+  function toggleEngineFamily(family, btn) {
+    const allBtn = document.getElementById('btn_family_all');
+    if (family === 'all') {
+      if (selectedEngines.size === 5) {
+        selectedEngines.clear();
+        btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.remove('active'));
+      } else {
+        selectedEngines = new Set(['glicko2_daneo', 'glicko2_mp', 'glicko2_adapt', 'glicko2_std', 'whr']);
+        btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.add('active'));
+      }
+    } else {
+      if (selectedEngines.has(family)) {
+        selectedEngines.delete(family);
+        btn.classList.remove('active');
+      } else {
+        selectedEngines.add(family);
+        btn.classList.add('active');
+      }
+      if (selectedEngines.size === 5) {
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+      }
+    }
+    refreshAnalysisView();
+  }
+
+  function toggleResetMode(reset, btn) {
+    const allBtn = document.getElementById('btn_reset_all');
+    if (reset === 'all') {
+      if (selectedResets.size === 2) {
+        selectedResets.clear();
+        btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.remove('active'));
+      } else {
+        selectedResets = new Set(['continuous', 'softer']);
+        btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.add('active'));
+      }
+    } else {
+      if (selectedResets.has(reset)) {
+        selectedResets.delete(reset);
+        btn.classList.remove('active');
+      } else {
+        selectedResets.add(reset);
+        btn.classList.add('active');
+      }
+      if (selectedResets.size === 2) {
+        allBtn.classList.add('active');
+      } else {
+        allBtn.classList.remove('active');
+      }
+    }
+    refreshAnalysisView();
+  }
+
+  function setPriorFilter(mode, btn) {
+    selectedPrior = mode;
+    btn.parentElement.querySelectorAll('.opt-toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    refreshAnalysisView();
+  }
+
+  function resetAllFilters() {
+    selectedEngines = new Set(['glicko2_daneo', 'glicko2_mp', 'glicko2_adapt', 'glicko2_std', 'whr']);
+    selectedResets = new Set(['continuous']);
+    
+    document.getElementById('btn_family_all').classList.add('active');
+    document.getElementById('btn_family_glicko2_daneo').classList.add('active');
+    document.getElementById('btn_family_glicko2_mp').classList.add('active');
+    document.getElementById('btn_family_glicko2_adapt').classList.add('active');
+    document.getElementById('btn_family_glicko2_std').classList.add('active');
+    document.getElementById('btn_family_whr').classList.add('active');
+
+    document.getElementById('btn_reset_all').classList.remove('active');
+    document.getElementById('btn_reset_continuous').classList.add('active');
+    document.getElementById('btn_reset_softer').classList.remove('active');
+
+    currentEvalMode = 'standard';
+    currentFormat = 0;
+    document.querySelectorAll('[onclick^="setEvalMode"]').forEach(b => b.classList.toggle('active', b.innerText === 'Standard'));
+    document.querySelectorAll('[onclick^="setFormat"]').forEach(b => b.classList.toggle('active', b.innerText === 'All Formats'));
+    refreshAnalysisView();
+  }
+
+  // Initialize Chart.js
+  document.addEventListener('DOMContentLoaded', function() {
+    const ctxCalib = document.getElementById('heroCalibrationChart').getContext('2d');
+    calibChartInstance = new Chart(ctxCalib, {
+      type: 'line',
+      data: {
+        labels: ['50-55%', '55-60%', '60-65%', '65-70%', '70-75%', '75-80%', '80-85%', '85-90%', '90-95%', '95-100%'],
+        datasets: []
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+          x: {
+            title: { display: true, text: 'Model Forecasted Probability Bin', color: '#ffd700', font: { family: 'Cinzel', weight: '600' } },
+            grid: { color: 'rgba(74, 53, 37, 0.3)' },
+            ticks: { color: '#e0d5c1', font: { family: 'Share Tech Mono' } }
+          },
+          y: {
+            min: 0.45,
+            max: 1.0,
+            title: { display: true, text: 'Empirical Match Win Rate', color: '#ffd700', font: { family: 'Cinzel', weight: '600' } },
+            grid: { color: 'rgba(74, 53, 37, 0.3)' },
+            ticks: {
+              color: '#e0d5c1',
+              font: { family: 'Share Tech Mono' },
+              callback: function(value) { return (value * 100).toFixed(0) + '%'; }
+            }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#f5eedb', font: { family: 'Share Tech Mono', size: 11 }, usePointStyle: true, padding: 12 }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return context.dataset.label + ': ' + (context.raw * 100).toFixed(1) + '% observed win rate';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    refreshAnalysisView();
+
+    // Rating Density Histogram Chart with Cumulative Percentiles & Active Player Means
+    const histData = {{ hist_json | safe }};
+    const ctxDensity = document.getElementById('ratingDensityChart').getContext('2d');
+
+    new Chart(ctxDensity, {
       type: 'bar',
       data: {
-        labels: rawHist.labels,
+        labels: histData.labels,
         datasets: [
           {
-            label: 'Glicko-2 Standard',
-            data: rawHist.std,
-            backgroundColor: 'rgba(229, 169, 60, 0.65)',
+            label: '👑 GlickoD* (Gold Standard)',
+            data: histData.daneo || [],
+            backgroundColor: 'rgba(229, 169, 60, 0.7)',
             borderColor: '#e5a93c',
-            borderWidth: 1
+            borderWidth: 1.5,
+            minBarLength: 5
+          },
+          {
+            label: 'Glicko-2 Adaptive-T',
+            data: histData.adapt || [],
+            backgroundColor: 'rgba(34, 197, 94, 0.55)',
+            borderColor: '#22c55e',
+            borderWidth: 1.5,
+            minBarLength: 5
           },
           {
             label: 'Glicko-2 MP-Weighted',
-            data: rawHist.mp,
-            backgroundColor: 'rgba(142, 30, 29, 0.65)',
-            borderColor: '#8e1e1d',
-            borderWidth: 1
+            data: histData.mp || [],
+            backgroundColor: 'rgba(239, 83, 80, 0.55)',
+            borderColor: '#ef5350',
+            borderWidth: 1.5,
+            minBarLength: 5
+          },
+          {
+            label: 'Glicko-2 Standard',
+            data: histData.std || [],
+            backgroundColor: 'rgba(255, 202, 40, 0.5)',
+            borderColor: '#ffca28',
+            borderWidth: 1.5,
+            minBarLength: 5
           },
           {
             label: 'Whole-History Rating',
-            data: rawHist.whr,
-            backgroundColor: 'rgba(79, 195, 247, 0.65)',
-            borderColor: '#4fc3f7',
-            borderWidth: 1
+            data: histData.whr || [],
+            backgroundColor: 'rgba(41, 182, 246, 0.5)',
+            borderColor: '#29b6f6',
+            borderWidth: 1.5,
+            minBarLength: 5
           }
         ]
       },
       options: {
         responsive: true,
         maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#f3e5c8', font: { family: "'Cinzel', serif" } } },
-          tooltip: {
-            backgroundColor: 'rgba(28, 19, 13, 0.95)',
-            titleColor: '#e5a93c',
-            bodyColor: '#f3e5c8'
-          }
-        },
-        scales: {
-          x: { grid: { color: 'rgba(74, 53, 37, 0.25)' }, ticks: { color: '#a89880' } },
-          y: { grid: { color: 'rgba(74, 53, 37, 0.25)' }, ticks: { color: '#a89880' } }
-        }
-      }
-    });
-
-    // 2. Calibration Reliability Diagram
-    const rawCalib = {{ calib_json|safe }};
-    const ctxCalib = document.getElementById('calibChart').getContext('2d');
-
-    const idealDataset = {
-      label: 'Ideal 45° Diagonal',
-      data: rawCalib.ideal.map(x => (x * 100).toFixed(1)),
-      borderColor: 'rgba(255, 255, 255, 0.4)',
-      borderDash: [6, 6],
-      borderWidth: 2,
-      pointRadius: 0,
-      fill: false
-    };
-
-    const modelStyles = {
-      'glicko2_std': { name: 'Glicko-2 Std (Cont)', color: '#e5a93c' },
-      'glicko2_mp': { name: 'Glicko-2 MP (Cont)', color: '#ef5350' },
-      'whr': { name: 'WHR (Cont)', color: '#4fc3f7' },
-      'glicko2_std_soft': { name: 'Glicko-2 Std (Soft φ)', color: '#ffd54f' },
-      'glicko2_mp_soft': { name: 'Glicko-2 MP (Soft φ)', color: '#ff8a80' },
-      'whr_soft': { name: 'WHR (Soft φ)', color: '#80d8ff' },
-      'glicko2_std_amplified': { name: 'Glicko-2 Std (Amp φ²)', color: '#ffb300' },
-      'glicko2_mp_amplified': { name: 'Glicko-2 MP (Amp φ²)', color: '#d32f2f' },
-      'whr_amplified': { name: 'WHR (Amp φ²)', color: '#0288d1' }
-    };
-
-    function buildModelDataset(mKey) {
-      const m = rawCalib.models && rawCalib.models[mKey];
-      if (!m) return null;
-      const st = modelStyles[mKey] || { name: mKey, color: '#e5a93c' };
-      return {
-        label: `${st.name} (Brier: ${m.brier})`,
-        data: m.actuals.map(x => (x * 100).toFixed(1)),
-        borderColor: st.color,
-        backgroundColor: st.color,
-        borderWidth: 2,
-        pointRadius: 4,
-        tension: 0.15,
-        fill: false
-      };
-    }
-
-    const activeKeys = {
-      'soft': ['glicko2_std_soft', 'glicko2_mp_soft', 'whr_soft'],
-      'amplified': ['glicko2_std_amplified', 'glicko2_mp_amplified', 'whr_amplified'],
-      'continuous': ['glicko2_std', 'glicko2_mp', 'whr']
-    };
-
-    function getDatasetsForView(viewKey) {
-      let keys = [];
-      if (viewKey === 'active') {
-        const curMode = '{{ active_reset_mode }}';
-        keys = activeKeys[curMode] || activeKeys['continuous'];
-      } else if (viewKey === 'glicko_std_all') {
-        keys = ['glicko2_std', 'glicko2_std_soft', 'glicko2_std_amplified'];
-      } else if (viewKey === 'whr_all') {
-        keys = ['whr', 'whr_soft', 'whr_amplified'];
-      } else if (viewKey === 'all_cont') {
-        keys = ['glicko2_std', 'glicko2_mp', 'whr'];
-      } else if (viewKey === 'all_soft') {
-        keys = ['glicko2_std_soft', 'glicko2_mp_soft', 'whr_soft'];
-      } else {
-        keys = ['glicko2_std', 'glicko2_mp', 'whr'];
-      }
-
-      const list = [idealDataset];
-      keys.forEach(k => {
-        const ds = buildModelDataset(k);
-        if (ds) list.push(ds);
-      });
-      return list;
-    }
-
-    const calibChartInstance = new Chart(ctxCalib, {
-      type: 'line',
-      data: {
-        labels: rawCalib.labels,
-        datasets: getDatasetsForView('active')
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { labels: { color: '#f3e5c8', font: { family: "'Inter', sans-serif", size: 11 } } },
-          tooltip: {
-            backgroundColor: 'rgba(28, 19, 13, 0.95)',
-            callbacks: {
-              label: function(context) {
-                return context.dataset.label + ': ' + context.parsed.y + '% actual win rate';
-              }
-            }
-          }
+        interaction: {
+          mode: 'index',
+          intersect: false
         },
         scales: {
           x: {
-            title: { display: true, text: 'Favored Player Predicted Probability Bin (≥ 50%)', color: '#a89880' },
-            grid: { color: 'rgba(74, 53, 37, 0.25)' },
-            ticks: { color: '#a89880' }
+            title: { display: true, text: 'Rating Score Bins (100-pt intervals)', color: '#ffd700', font: { family: 'Cinzel' } },
+            grid: { color: 'rgba(74, 53, 37, 0.3)' },
+            ticks: { color: '#e0d5c1', font: { family: 'Share Tech Mono' } }
           },
           y: {
-            title: { display: true, text: 'Actual Empirical Win Rate (%)', color: '#a89880' },
-            min: 50,
-            max: 100,
-            grid: { color: 'rgba(74, 53, 37, 0.25)' },
-            ticks: { color: '#a89880', callback: val => val + '%' }
+            title: { display: true, text: 'Number of Players', color: '#ffd700', font: { family: 'Cinzel' } },
+            grid: { color: 'rgba(74, 53, 37, 0.3)' },
+            ticks: { color: '#e0d5c1', font: { family: 'Share Tech Mono' } }
+          }
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: { color: '#f5eedb', font: { family: 'Share Tech Mono', size: 12 }, padding: 12 }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(18, 12, 8, 0.95)',
+            titleColor: '#ffd700',
+            titleFont: { family: 'Cinzel', size: 13, weight: 'bold' },
+            bodyFont: { family: 'Share Tech Mono', size: 11 },
+            borderColor: 'rgba(229, 169, 60, 0.4)',
+            borderWidth: 1,
+            padding: 10,
+            callbacks: {
+              title: function(items) {
+                if (!items.length) return '';
+                const idx = items[0].dataIndex;
+                return `Rating Bracket: ${histData.labels[idx]}`;
+              },
+              label: function(context) {
+                const val = context.parsed.y;
+                const dataset = context.dataset;
+                const total = dataset.data.reduce((a, b) => a + b, 0);
+                let cum = 0;
+                for (let k = 0; k <= context.dataIndex; k++) {
+                  cum += dataset.data[k];
+                }
+                const pct = total > 0 ? ((val / total) * 100).toFixed(1) : '0.0';
+                const cumPct = total > 0 ? ((cum / total) * 100).toFixed(1) : '0.0';
+                const topPct = total > 0 ? (((total - cum) / total) * 100).toFixed(1) : '0.0';
+                return ` ${dataset.label}: ${val} (${pct}%) • Percentile: ${cumPct}% (Top ${topPct}%)`;
+              },
+              footer: function(items) {
+                const means = histData.means || {};
+                const active = histData.active_means || {};
+                return `\nExact Means (All Players):\n  GlickoD*: ${means.daneo || 1500} | Adapt: ${means.adapt || 1500} | MP: ${means.mp || 1500} | Std: ${means.std || 1500} | WHR: ${means.whr || 1500}\n\nActive Player Means (>10 games in last yr):\n  GlickoD*: ${active.daneo || 1500} | Adapt: ${active.adapt || 1500} | MP: ${active.mp || 1500} | Std: ${active.std || 1500} | WHR: ${active.whr || 1500}`;
+              }
+            }
           }
         }
       }
     });
-
-    window.selectCalibCurve = function(viewKey, btn) {
-      document.querySelectorAll('.calib-btn').forEach(b => b.classList.remove('active'));
-      if (btn) btn.classList.add('active');
-      calibChartInstance.data.datasets = getDatasetsForView(viewKey);
-      calibChartInstance.update();
-    };
   });
 </script>
 {% endblock %}
+

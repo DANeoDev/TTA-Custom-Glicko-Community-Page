@@ -11,10 +11,12 @@ CREATE TABLE IF NOT EXISTS players (
     country_code TEXT,
     title TEXT,
     title_count INTEGER DEFAULT 0,
+    badge_reason TEXT,
     last_played TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
+CREATE INDEX IF NOT EXISTS idx_players_nocase ON players(name COLLATE NOCASE);
 
 CREATE TABLE IF NOT EXISTS matches (
     match_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -28,11 +30,16 @@ CREATE TABLE IF NOT EXISTS matches (
     player3 TEXT,
     score3 REAL,
     player4 TEXT,
-    score4 REAL
+    score4 REAL,
+    replay_code TEXT
 );
 
 CREATE INDEX IF NOT EXISTS idx_matches_date ON matches(date);
 CREATE INDEX IF NOT EXISTS idx_matches_tournament ON matches(tournament);
+CREATE INDEX IF NOT EXISTS idx_matches_p1 ON matches(player1, date);
+CREATE INDEX IF NOT EXISTS idx_matches_p2 ON matches(player2, date);
+CREATE INDEX IF NOT EXISTS idx_matches_p3 ON matches(player3, date);
+CREATE INDEX IF NOT EXISTS idx_matches_p4 ON matches(player4, date);
 
 CREATE TABLE IF NOT EXISTS pairwise_matches (
     pairwise_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -52,6 +59,7 @@ CREATE TABLE IF NOT EXISTS pairwise_matches (
 CREATE INDEX IF NOT EXISTS idx_pw_date ON pairwise_matches(date);
 CREATE INDEX IF NOT EXISTS idx_pw_player_a ON pairwise_matches(player_a);
 CREATE INDEX IF NOT EXISTS idx_pw_player_b ON pairwise_matches(player_b);
+CREATE INDEX IF NOT EXISTS idx_pw_match_id ON pairwise_matches(match_id);
 
 CREATE TABLE IF NOT EXISTS player_ratings (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -89,6 +97,7 @@ CREATE TABLE IF NOT EXISTS rating_history (
 );
 
 CREATE INDEX IF NOT EXISTS idx_rh_player ON rating_history(model_type, player_count, player_name, period_date);
+CREATE INDEX IF NOT EXISTS idx_rh_player_fast ON rating_history(player_name, player_count, period_date, rating);
 
 CREATE TABLE IF NOT EXISTS official_baseline (
     player_name TEXT PRIMARY KEY,
@@ -152,15 +161,70 @@ CREATE TABLE IF NOT EXISTS walk_forward_calibration (
 );
 
 CREATE INDEX IF NOT EXISTS idx_wfc_lookup ON walk_forward_calibration(model_type, player_count, period_month);
+CREATE INDEX IF NOT EXISTS idx_wfc_pc_month ON walk_forward_calibration(player_count, period_month);
+
+CREATE TABLE IF NOT EXISTS standard_calibration (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    model_type TEXT NOT NULL,
+    player_count INTEGER DEFAULT 0,
+    period_month TEXT NOT NULL DEFAULT 'AGGREGATED',
+    matches_evaluated INTEGER NOT NULL,
+    brier_score REAL NOT NULL,
+    ece REAL NOT NULL,
+    log_loss REAL,
+    accuracy REAL,
+    bin_data_json TEXT,
+    UNIQUE(model_type, player_count, period_month)
+);
+
+CREATE INDEX IF NOT EXISTS idx_std_calib_lookup ON standard_calibration(model_type, player_count, period_month);
+CREATE INDEX IF NOT EXISTS idx_std_calib_pc_month ON standard_calibration(player_count, period_month);
+
+CREATE TABLE IF NOT EXISTS delta_config (
+    id INTEGER PRIMARY KEY CHECK (id = 1),
+    active_snapshot_file TEXT,
+    cutoff_date TEXT,
+    description TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS webmaster_notes (
+    key TEXT PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    updated_at TEXT
+);
+
+CREATE TABLE IF NOT EXISTS faq_sections (
+    key TEXT PRIMARY KEY,
+    title TEXT,
+    content TEXT,
+    updated_at TEXT
+);
+CREATE TABLE IF NOT EXISTS cms_content_blocks (
+    page_id TEXT NOT NULL,
+    block_key TEXT NOT NULL,
+    title TEXT,
+    content_html TEXT,
+    content_markdown TEXT,
+    is_deleted INTEGER DEFAULT 0,
+    relative_to TEXT,
+    placement TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_custom_card INTEGER DEFAULT 0,
+    updated_at TEXT,
+    PRIMARY KEY (page_id, block_key)
+);
 """
 
 def get_connection(db_path=None):
     path = db_path or DEFAULT_DB_PATH
     Path(path).parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(path))
+    conn = sqlite3.connect(str(path), timeout=60.0)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA foreign_keys = ON;')
     conn.execute('PRAGMA journal_mode = WAL;')
+    conn.execute('PRAGMA busy_timeout = 60000;')
     return conn
 
 def init_db(db_path=None):
@@ -173,7 +237,15 @@ def init_db(db_path=None):
         except sqlite3.OperationalError:
             pass
         try:
+            conn.execute("ALTER TABLE matches ADD COLUMN replay_code TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
             conn.execute("ALTER TABLE pairwise_matches ADD COLUMN glicko_eligible INTEGER NOT NULL DEFAULT 1")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE players ADD COLUMN badge_reason TEXT")
         except sqlite3.OperationalError:
             pass
         for col, col_def in [
@@ -187,7 +259,200 @@ def init_db(db_path=None):
                 conn.execute(f"ALTER TABLE yearly_player_stats ADD COLUMN {col} {col_def}")
             except sqlite3.OperationalError:
                 pass
+
+        # Migrate cms_content_blocks columns
+        for col, col_def in [
+            ('is_deleted', 'INTEGER DEFAULT 0'),
+            ('relative_to', 'TEXT'),
+            ('placement', 'TEXT'),
+            ('sort_order', 'INTEGER DEFAULT 0'),
+            ('is_custom_card', 'INTEGER DEFAULT 0')
+        ]:
+            try:
+                conn.execute(f"ALTER TABLE cms_content_blocks ADD COLUMN {col} {col_def}")
+            except sqlite3.OperationalError:
+                pass
+
+        # Migrate existing faq_sections into cms_content_blocks
+        try:
+            conn.execute("""
+                INSERT OR IGNORE INTO cms_content_blocks (page_id, block_key, title, content_html, content_markdown, updated_at)
+                SELECT 'faq', key, title, content, content, updated_at FROM faq_sections
+            """)
+        except sqlite3.OperationalError:
+            pass
     conn.close()
+
+def get_all_cms_blocks(conn=None):
+    """Returns a dictionary of all custom CMS blocks keyed by (page_id, block_key)."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        cur = conn.execute("""
+            SELECT page_id, block_key, title, content_html, content_markdown,
+                   is_deleted, relative_to, placement, sort_order, is_custom_card, updated_at
+            FROM cms_content_blocks
+        """)
+        rows = cur.fetchall()
+        return {(r['page_id'], r['block_key']): dict(r) for r in rows}
+    finally:
+        if close_after:
+            conn.close()
+
+def save_cms_block(page_id: str, block_key: str, title: str, content_html: str, content_markdown: str,
+                   relative_to: str = None, placement: str = None, sort_order: int = 0,
+                   is_custom_card: int = 0, is_deleted: int = 0, conn=None):
+    """Persists an updated CMS block to the database."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        with conn:
+            conn.execute("""
+                INSERT INTO cms_content_blocks (
+                    page_id, block_key, title, content_html, content_markdown,
+                    is_deleted, relative_to, placement, sort_order, is_custom_card, updated_at
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(page_id, block_key) DO UPDATE SET
+                    title = excluded.title,
+                    content_html = excluded.content_html,
+                    content_markdown = excluded.content_markdown,
+                    is_deleted = excluded.is_deleted,
+                    relative_to = COALESCE(excluded.relative_to, cms_content_blocks.relative_to),
+                    placement = COALESCE(excluded.placement, cms_content_blocks.placement),
+                    sort_order = excluded.sort_order,
+                    is_custom_card = excluded.is_custom_card,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (page_id, block_key, title, content_html, content_markdown,
+                  is_deleted, relative_to, placement, sort_order, is_custom_card))
+    finally:
+        if close_after:
+            conn.close()
+
+def delete_cms_block(page_id: str, block_key: str, conn=None):
+    """Marks a card as deleted (is_deleted = 1). If it's a default template card, creates an entry with is_deleted = 1."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        with conn:
+            cur = conn.execute("SELECT is_custom_card FROM cms_content_blocks WHERE page_id = ? AND block_key = ?", (page_id, block_key))
+            row = cur.fetchone()
+            if row:
+                conn.execute("UPDATE cms_content_blocks SET is_deleted = 1, updated_at = CURRENT_TIMESTAMP WHERE page_id = ? AND block_key = ?", (page_id, block_key))
+            else:
+                conn.execute("""
+                    INSERT INTO cms_content_blocks (page_id, block_key, title, content_html, content_markdown, is_deleted, is_custom_card, updated_at)
+                    VALUES (?, ?, '', '', '', 1, 0, CURRENT_TIMESTAMP)
+                """, (page_id, block_key))
+            return True
+    finally:
+        if close_after:
+            conn.close()
+
+def restore_cms_block(page_id: str, block_key: str, conn=None):
+    """Restores a deleted block (either unsets is_deleted for custom card, or deletes override for default card)."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        with conn:
+            cur = conn.execute("SELECT is_custom_card FROM cms_content_blocks WHERE page_id = ? AND block_key = ?", (page_id, block_key))
+            row = cur.fetchone()
+            if row:
+                if row['is_custom_card'] == 1:
+                    conn.execute("UPDATE cms_content_blocks SET is_deleted = 0, updated_at = CURRENT_TIMESTAMP WHERE page_id = ? AND block_key = ?", (page_id, block_key))
+                else:
+                    conn.execute("DELETE FROM cms_content_blocks WHERE page_id = ? AND block_key = ?", (page_id, block_key))
+                return True
+            return False
+    finally:
+        if close_after:
+            conn.close()
+
+def revert_cms_block(page_id: str, block_key: str, conn=None):
+    """Deletes an override from cms_content_blocks, reverting the block to template default."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        with conn:
+            cur = conn.execute("DELETE FROM cms_content_blocks WHERE page_id = ? AND block_key = ?", (page_id, block_key))
+            return cur.rowcount > 0
+    finally:
+        if close_after:
+            conn.close()
+
+def revert_all_cms_blocks(page_id: str = None, conn=None):
+    """Deletes all overrides (optionally filtered by page_id), reverting blocks to template defaults."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        with conn:
+            if page_id:
+                cur = conn.execute("DELETE FROM cms_content_blocks WHERE page_id = ?", (page_id,))
+            else:
+                cur = conn.execute("DELETE FROM cms_content_blocks")
+            return cur.rowcount
+    finally:
+        if close_after:
+            conn.close()
+
+def get_cms_block(page_id: str, block_key: str, conn=None):
+    """Fetches a single CMS block by page_id and block_key."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        cur = conn.execute("""
+            SELECT page_id, block_key, title, content_html, content_markdown,
+                   is_deleted, relative_to, placement, sort_order, is_custom_card, updated_at
+            FROM cms_content_blocks
+            WHERE page_id = ? AND block_key = ?
+        """, (page_id, block_key))
+        row = cur.fetchone()
+        return dict(row) if row else None
+    finally:
+        if close_after:
+            conn.close()
+
+def get_custom_cards(page_id: str = None, conn=None):
+    """Returns all active (non-deleted) custom-created cards, optionally filtered by page_id."""
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+    try:
+        if page_id:
+            cur = conn.execute("""
+                SELECT page_id, block_key, title, content_html, content_markdown,
+                       relative_to, placement, sort_order, updated_at
+                FROM cms_content_blocks
+                WHERE page_id = ? AND is_custom_card = 1 AND (is_deleted = 0 OR is_deleted IS NULL)
+                ORDER BY sort_order ASC, updated_at ASC
+            """, (page_id,))
+        else:
+            cur = conn.execute("""
+                SELECT page_id, block_key, title, content_html, content_markdown,
+                       relative_to, placement, sort_order, updated_at
+                FROM cms_content_blocks
+                WHERE is_custom_card = 1 AND (is_deleted = 0 OR is_deleted IS NULL)
+                ORDER BY sort_order ASC, updated_at ASC
+            """)
+        return [dict(r) for r in cur.fetchall()]
+    finally:
+        if close_after:
+            conn.close()
 
 def log_pipeline_update(conn, cutoff_date=None, matches_added=0, description=""):
     """Logs a webmaster update event for delta tracking."""

@@ -1,0 +1,597 @@
+{% extends "base.html" %}
+
+{% block title %}{{ player.name }} - Mode Comparison Matrix & Career Evaluation | Through the Ages{% endblock %}
+
+{% block extra_head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .matrix-header-card {
+    background: linear-gradient(135deg, rgba(28, 19, 13, 0.95), rgba(45, 30, 20, 0.9));
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.75rem 2rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+  }
+  .peak-year-card {
+    background: linear-gradient(135deg, rgba(35, 25, 12, 0.95), rgba(20, 14, 8, 0.95));
+    border: 1px solid rgba(229, 169, 60, 0.45);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    border-left: 5px solid var(--accent-gold);
+  }
+  .peak-year-badge {
+    font-size: 2.8rem;
+    line-height: 1;
+    background: rgba(229, 169, 60, 0.15);
+    border: 1px solid rgba(229, 169, 60, 0.3);
+    border-radius: 12px;
+    padding: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+  .matrix-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    margin-bottom: 2rem;
+    background: var(--surface-panel);
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid var(--border-subtle);
+  }
+  .matrix-table th {
+    background: rgba(30, 20, 14, 0.98);
+    color: var(--accent-gold);
+    padding: 1rem;
+    font-family: var(--font-heading);
+    font-size: 0.88rem;
+    letter-spacing: 0.5px;
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--border-subtle);
+  }
+  .matrix-table td {
+    padding: 1.1rem 1rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.3);
+    vertical-align: top;
+  }
+  .matrix-table tr:hover td {
+    background: rgba(229, 169, 60, 0.05);
+  }
+  .matrix-cell-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .matrix-val-primary {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #fff;
+  }
+  .matrix-val-c {
+    font-size: 0.88rem;
+    color: var(--accent-gold);
+    font-weight: 600;
+  }
+  .matrix-val-meta {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+  }
+  .career-history-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    font-size: 0.92rem;
+  }
+  .career-history-table th {
+    background: rgba(24, 16, 10, 0.95);
+    color: var(--accent-gold);
+    padding: 0.75rem 0.85rem;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid rgba(229, 169, 60, 0.2);
+    text-align: left;
+  }
+  .career-history-table td {
+    padding: 0.7rem 0.85rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+  }
+  .career-history-table tr.peak-row td {
+    background: rgba(229, 169, 60, 0.12);
+    font-weight: 600;
+  }
+  .year-filter-bar {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    background: rgba(18, 12, 8, 0.85);
+    padding: 0.4rem 0.75rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .chart-container-box {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Top Identity Card -->
+<div class="matrix-header-card">
+  <div>
+    <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.4rem; flex-wrap: wrap;">
+      <span class="flag-icon">{{ get_flag(player.country_code) }}</span>
+      <h1 style="font-size: 2rem; margin: 0; color: #fff; font-family: var(--font-heading);">
+        {{ player.name }}
+      </h1>
+      {% if player.title == 'WC' or player.name == 'a440' %}
+        <span class="badge-wc">💎 Reigning WC</span>
+      {% elif player.name == 'Martin_Pecheur' %}
+        <span class="badge-wc">💎 2024 WC</span>
+      {% elif player.name == 'Weidenbaum' %}
+        <span class="badge-wc">💎 2023 WC</span>
+      {% elif player.title %}
+        <span class="badge badge-{{ player.title.lower() }}">{{ player.title }}</span>
+      {% endif %}
+    </div>
+    <div style="color: var(--text-muted); font-size: 0.9rem;">
+      Cross-Mode Rating Matrix &bull; Career Peak Year Evaluation &bull; Format: <strong style="color: var(--accent-gold);">{{ formats.get(active_format, 'All Formats') }}</strong>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+    <a href="{{ url_for('player.profile', player_name=player.name, format=active_format) }}" class="btn-antique" style="text-decoration: none; font-size: 0.85rem;">
+      &laquo; Return to Profile
+    </a>
+    <a href="{{ url_for('player.player_achievements', player_name=player.name) }}" class="btn-reset" style="font-size: 0.85rem;">
+      🏆 Achievements &raquo;
+    </a>
+  </div>
+</div>
+
+<!-- Format Selector Bar -->
+<div class="format-bar" style="margin-bottom: 1rem;">
+  <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+    {% for f_id, f_name in formats.items() %}
+      <a href="?format={{ f_id }}{% if selected_year %}&year={{ selected_year }}{% endif %}" 
+         class="format-btn {% if active_format == f_id %}active{% endif %}">
+        {{ f_name }}
+      </a>
+    {% endfor %}
+  </div>
+  <div style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
+    Mode: <strong>All 9 Engine &times; Reset Combinations</strong>
+  </div>
+</div>
+
+<!-- Year Filter Bar -->
+<div class="year-filter-bar">
+  <span style="font-family: var(--font-heading); font-size: 0.8rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.35rem;">Snapshot Filter:</span>
+  <a href="?format={{ active_format }}" class="year-pill {% if not selected_year %}active{% endif %}">
+    All-Time (Live)
+  </a>
+  {% for y in available_years %}
+    <a href="?format={{ active_format }}&year={{ y }}" class="year-pill {% if selected_year == y %}active{% endif %}">
+      {{ y }}
+    </a>
+  {% endfor %}
+</div>
+
+<!-- Peak Career Year Evaluation Banner -->
+{% if best_year %}
+<div class="peak-year-card">
+  <div class="peak-year-badge">👑</div>
+  <div style="flex-grow: 1;">
+    <div style="font-family: var(--font-heading); font-size: 0.82rem; color: var(--accent-gold); text-transform: uppercase; letter-spacing: 0.5px;">
+      Career Benchmark Evaluation
+    </div>
+    <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">
+      Peak Career Season: <span style="color: var(--accent-gold);">{{ best_year.year }}</span>
+      {% if best_year.is_wc %}
+        <span class="badge-wc" style="font-size: 0.75rem; margin-left: 0.5rem;">💎 World Champion</span>
+      {% endif %}
+    </div>
+    <div style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5;">
+      In {{ best_year.year }}, <strong>{{ player.name }}</strong> achieved a dominant <strong>{{ best_year.win_rate }}% win rate</strong> across <strong>{{ best_year.opps }} competitive matches</strong> ({{ best_year.wins }} wins, {{ best_year.losses }} losses)
+      {% if best_year.peak_rating %}
+        with a seasonal peak rating of <strong style="color: #ffd54f;">{{ best_year.peak_rating }}</strong>
+      {% endif %}
+      (Composite Performance Index: <strong style="color: var(--accent-gold);">{{ best_year.score }} pts</strong>).
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- The 3x3 Model x Reset Mode Matrix Card -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+    <div>
+      <h2 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.35rem; margin: 0 0 0.25rem 0;">
+        📊 Rating Model &times; Reset Mode Comparison Matrix
+      </h2>
+      <p style="color: var(--text-muted); font-size: 0.85rem; margin: 0;">
+        Direct multi-paradigm rating cross-reference in <strong style="color: var(--accent-gold);">{{ formats.get(active_format, 'All Formats') }}</strong>.
+      </p>
+    </div>
+    <span style="font-family: var(--font-stats); font-size: 0.85rem; color: #ffde8a; background: rgba(0,0,0,0.4); padding: 0.3rem 0.75rem; border-radius: 4px; border: 1px solid var(--border-subtle);">
+      {% if selected_year %}Snapshot: End of Season {{ selected_year }}{% else %}Current Live Ratings{% endif %}
+    </span>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="matrix-table" style="margin-bottom: 0;">
+      <thead>
+        <tr>
+          <th style="width: 25%; text-align: left;">Rating Engine</th>
+          <th style="width: 25%;">Continuous (Career)</th>
+          <th style="width: 25%;">Soft Reset (&phi;)</th>
+          <th style="width: 25%;">Amplified / Softer Reset</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- GlickoD* -->
+        <tr style="background: rgba(229, 169, 60, 0.08); border-left: 3px solid #b8860b;">
+          <td>
+            <div style="font-weight: 700; color: #ffd54f; font-size: 1.05rem;">👑 GlickoD*</div>
+            <div style="font-size: 0.8rem; color: #c7a76d; margin-top: 0.2rem;">φ^(N-2) MP decomposition &amp; 15-game re-calibration</div>
+          </td>
+          {% for r_mode in ['continuous', 'soft', 'softer'] %}
+            {% set cell = matrix_cells.get(('glicko2_daneo', r_mode), {}) %}
+            <td>
+              {% if cell.rating %}
+                <div class="matrix-cell-box">
+                  <div class="matrix-val-primary" style="color: #ffde8a;">{{ cell.rating }} <span style="font-size: 0.85rem; color: #c7a76d; font-weight: 500;">&plusmn;{{ cell.rd }}</span></div>
+                  <div class="matrix-val-c" style="color: #ffd54f;">C: {{ cell.c_rating }}</div>
+                  {% if cell.rank %}
+                    <div class="matrix-val-meta">Rank: <strong style="color: #ffd54f;">#{{ cell.rank }}</strong></div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span style="color: #665544;">Unranked</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Glicko-2 Standard -->
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Glicko-2 Standard</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Naive 1v1 pairwise baseline</div>
+          </td>
+          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+            {% set cell = matrix_cells.get(('glicko2_std', r_mode), {}) %}
+            <td>
+              {% if cell.rating %}
+                <div class="matrix-cell-box">
+                  <div class="matrix-val-primary">{{ cell.rating }} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">&plusmn;{{ cell.rd }}</span></div>
+                  <div class="matrix-val-c">C: {{ cell.c_rating }}</div>
+                  {% if cell.rank %}
+                    <div class="matrix-val-meta">Rank: <strong style="color: #fff;">#{{ cell.rank }}</strong></div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span style="color: #665544;">Unranked</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Glicko-2 MP-Weighted -->
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Glicko-2 MP-Weighted</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Coulom fractional w=1/(N-1)</div>
+          </td>
+          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+            {% set cell = matrix_cells.get(('glicko2_mp', r_mode), {}) %}
+            <td>
+              {% if cell.rating %}
+                <div class="matrix-cell-box">
+                  <div class="matrix-val-primary">{{ cell.rating }} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">&plusmn;{{ cell.rd }}</span></div>
+                  <div class="matrix-val-c">C: {{ cell.c_rating }}</div>
+                  {% if cell.rank %}
+                    <div class="matrix-val-meta">Rank: <strong style="color: #fff;">#{{ cell.rank }}</strong></div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span style="color: #665544;">Unranked</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Glicko-2 Adaptive-T -->
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #4ade80; font-size: 1.05rem;">Glicko-2 Adaptive-T</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Format-specific temperature $T(P, N)$</div>
+          </td>
+          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+            {% set cell = matrix_cells.get(('glicko2_adapt', r_mode), {}) %}
+            <td>
+              {% if cell.rating %}
+                <div class="matrix-cell-box" style="border-color: rgba(34, 197, 94, 0.3);">
+                  <div class="matrix-val-primary" style="color: #4ade80;">{{ cell.rating }} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">&plusmn;{{ cell.rd }}</span></div>
+                  <div class="matrix-val-c" style="color: #22c55e;">C: {{ cell.c_rating }}</div>
+                  {% if cell.rank %}
+                    <div class="matrix-val-meta">Rank: <strong style="color: #4ade80;">#{{ cell.rank }}</strong></div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span style="color: #665544;">Unranked</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+
+        <!-- Whole-History Rating (WHR) -->
+        <tr>
+          <td>
+            <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Whole-History Rating (WHR)</div>
+            <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Retrospective Brownian MAP</div>
+          </td>
+          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+            {% set cell = matrix_cells.get(('whr', r_mode), {}) %}
+            <td>
+              {% if cell.rating %}
+                <div class="matrix-cell-box">
+                  <div class="matrix-val-primary">{{ cell.rating }} <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: 500;">&plusmn;{{ cell.rd }}</span></div>
+                  <div class="matrix-val-c">C: {{ cell.c_rating }}</div>
+                  {% if cell.rank %}
+                    <div class="matrix-val-meta">Rank: <strong style="color: #fff;">#{{ cell.rank }}</strong></div>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span style="color: #665544;">Unranked</span>
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Reset Modes Trajectory Comparison Chart Card with Engine Switcher -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0 0 0.25rem 0;">
+        📈 Reset Mode Trajectory Comparison (<span id="chartActiveEngineName">{{ active_model_name }}</span>)
+      </h3>
+      <span style="font-size: 0.82rem; color: var(--text-muted);">
+        Continuous vs Soft Reset (&phi;) vs Amplified Reset (&phi;&sup2;) across career history
+      </span>
+    </div>
+
+    <!-- Dynamic Rating Engine Switcher Toolbar -->
+    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+      <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.25rem;">Engine:</span>
+      <button type="button" id="btnEngineStd" class="format-btn {% if active_model == 'glicko2_std' %}active{% endif %}" onclick="switchChartEngine('glicko2_std', 'Glicko-2 Standard')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+        Glicko-2 Std
+      </button>
+      <button type="button" id="btnEngineMp" class="format-btn {% if active_model == 'glicko2_mp' %}active{% endif %}" onclick="switchChartEngine('glicko2_mp', 'Glicko-2 MP-Weighted')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+        Glicko-2 MP
+      </button>
+      <button type="button" id="btnEngineAdapt" class="format-btn {% if active_model == 'glicko2_adapt' %}active{% endif %}" onclick="switchChartEngine('glicko2_adapt', 'Glicko-2 Adaptive-T')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+        Adaptive-T
+      </button>
+      <button type="button" id="btnEngineWhr" class="format-btn {% if active_model == 'whr' %}active{% endif %}" onclick="switchChartEngine('whr', 'Whole-History Rating (WHR)')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+        WHR
+      </button>
+    </div>
+  </div>
+
+  <div style="position: relative; height: 320px; width: 100%;">
+    <canvas id="resetModesChart"></canvas>
+  </div>
+</div>
+
+<!-- Career Year-by-Year Performance Breakdown Table -->
+<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0 0 0.25rem 0;">
+        📅 Year-by-Year Career Breakdown
+      </h3>
+      <span style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
+        {{ career_history|length }} Seasons Recorded &bull; Format: {{ formats.get(active_format, 'All Formats') }}
+      </span>
+    </div>
+    <span style="font-size: 0.8rem; color: var(--text-muted);">
+      Hover on <strong style="color: var(--accent-gold);">ℹ️ Score Index</strong> for composite formula details
+    </span>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="career-history-table">
+      <thead>
+        <tr>
+          <th>Year</th>
+          <th>Season Opps</th>
+          <th>Season W-L-D</th>
+          <th>Season Win %</th>
+          <th>Peak Rating</th>
+          <th>Year-End Rating</th>
+          <th>Career Opps</th>
+          <th>Career Win %</th>
+          <th>
+            Score Index
+            <span data-tooltip="Composite Performance Index: Evaluates career seasons balancing win rate (wr × 2.0), match volume (wins × 1.5), peak rating bonus, and World Championship title prestige to objectively rank peak performance." style="cursor: help; color: var(--accent-gold); margin-left: 0.25rem;">ℹ️</span>
+          </th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for yr in career_history %}
+          <tr class="{% if best_year and best_year.year == yr.year %}peak-row{% endif %}">
+            <td>
+              <strong style="color: #fff;">{{ yr.year }}</strong>
+              {% if yr.is_wc %}<span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.3rem;">WC</span>{% endif %}
+            </td>
+            <td>{{ yr.opps }}</td>
+            <td>
+              <span style="color: #66bb6a;">{{ yr.wins }}</span> - 
+              <span style="color: #ef5350;">{{ yr.losses }}</span> - 
+              <span style="color: #ffa726;">{{ yr.draws }}</span>
+            </td>
+            <td><strong>{{ yr.win_rate }}%</strong></td>
+            <td><strong style="color: #ffd54f;">{{ yr.peak_rating or '-' }}</strong></td>
+            <td>{{ yr.year_end_rating or '-' }}</td>
+            <td>{{ yr.career_opps }}</td>
+            <td>{{ yr.career_win_rate }}%</td>
+            <td style="color: var(--accent-gold); font-weight: 700;">{{ yr.score }}</td>
+            <td>
+              {% if best_year and best_year.year == yr.year %}
+                <span class="badge" style="background: rgba(229, 169, 60, 0.25); color: #ffd700; border: 1px solid #ffd700; font-size: 0.75rem;">👑 Peak Career Year</span>
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">Active</span>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let trajectoryChart = null;
+  const rawChartData = {{ chart_json|safe }};
+  let currentEngine = rawChartData.active_model || 'glicko2_std';
+
+  function initOrUpdateChart(engineKey) {
+    const ctx = document.getElementById('resetModesChart');
+    if (!ctx || !rawChartData.labels || rawChartData.labels.length === 0) return;
+
+    const engData = rawChartData[engineKey] || rawChartData.glicko2_std || {};
+    const contSeries = engData.continuous || [];
+    const softSeries = engData.soft || [];
+    const ampSeries = engData.amplified || [];
+
+    if (trajectoryChart) {
+      trajectoryChart.data.datasets[0].data = contSeries;
+      trajectoryChart.data.datasets[1].data = softSeries;
+      trajectoryChart.data.datasets[2].data = ampSeries;
+      trajectoryChart.update();
+      return;
+    }
+
+    trajectoryChart = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: rawChartData.labels,
+        datasets: [
+          {
+            label: 'Continuous (Career)',
+            data: contSeries,
+            borderColor: '#e5a93c',
+            backgroundColor: 'rgba(229, 169, 60, 0.15)',
+            borderWidth: 2.5,
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            tension: 0.1,
+            spanGaps: true
+          },
+          {
+            label: 'Soft Reset (φ)',
+            data: softSeries,
+            borderColor: '#60a5fa',
+            backgroundColor: 'rgba(96, 165, 250, 0.15)',
+            borderWidth: 2,
+            borderDash: [5, 5],
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            tension: 0.1,
+            spanGaps: true
+          },
+          {
+            label: 'Amplified Reset (φ²)',
+            data: ampSeries,
+            borderColor: '#a855f7',
+            backgroundColor: 'rgba(168, 85, 247, 0.15)',
+            borderWidth: 2,
+            borderDash: [2, 2],
+            pointRadius: 2,
+            pointHoverRadius: 5,
+            tension: 0.1,
+            spanGaps: true
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: {
+          mode: 'index',
+          intersect: false
+        },
+        plugins: {
+          legend: {
+            position: 'top',
+            labels: {
+              color: '#d0c0b0',
+              font: { family: 'Cinzel, Georgia, serif', size: 12 }
+            }
+          },
+          tooltip: {
+            backgroundColor: 'rgba(20, 13, 8, 0.95)',
+            titleColor: '#e5a93c',
+            bodyColor: '#f5efe6',
+            borderColor: '#5c4028',
+            borderWidth: 1
+          }
+        },
+        scales: {
+          x: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#8c7662', font: { family: 'Share Tech Mono, monospace' } }
+          },
+          y: {
+            grid: { color: 'rgba(255, 255, 255, 0.05)' },
+            ticks: { color: '#8c7662', font: { family: 'Share Tech Mono, monospace' } }
+          }
+        }
+      }
+    });
+  }
+
+  function switchChartEngine(engineKey, engineName) {
+    currentEngine = engineKey;
+    document.getElementById('chartActiveEngineName').textContent = engineName;
+    document.getElementById('btnEngineStd').classList.toggle('active', engineKey === 'glicko2_std');
+    document.getElementById('btnEngineMp').classList.toggle('active', engineKey === 'glicko2_mp');
+    const btnAdapt = document.getElementById('btnEngineAdapt');
+    if (btnAdapt) btnAdapt.classList.toggle('active', engineKey === 'glicko2_adapt');
+    document.getElementById('btnEngineWhr').classList.toggle('active', engineKey === 'whr');
+    initOrUpdateChart(engineKey);
+  }
+
+  document.addEventListener('DOMContentLoaded', function() {
+    initOrUpdateChart(currentEngine);
+  });
+</script>
+{% endblock %}

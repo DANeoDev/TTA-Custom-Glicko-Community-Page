@@ -1,0 +1,593 @@
+{% extends "base.html" %}
+
+{% block title %}Webmaster Operations Dashboard - Through the Ages{% endblock %}
+
+{% block content %}
+<style>
+  .admin-tooltip {
+    position: relative;
+    display: inline-block;
+  }
+  .admin-tooltip .tooltip-popup {
+    visibility: hidden;
+    width: 320px;
+    background-color: rgba(22, 14, 10, 0.98);
+    color: #f5eedb;
+    text-align: left;
+    border: 1.5px solid var(--accent-gold);
+    border-radius: 6px;
+    padding: 0.85rem 1rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+    position: absolute;
+    z-index: 1000;
+    top: calc(100% + 8px);
+    left: 50%;
+    transform: translateX(-50%);
+    opacity: 0;
+    transition: opacity 0.2s ease, transform 0.2s ease;
+    pointer-events: none;
+  }
+  .admin-tooltip:hover .tooltip-popup {
+    visibility: visible;
+    opacity: 1;
+    transform: translateX(-50%) translateY(2px);
+  }
+  .admin-tooltip .tooltip-popup::before {
+    content: "";
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    margin-left: -6px;
+    border-width: 6px;
+    border-style: solid;
+    border-color: transparent transparent var(--accent-gold) transparent;
+  }
+</style>
+<div class="content-container" style="max-width: 1400px; margin: 2rem auto; padding: 0 1.5rem;">
+
+  <!-- Header Panel -->
+  <div class="analysis-hero-card" style="margin-bottom: 2rem;">
+    <div>
+      <h2 class="analysis-hero-title">Webmaster Operations & Pipeline Control</h2>
+      <p class="analysis-hero-desc">
+        Manage live tournament sources, crawl CGE match results with automated rate-limiting, preview dry-run diffs with safety backups, and maintain rating integrity.
+      </p>
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+      <div class="admin-tooltip">
+        <a href="{{ url_for('admin.consistency') }}" class="btn-antique" style="font-size: 0.88rem;">
+          Sanity & Consistency Check &#9432;
+        </a>
+        <div class="tooltip-popup">
+          <div style="font-weight: 700; color: var(--accent-gold); margin-bottom: 0.35rem;">&#128737; Sanity &amp; Consistency Audit</div>
+          Cross-references match outcomes in SQLite &amp; CSV against official tournament standings (<code>result.csv</code> or source tables). Verifies player win/loss records, point totals, and detects any discrepancies or unrecorded matches.
+        </div>
+      </div>
+      <form method="POST" action="{{ url_for('admin.recompute') }}" style="display: inline;" onsubmit="return confirm('Trigger rating calculation pipeline across all formats in background?');">
+        <button type="submit" class="btn-tournament-achievements" style="cursor: pointer; border: none; font-size: 0.88rem;">
+          Recompute Ratings (All Formats)
+        </button>
+      </form>
+      <a href="{{ url_for('admin.logout') }}" style="color: var(--text-muted); font-size: 0.85rem; padding: 0.4rem 0.8rem; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px;">
+        Logout
+      </a>
+    </div>
+  </div>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      {% for category, message in messages %}
+        <div style="padding: 1.15rem 1.4rem; border-radius: 8px; margin-bottom: 1.75rem; font-size: 0.96rem; line-height: 1.6; display: flex; align-items: flex-start; gap: 0.85rem; box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+                    {% if category == 'success' %}background: rgba(14, 38, 20, 0.96); border: 1.5px solid #66bb6a; color: #f1f8e9;
+                    {% elif category == 'error' %}background: rgba(45, 12, 12, 0.96); border: 1.5px solid #ef5350; color: #ffebee;
+                    {% elif category == 'warning' %}background: rgba(42, 26, 10, 0.98); border: 1.5px solid #ffa726; color: #fff8e1;
+                    {% else %}background: rgba(12, 28, 48, 0.96); border: 1.5px solid #42a5f5; color: #e3f2fd;{% endif %}">
+          <span style="font-size: 1.3rem; line-height: 1;">
+            {% if category == 'success' %}&#9989;
+            {% elif category == 'error' %}&#10060;
+            {% elif category == 'warning' %}&#9888;&#65039;
+            {% else %}&#8505;&#65039;{% endif %}
+          </span>
+          <div style="flex: 1;">
+            {{ message | safe }}
+          </div>
+        </div>
+      {% endfor %}
+    {% endif %}
+  {% endwith %}
+
+  <!-- Metrics Grid -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-subheading); letter-spacing: 0.5px;">Matches Ingested</div>
+      <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-gold); font-family: var(--font-heading); margin: 0.4rem 0;">{{ "{:,}".format(matches_count) }}</div>
+      <div style="font-size: 0.82rem; color: #a99684;">Pairwise Games: {{ "{:,}".format(pairwise_count) }}</div>
+    </div>
+
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-subheading); letter-spacing: 0.5px;">Latest Match Date</div>
+      <div style="font-size: 1.6rem; font-weight: 700; color: #f5eedb; font-family: var(--font-heading); margin: 0.4rem 0;">{{ latest_match_date }}</div>
+      <div style="font-size: 0.82rem; color: #a99684;">Historical Database Intact</div>
+    </div>
+
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-subheading); letter-spacing: 0.5px;">Unique Players</div>
+      <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent-gold); font-family: var(--font-heading); margin: 0.4rem 0;">{{ "{:,}".format(players_count) }}</div>
+      <div style="font-size: 0.82rem; color: #a99684;">Active Database Profiles</div>
+    </div>
+
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-subheading); letter-spacing: 0.5px;">CGE Scraper Credentials</div>
+      <div style="font-size: 1.4rem; font-weight: 700; margin: 0.4rem 0; color: {% if has_cge_auth %}#81c784{% else %}#ffb74d{% endif %};">
+        {% if has_cge_auth %}&#10004; Configured ({{ auth_method }}){% else %}&#9888; Missing (.env){% endif %}
+      </div>
+      <div style="font-size: 0.82rem; color: #a99684;">
+        {% if has_cge_auth %}Authenticated access active{% else %}Set CGE_USERNAME in .env for private tournaments{% endif %}
+      </div>
+    </div>
+  </div>
+
+  {% if added_tournaments_summary %}
+  <!-- Panel: Newly Ingested Tournaments & Stages -->
+  <div style="background: rgba(20, 16, 10, 0.95); border: 1.5px solid var(--accent-gold); border-radius: 8px; padding: 1.25rem 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin: 0; display: flex; align-items: center; gap: 0.5rem;">
+        <span>&#127942;</span> Newly Ingested Tournaments &amp; Stages (Included in Recomputation)
+      </h3>
+      <span style="background: rgba(229, 169, 60, 0.2); color: var(--accent-gold); font-size: 0.82rem; padding: 0.2rem 0.6rem; border-radius: 4px; font-weight: 600;">
+        {{ added_tournaments_summary|length }} Tournament Stages
+      </span>
+    </div>
+    <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 0.75rem;">
+      The following tournaments and stages will be applied when you click <strong>Recompute Ratings (All Formats)</strong>:
+    </p>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 0.5rem; background: rgba(10, 7, 5, 0.6); padding: 0.85rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.06); max-height: 240px; overflow-y: auto;">
+      {% for item in added_tournaments_summary %}
+      <div style="display: flex; align-items: center; gap: 0.5rem; font-family: monospace; font-size: 0.85rem; color: #fff8e1;">
+        <span style="color: #81c784;">&#10004;</span>
+        <span>{{ item }}</span>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- Panel 1: Auto-Register Tournament (Full-Width Card) -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 0.75rem;">
+      Add Tournament / Source
+    </h3>
+    <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem; line-height: 1.5;">
+      Paste a CGE tournament URL or Google Sheets link. The system will automatically create the tournament folder in <code>data/tournaments/</code>, register the source file, and save any attached results.
+    </p>
+
+    <form method="POST" action="{{ url_for('admin.add_tournament') }}" enctype="multipart/form-data">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1rem;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; color: #f5eedb; margin-bottom: 0.35rem;">Tournament Page URL *</label>
+          <input type="url" name="source_url" required placeholder="https://account.czechgames.com/tournaments/detail/5703"
+                 style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(18, 12, 8, 0.9); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.9rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; color: #f5eedb; margin-bottom: 0.35rem;">Tournament Name / Folder (Optional)</label>
+          <input type="text" name="tournament_name" placeholder="Auto-inferred if left blank (e.g. Royal_League)"
+                 style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(18, 12, 8, 0.9); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.9rem;">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1rem; margin-bottom: 1.25rem;">
+        <div>
+          <label style="display: block; font-size: 0.85rem; color: #f5eedb; margin-bottom: 0.35rem;">Online Standings Page URL (Optional Google Sheet or Result Link)</label>
+          <input type="url" name="standings_url" placeholder="https://docs.google.com/spreadsheets/d/... (Auto-syncs live standings into sanity checks)"
+                 style="width: 100%; padding: 0.6rem 0.8rem; background: rgba(18, 12, 8, 0.9); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.9rem;">
+        </div>
+
+        <div>
+          <label style="display: block; font-size: 0.85rem; color: #f5eedb; margin-bottom: 0.35rem;">Attach Standings / Result Table (Optional .csv file)</label>
+          <input type="file" name="result_csv_file" accept=".csv,.txt"
+                 style="width: 100%; padding: 0.4rem 0; color: #a99684; font-size: 0.85rem;">
+        </div>
+      </div>
+
+      <div style="margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; background: rgba(18, 12, 8, 0.7); padding: 0.5rem 0.75rem; border-radius: 5px; border: 1px solid var(--border-subtle);">
+        <input type="checkbox" name="glicko_eligible" id="glicko_eligible" value="1" checked style="width: 18px; height: 18px; accent-color: var(--accent-gold);">
+        <label for="glicko_eligible" style="font-size: 0.88rem; color: #f5eedb; cursor: pointer;">
+          <strong>Glicko-2 &amp; WHR Eligible</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(Uncheck for casual / Swiss exhibition cups like Q&amp;D)</span>
+        </label>
+      </div>
+
+      <button type="submit" class="btn-antique" style="font-size: 0.95rem; padding: 0.65rem 1.5rem;">
+        Auto-Create &amp; Register Tournament
+      </button>
+    </form>
+  </div>
+
+  <!-- Dedicated Panel: Rating Update Delta Period (Snapshot Baseline Management) -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+      <div>
+        <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0 0 0.25rem 0; display: flex; align-items: center; gap: 0.5rem;">
+          <span>&#9194;</span> Rating Update Delta Period
+        </h3>
+        <div style="color: var(--text-muted); font-size: 0.85rem;">
+          Controls the historical snapshot matchdata CSV that defines the <strong>"Since Last Webmaster Update"</strong> delta window.
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <form method="POST" action="{{ url_for('admin.refresh_snapshots') }}" style="margin: 0;">
+          <button type="submit" class="btn-antique" style="font-size: 0.82rem; padding: 0.45rem 0.9rem;">
+            &#x21bb; Scan &amp; Refresh Snapshots
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Active Baseline Summary -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; background: rgba(18, 12, 8, 0.8); padding: 1rem 1.25rem; border-radius: 6px; border: 1px solid var(--border-subtle); margin-bottom: 1.25rem;">
+      <div>
+        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-subheading); letter-spacing: 0.5px;">Active Delta Baseline</div>
+        <div style="font-size: 1.1rem; font-weight: 600; color: #ffd700; font-family: var(--font-stats); margin-top: 0.2rem;">
+          {% if active_delta_config and active_delta_config.active_snapshot_file %}
+            <code>{{ active_delta_config.active_snapshot_file }}</code> (Cutoff Date: <strong>{{ active_delta_config.cutoff_date or 'Auto' }}</strong>)
+          {% else %}
+            <span style="color: var(--text-muted);">Auto-Penultimate Snapshot (Default)</span>
+          {% endif %}
+        </div>
+      </div>
+      <div style="font-size: 0.82rem; color: var(--text-muted);">
+        Updated: {{ active_delta_config.updated_at if active_delta_config else 'Initial Default' }}
+      </div>
+    </div>
+
+    {% if snapshots %}
+      <form method="POST" action="{{ url_for('admin.select_delta_snapshot') }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+          <div style="font-size: 0.82rem; color: var(--text-muted);">
+            Select one or multiple snapshots to define the baseline. Selecting multiple files automatically uses the <strong>earliest match cutoff date</strong>, creating the maximum delta span.
+          </div>
+          <div style="display: flex; gap: 0.4rem;">
+            <button type="button" onclick="toggleAllSnapshots(true)" class="btn-antique" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">Select All</button>
+            <button type="button" onclick="toggleAllSnapshots(false)" class="btn-antique" style="font-size: 0.75rem; padding: 0.25rem 0.6rem;">Deselect All</button>
+          </div>
+        </div>
+
+        <div style="overflow-x: auto; margin-bottom: 1rem;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem; font-family: var(--font-stats);">
+            <thead>
+              <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--accent-gold); font-family: var(--font-subheading);">
+                <th style="padding: 0.6rem 0.5rem; text-align: center; width: 50px;">Select</th>
+                <th style="padding: 0.6rem 0.5rem;">Snapshot CSV File</th>
+                <th style="padding: 0.6rem 0.5rem;">Date</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center;">Creation Time (HH:MM)</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: right;">Matches</th>
+                <th style="padding: 0.6rem 0.5rem;">Date Range in File</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: right;">Size</th>
+                <th style="padding: 0.6rem 0.5rem; text-align: center; width: 80px;">Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in snapshots %}
+              <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3); {% if s.is_active %}background: rgba(229, 169, 60, 0.08);{% endif %}">
+                <td style="padding: 0.6rem 0.5rem; text-align: center;">
+                  <input type="checkbox" name="snapshot_filenames" value="{{ s.filename }}" class="snapshot-cb" {% if s.is_active %}checked{% endif %} style="width: 16px; height: 16px; accent-color: var(--accent-gold); cursor: pointer;">
+                </td>
+                <td style="padding: 0.6rem 0.5rem; font-weight: 600; color: #f5eedb;">
+                  <code>{{ s.filename }}</code>
+                  {% if s.is_active %}
+                    <span class="badge badge-gm" style="font-size: 0.7rem; padding: 2px 6px; margin-left: 0.4rem;">ACTIVE BASELINE</span>
+                  {% endif %}
+                </td>
+                <td style="padding: 0.6rem 0.5rem; color: #81c784;">{{ s.date }}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: center; color: #ffd700; font-family: monospace; font-size: 0.9rem;">{{ s.time }}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right; color: #ffd700;">{{ s.match_count }}</td>
+                <td style="padding: 0.6rem 0.5rem; color: var(--text-muted); font-size: 0.82rem;">{{ s.min_date }} &rarr; {{ s.max_date }}</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: right; color: var(--text-muted);">{{ s.size_kb }} KB</td>
+                <td style="padding: 0.6rem 0.5rem; text-align: center;">
+                  <button type="submit" form="del_snap_{{ loop.index }}" class="btn-antique" style="font-size: 0.75rem; padding: 2px 6px; background: rgba(239, 83, 80, 0.15); border-color: rgba(239, 83, 80, 0.4); color: #ef5350;" onclick="return confirm('Delete snapshot {{ s.filename }}?');" title="Delete Snapshot">
+                    &#10005;
+                  </button>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+
+        <div style="display: flex; justify-content: flex-end; gap: 0.75rem; align-items: center;">
+          <button type="submit" class="btn-antique" style="background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%); color: #1a1108 !important; font-weight: 700; font-size: 0.88rem; padding: 0.55rem 1.4rem;">
+            &#10003; Apply Selected Snapshot(s) as Delta Baseline (Max Delta Span)
+          </button>
+        </div>
+      </form>
+
+      <script>
+        function toggleAllSnapshots(checked) {
+          document.querySelectorAll('.snapshot-cb').forEach(cb => cb.checked = checked);
+        }
+      </script>
+
+      <!-- Separate hidden delete forms -->
+      {% for s in snapshots %}
+      <form id="del_snap_{{ loop.index }}" method="POST" action="{{ url_for('admin.delete_snapshot') }}" style="display: none;">
+        <input type="hidden" name="snapshot_filename" value="{{ s.filename }}">
+      </form>
+      {% endfor %}
+
+    {% else %}
+      <div style="background: rgba(18, 12, 8, 0.6); padding: 1.25rem; border-radius: 6px; text-align: center; color: var(--text-muted); font-size: 0.88rem;">
+        No snapshot CSV files found in <code>data/updates/</code>. Run a match import or click "Scan &amp; Refresh Snapshots" above.
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Tracked Tournaments Table Card with Integrated Scraper Options -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0 0 0.25rem 0;">
+          Tracked Tournament Directories ({{ tournaments|length }})
+        </h3>
+        <span style="font-size: 0.82rem; color: var(--text-muted);">Root: <code>data/tournaments/</code></span>
+      </div>
+      <button type="button" onclick="triggerScrapeAll()" class="btn-antique" style="background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%); color: #1a1108 !important; font-weight: 700; font-size: 0.92rem; padding: 0.6rem 1.2rem; cursor: pointer; border: none; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);">
+        ⚡ Scrape All Tracked Tournaments
+      </button>
+    </div>
+
+    <!-- Crawler Controls & Options Bar -->
+    <div style="background: rgba(18, 12, 8, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;">
+      <div style="font-size: 0.85rem; color: var(--accent-gold); font-weight: 700; margin-bottom: 0.6rem;">
+        &#9881;&#65039; Scraper Options (Applies to both individual tournament scrapes and 'Scrape All'):
+      </div>
+      <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; color: #f5eedb; cursor: pointer; margin: 0;">
+          <input type="checkbox" id="opt_crawl_all_stages" checked style="width: 17px; height: 17px; accent-color: var(--accent-gold); cursor: pointer;">
+          <span><strong>Crawl all stages / rounds</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(Survivors Cup, Worlds, French Open)</span></span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; color: #f5eedb; cursor: pointer; margin: 0;">
+          <input type="checkbox" id="opt_crawl_all_groups" checked style="width: 17px; height: 17px; accent-color: var(--accent-gold); cursor: pointer;">
+          <span><strong>Crawl all groups in season</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(Emperor, King, Prince... all divisions)</span></span>
+        </label>
+
+        <label style="display: flex; align-items: center; gap: 0.5rem; font-size: 0.86rem; color: #f5eedb; cursor: pointer; margin: 0;">
+          <input type="checkbox" id="opt_force_refresh" style="width: 17px; height: 17px; accent-color: var(--accent-gold); cursor: pointer;">
+          <span><strong>Force refresh cache</strong> <span style="color: var(--text-muted); font-size: 0.8rem;">(Unchecked = instant cache + skip ingested; Checked = re-download all)</span></span>
+        </label>
+      </div>
+
+      <div style="margin-top: 0.65rem; font-size: 0.8rem; color: #81c784; display: flex; align-items: center; gap: 0.4rem;">
+        <span>&#128737;</span>
+        <span><strong>Smart Ingestion Skip Active:</strong> Any stages/seasons already present in <code>all_matches.csv</code> (e.g. RL S1–S8, SC Stages 1–6) are automatically skipped unless Force Refresh is checked.</span>
+      </div>
+    </div>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.9rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border-subtle); text-align: left; color: var(--accent-gold); font-family: var(--font-subheading);">
+            <th style="padding: 0.75rem 0.5rem;">Folder Name</th>
+            <th style="padding: 0.75rem 0.5rem;">CGE Detail IDs</th>
+            <th style="padding: 0.75rem 0.5rem;">External Sheets / Standings</th>
+            <th style="padding: 0.75rem 0.5rem;">Result Files</th>
+            <th style="padding: 0.75rem 0.5rem; text-align: right;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tournaments %}
+          <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.4);">
+            <td style="padding: 0.75rem 0.5rem; font-weight: 600; color: #f5eedb;">
+              {% if t.cge_urls %}
+                <a href="{{ t.cge_urls[0] }}" target="_blank" style="color: #ffd700; text-decoration: underline; text-underline-offset: 3px;" title="Open CGE Tournament Detail Page &nearr;">{{ t.folder }} &nearr;</a>
+              {% elif t.cge_ids %}
+                <a href="https://account.czechgames.com/tournaments/detail/{{ t.cge_ids[0] }}" target="_blank" style="color: #ffd700; text-decoration: underline; text-underline-offset: 3px;" title="Open CGE Tournament Detail Page &nearr;">{{ t.folder }} &nearr;</a>
+              {% else %}
+                {{ t.folder }}
+              {% endif %}
+              {% if t.source_files %}
+                <div style="font-size: 0.75rem; color: var(--text-muted); font-weight: 400;">{{ t.source_files|join(', ') }}</div>
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem 0.5rem;">
+              {% if t.cge_ids %}
+                {% for cid in t.cge_ids %}
+                  <button type="button" onclick="triggerScrape('{{ cid }}', '{{ t.folder }}')" title="Scrape CGE #{{ cid }} using toolbar settings" style="background: rgba(229, 169, 60, 0.15); border: 1px solid var(--accent-gold); color: #ffd700; border-radius: 4px; padding: 3px 8px; font-size: 0.8rem; cursor: pointer; margin-right: 4px; display: inline-block;">
+                    #{{ cid }} &#x21bb;
+                  </button>
+                {% endfor %}
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">None detected</span>
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem 0.5rem;">
+              {% if t.standings_url %}
+                <a href="{{ t.standings_url }}" target="_blank" style="font-size: 0.82rem; color: #81c784; font-weight: 600; text-decoration: underline;" title="Live online standings source for sanity checks">&#127760; Live Standings &nearr;</a>
+              {% elif t.gsheet_urls %}
+                <a href="{{ t.gsheet_urls[0] }}" target="_blank" style="font-size: 0.8rem; color: #64b5f6; text-decoration: underline;">Google Sheet &nearr;</a>
+              {% elif t.other_urls %}
+                <a href="{{ t.other_urls[0] }}" target="_blank" style="font-size: 0.8rem; color: #64b5f6; text-decoration: underline;">Link &nearr;</a>
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">-</span>
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem 0.5rem;">
+              {% if t.result_files %}
+                <span style="color: #81c784; font-size: 0.82rem;">&#10004; {{ t.result_files|join(', ') }}</span>
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">No local table</span>
+              {% endif %}
+            </td>
+            <td style="padding: 0.75rem 0.5rem; text-align: right;">
+              <div style="display: flex; gap: 0.45rem; justify-content: flex-end; align-items: center; flex-wrap: wrap;">
+                {% if t.cge_ids %}
+                  <button type="button" onclick="triggerScrape('{{ t.cge_ids[0] }}', '{{ t.folder }}')" class="btn-antique" style="font-size: 0.78rem; padding: 0.25rem 0.65rem; cursor: pointer;">
+                    Scrape
+                  </button>
+                {% endif %}
+                <a href="{{ url_for('admin.edit_tournament', folder=t.folder) }}" class="btn-antique" style="font-size: 0.78rem; padding: 0.25rem 0.65rem; text-decoration: none;">
+                  Edit
+                </a>
+                <button type="button" onclick="confirmDeleteTournament('{{ t.folder }}')" style="background: rgba(239, 83, 80, 0.15); border: 1px solid #ef5350; color: #ef5350; border-radius: 4px; font-size: 0.78rem; padding: 0.25rem 0.55rem; cursor: pointer;" title="Delete '{{ t.folder }}' directory">
+                  &#128465;
+                </button>
+                <div class="admin-tooltip">
+                  <a href="{{ url_for('admin.consistency', tournament=t.folder) }}" style="font-size: 0.82rem; color: var(--accent-gold); text-decoration: underline; margin-left: 0.25rem;">
+                    Sanity Check
+                  </a>
+                  <div class="tooltip-popup" style="right: 0; left: auto; transform: none; width: 260px;">
+                    Audits {{ t.folder }} recorded matches against live online standings or official result tables.
+                  </div>
+                </div>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Hidden Scraper Submission Form -->
+  <form id="scrape-action-form" method="POST" style="display: none;">
+    <input type="hidden" name="tournament_id" id="scrape-target-id" value="">
+    <input type="hidden" name="tournament_folder" id="scrape-target-folder" value="">
+    <input type="hidden" name="crawl_all_stages" id="form-crawl-stages" value="1">
+    <input type="hidden" name="crawl_all_groups" id="form-crawl-groups" value="1">
+    <input type="hidden" name="force_refresh" id="form-force-refresh" value="0">
+  </form>
+
+  <script>
+    function getToolbarOptions() {
+      return {
+        crawlStages: document.getElementById('opt_crawl_all_stages') && document.getElementById('opt_crawl_all_stages').checked ? '1' : '0',
+        crawlGroups: document.getElementById('opt_crawl_all_groups') && document.getElementById('opt_crawl_all_groups').checked ? '1' : '0',
+        forceRefresh: document.getElementById('opt_force_refresh') && document.getElementById('opt_force_refresh').checked ? '1' : '0',
+      };
+    }
+
+    function triggerScrape(cid, folder) {
+      const opts = getToolbarOptions();
+      const form = document.getElementById('scrape-action-form');
+      document.getElementById('scrape-target-id').value = cid;
+      document.getElementById('scrape-target-folder').value = folder || '';
+      document.getElementById('form-crawl-stages').value = opts.crawlStages;
+      document.getElementById('form-crawl-groups').value = opts.crawlGroups;
+      document.getElementById('form-force-refresh').value = opts.forceRefresh;
+      form.action = "{{ url_for('admin.trigger_scrape') }}";
+      form.submit();
+    }
+
+    function triggerScrapeAll() {
+      const opts = getToolbarOptions();
+      const msg = opts.forceRefresh === '1'
+        ? "Force refresh is enabled. This will re-download all pages for all tracked tournaments from CGE. Proceed?"
+        : "Scrape all tracked tournaments? Already-ingested seasons and stages will be skipped automatically.";
+      if (!confirm(msg)) return;
+      const form = document.getElementById('scrape-action-form');
+      document.getElementById('form-crawl-stages').value = opts.crawlStages;
+      document.getElementById('form-crawl-groups').value = opts.crawlGroups;
+      document.getElementById('form-force-refresh').value = opts.forceRefresh;
+      form.action = "{{ url_for('admin.scrape_all_tournaments') }}";
+      form.submit();
+    }
+
+    function confirmDeleteTournament(folder) {
+      if (confirm(`Are you sure you want to completely delete the tournament directory '${folder}'? This action cannot be undone.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/admin/tournaments/delete/${encodeURIComponent(folder)}`;
+        document.body.appendChild(form);
+        form.submit();
+      }
+    }
+
+    function toggleEditSheetUrl() {
+      const c = document.getElementById('sheet_url_container');
+      if (c) {
+        c.style.display = (c.style.display === 'none' || !c.style.display) ? 'block' : 'none';
+        if (c.style.display === 'block') {
+          const input = document.getElementById('sheet_url_input');
+          if (input) input.focus();
+        }
+      }
+    }
+
+    function submitSyncLeaderboard() {
+      const f = document.getElementById('sync_leaderboard_form');
+      if (f) f.submit();
+    }
+  </script>
+
+  <!-- Dedicated Panel: Official Community Leaderboard Sync (Google Sheets) -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--accent-gold); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.4);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
+      <div>
+        <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0 0 0.25rem 0; display: flex; align-items: center; gap: 0.5rem;">
+          <span>&#127942;</span> Official Community Leaderboard Sync
+        </h3>
+        <div style="color: var(--text-muted); font-size: 0.85rem;">
+          Managed via Google Sheets &bull; Target edition: <strong>2026 (Rolling Q2)</strong>
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <a href="{{ url_for('community.index') }}" target="_blank" class="btn-antique" style="font-size: 0.85rem; padding: 0.45rem 1rem;">
+          &#128065; View Live Leaderboard &nearr;
+        </a>
+      </div>
+    </div>
+
+    <!-- Simplified Sync & Last Synchronized Row -->
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem; background: rgba(18, 12, 8, 0.8); padding: 1rem 1.25rem; border-radius: 6px; border: 1px solid var(--border-subtle); margin-bottom: 1rem;">
+      <div>
+        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-family: var(--font-subheading); letter-spacing: 0.5px;">Last Synchronized</div>
+        <div style="font-size: 1.15rem; font-weight: 600; color: #81c784; font-family: var(--font-stats); margin-top: 0.2rem;">
+          {{ community_stats.last_updated or 'Never' }}
+        </div>
+      </div>
+      <div style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" onclick="toggleEditSheetUrl()" class="btn-antique" style="font-size: 0.82rem; padding: 0.45rem 0.9rem; background: rgba(255,255,255,0.06); border: 1px solid var(--border-subtle); color: #f5eedb; cursor: pointer;">
+          &#9998; Edit Sheet URL
+        </button>
+        <button type="button" onclick="submitSyncLeaderboard()" class="btn-antique" style="background: linear-gradient(180deg, #d4af37 0%, #aa820a 100%); color: #1a1108 !important; font-weight: 700; font-size: 0.88rem; padding: 0.5rem 1.2rem; cursor: pointer; border: none; border-radius: 5px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); white-space: nowrap;">
+          &#9889; Sync from Google Sheet Now
+        </button>
+      </div>
+    </div>
+
+    <!-- Hidden by default Sheet URL edit form -->
+    <form id="sync_leaderboard_form" method="POST" action="{{ url_for('admin.sync_community_leaderboard') }}">
+      <div id="sheet_url_container" style="display: none; background: rgba(10, 7, 5, 0.6); padding: 0.85rem; border-radius: 6px; border: 1px solid rgba(255,255,255,0.08); margin-bottom: 0.5rem;">
+        <label style="display: block; font-size: 0.82rem; color: #f5eedb; margin-bottom: 0.35rem;">
+          Google Sheet URL (Public link or specific GID tab):
+        </label>
+        <input type="url" id="sheet_url_input" name="sheet_url" required value="{{ community_stats.sheet_url }}"
+               style="width: 100%; padding: 0.55rem 0.75rem; background: rgba(18, 12, 8, 0.9); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.85rem;">
+      </div>
+    </form>
+  </div>
+
+  <!-- Safety Backups Log -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin-bottom: 0.75rem;">
+      Dataset Safety Backups (data/raw/backups/)
+    </h3>
+    {% if backups %}
+      <div style="display: flex; gap: 0.75rem; flex-wrap: wrap;">
+        {% for b in backups %}
+          <div style="background: rgba(18, 12, 8, 0.8); border: 1px solid var(--border-subtle); border-radius: 5px; padding: 0.5rem 0.85rem; font-size: 0.82rem;">
+            <div style="color: #f5eedb; font-weight: 600;">{{ b.name }}</div>
+            <div style="color: var(--text-muted); font-size: 0.75rem;">{{ b.size_mb }} MB</div>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <p style="color: var(--text-muted); font-size: 0.85rem;">No backups created yet. Automatic backups will appear here before any append operation.</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+
+{% block title %}Scrape Diff Preview - Through the Ages{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem;">
+
+  <div class="analysis-hero-card" style="margin-bottom: 2rem;">
+    <div>
+      <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap;">
+        <h2 class="analysis-hero-title" style="margin-bottom: 0;">{{ title }}</h2>
+        <span style="font-size: 0.8rem; padding: 0.25rem 0.6rem; border-radius: 4px; font-weight: 700;
+                     {% if is_finished %}background: rgba(46, 125, 50, 0.35); border: 1px solid #81c784; color: #c8e6c9;
+                     {% else %}background: rgba(239, 108, 0, 0.35); border: 1px solid #ffb74d; color: #ffe0b2;{% endif %}">
+          {{ status_label }}
+        </span>
+      </div>
+      <p class="analysis-hero-desc">
+        Review candidate matches before merging into the permanent dataset. Historical data is strictly append-only.
+      </p>
+      {% if season_status_msg %}
+      <div style="margin-top: 0.6rem; font-size: 0.88rem; color: #ffb74d; background: rgba(255, 183, 77, 0.12); padding: 0.4rem 0.75rem; border-radius: 4px; border: 1px solid rgba(255, 183, 77, 0.3);">
+        &#8505;&#65039; {{ season_status_msg }}
+      </div>
+      {% endif %}
+    </div>
+    <div>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-antique" style="font-size: 0.88rem;">
+        &larr; Cancel & Return to Dashboard
+      </a>
+    </div>
+  </div>
+
+
+  <!-- Completeness Banner -->
+  {% if completeness %}
+  <div style="background: rgba(26, 17, 12, 0.92); border: 1.5px solid {% if completeness.is_complete %}#81c784{% else %}#ffa726{% endif %}; border-radius: 8px; padding: 1.1rem 1.4rem; margin-bottom: 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem;">
+    <div style="display: flex; align-items: center; gap: 0.85rem;">
+      <span style="font-size: 1.5rem;">{% if completeness.is_complete %}&#9989;{% else %}&#9203;{% endif %}</span>
+      <div>
+        <div style="font-weight: 700; font-size: 1.05rem; color: #f5eedb;">
+          Season Completeness Check:
+          <span style="color: {% if completeness.is_complete %}#81c784{% else %}#ffa726{% endif %};">
+            {% if completeness.is_complete %}Complete (100%){% else %}Partial ({{ completeness.completeness_pct }}%){% endif %}
+          </span>
+        </div>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+          {{ completeness.summary }} &bull; Formula: &sum; n&middot;(n-1)/2 per division
+        </div>
+      </div>
+    </div>
+    {% if completeness.incomplete_groups %}
+    <div style="font-size: 0.82rem; color: #ffcc80; background: rgba(255, 167, 38, 0.12); padding: 0.35rem 0.75rem; border-radius: 4px; border: 1px solid rgba(255, 167, 38, 0.3);">
+      {{ completeness.incomplete_groups|length }} group(s) have pending games
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Summary Cards -->
+  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; text-align: center;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Total Scraped Games</div>
+      <div style="font-size: 2rem; font-weight: 700; color: #f5eedb; font-family: var(--font-heading); margin-top: 0.4rem;">{{ total_scraped }}</div>
+    </div>
+
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; text-align: center;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Already In Database (Skipped)</div>
+      <div style="font-size: 2rem; font-weight: 700; color: #ffb74d; font-family: var(--font-heading); margin-top: 0.4rem;">{{ duplicates_count }}</div>
+    </div>
+
+    <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; text-align: center;">
+      <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Verified New Matches</div>
+      <div style="font-size: 2rem; font-weight: 700; color: #81c784; font-family: var(--font-heading); margin-top: 0.4rem;">{{ new_matches_count }}</div>
+    </div>
+  </div>
+
+  {% if new_matches_count > 0 %}
+  <!-- Commit Action Banner -->
+  <div style="background: rgba(46, 125, 50, 0.2); border: 1.5px solid #81c784; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 1rem;">
+    <div>
+      <h3 style="color: #c8e6c9; font-size: 1.15rem; margin-bottom: 0.25rem;">Ready to Append to Historical Dataset</h3>
+      <p style="color: #e8f5e9; font-size: 0.88rem;">
+        Clicking 'Approve & Append' will create a safety backup in <code>data/raw/backups/</code> and append {{ new_matches_count }} verified matches.
+      </p>
+    </div>
+    <form method="POST" action="{{ url_for('admin.commit_matches') }}">
+      <input type="hidden" name="token" value="{{ token }}">
+      <button type="submit" class="btn-antique" style="background: linear-gradient(180deg, #388e3c 0%, #1b5e20 100%); border-color: #81c784; color: #fff !important; font-size: 1rem; padding: 0.75rem 1.5rem;">
+        &#10004; Approve & Append {{ new_matches_count }} Matches
+      </button>
+    </form>
+  </div>
+
+  <!-- Matches Table Preview -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem;">
+    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.2rem; margin-bottom: 1rem;">
+      Discovered New Matches Preview (Showing up to {{ new_matches|length }})
+    </h3>
+
+    <div style="overflow-x: auto;">
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--accent-gold); text-align: left;">
+            <th style="padding: 0.6rem;">#</th>
+            <th style="padding: 0.6rem;">Tournament</th>
+            <th style="padding: 0.6rem;">Date</th>
+            <th style="padding: 0.6rem;">Format</th>
+            <th style="padding: 0.6rem;">Standings (Placement / Score)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for m in new_matches %}
+          <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.4);">
+            <td style="padding: 0.6rem; color: var(--text-muted);">{{ loop.index }}</td>
+            <td style="padding: 0.6rem; color: #f5eedb; font-weight: 600;">{{ m.tournament }}</td>
+            <td style="padding: 0.6rem; color: #a99684;">{{ m.date }}</td>
+            <td style="padding: 0.6rem; color: var(--accent-gold);">{{ m.player_count }}p</td>
+            <td style="padding: 0.6rem;">
+              {% for p, s in m.participants %}
+                <span style="display: inline-block; background: rgba(18, 12, 8, 0.8); border: 1px solid rgba(229, 169, 60, 0.3); border-radius: 4px; padding: 2px 6px; margin: 2px; font-size: 0.82rem;">
+                  <strong>{{ p }}</strong>: {{ s }}
+                </span>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% else %}
+  <div style="background: rgba(239, 108, 0, 0.2); border: 1.5px solid #ffb74d; border-radius: 8px; padding: 2rem; text-align: center;">
+    <h3 style="color: #ffe0b2; margin-bottom: 0.5rem;">No New Matches Detected</h3>
+    <p style="color: #fff3e0; font-size: 0.9rem;">
+      All {{ total_scraped }} scraped matches from this tournament already exist in <code>all_matches.csv</code>. No data changes required!
+    </p>
+    <div style="margin-top: 1.5rem;">
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-antique">Return to Dashboard</a>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+{% endblock %}

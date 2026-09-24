@@ -72,10 +72,10 @@ Expanded 1v1 encounters with multiplayer fractional weights:
 
 ### `player_ratings`
 Calculated ratings for each model:
-- `model_type`: `'glicko2_std'`, `'glicko2_mp'`, or `'whr'`
+- `model_type`: `'glicko2_daneo'`, `'glicko2_std'`, `'glicko2_mp'`, `'glicko2_adapt'`, or `'whr'`
 - `player_name`: Handle
-- `rating`: Scaled rating ($\mu 	imes 173.7178 + 1500$)
-- `rd`: Rating deviation ($\phi 	imes 173.7178$)
+- `rating`: Scaled rating ($\mu \times 173.7178 + 1500$)
+- `rd`: Rating deviation ($\phi \times 173.7178$)
 - `sigma`: Volatility or drift rate
 - `c_rating`: Conservative rating ($R - 3 \times RD$)
 - `rank`: Leaderboard rank sorted by conservative rating

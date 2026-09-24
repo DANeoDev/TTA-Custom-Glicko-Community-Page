@@ -11,7 +11,7 @@ from src.models.whr.solver import solve_tridiagonal
 GLICKO2_SCALE = 173.7178
 DEFAULT_RATING = 1500.0
 DEFAULT_RD = 350.0
-DEFAULT_W2_PER_DAY = 0.005
+DEFAULT_W2_PER_DAY = 0.002
 DEFAULT_PRIOR_VAR = 2.0  # prior variance on initial skill (~245 RD)
 
 # Golden Retrospective Decay Constants (3-Year Informational Half-Life)
@@ -109,7 +109,7 @@ class WHREngine:
                     grad_lik[i] += weight * (outcome - p_win)
                     hess_lik[i] += weight * (p_win * (1.0 - p_win))
 
-            # 2. Prior precision matrix (tridiagonal) with Golden Retrospective Retention
+            # 2. Prior precision matrix (tridiagonal) with Canonical Coulom Brownian Precision
             diag_prior = np.zeros(n, dtype=float)
             off_prior = np.zeros(n - 1, dtype=float)
 
@@ -118,10 +118,8 @@ class WHREngine:
             else:
                 for k in range(n - 1):
                     dt = max(1, days[k + 1] - days[k])
-                    # Golden retrospective retention kernel: phi^(-dt / (3.0 * 365.25))
-                    # Retains 1/phi (~61.803%) per 3-year half-life
-                    retention = math.pow(PHI, -1.0 * dt / (3.0 * 365.25))
-                    inv_sigma2 = retention / (self.w2 * dt)
+                    # Canonical Coulom Brownian motion prior precision: inv_sigma2 = 1.0 / (w2 * dt)
+                    inv_sigma2 = 1.0 / (self.w2 * dt)
 
                     diag_prior[k] += inv_sigma2
                     diag_prior[k + 1] += inv_sigma2
@@ -191,3 +189,27 @@ class WHREngine:
 
         rd_scale = min(DEFAULT_RD, math.sqrt(var) * GLICKO2_SCALE)
         return (r_scale, rd_scale)
+
+    def get_rating_on_date(self, player_name: str, date_str: str) -> Optional[Tuple[float, float]]:
+        """Returns (rating, rd) on Glicko scale for player_name on a given match date."""
+        if player_name not in self.players or not self.players[player_name].ordered_days:
+            return None
+        p = self.players[player_name]
+        d = self._date_to_day(date_str)
+        if d in p.days:
+            pday = p.days[d]
+            return (pday.r * GLICKO2_SCALE + DEFAULT_RATING, math.sqrt(pday.var) * GLICKO2_SCALE)
+
+        # Find closest prior day
+        prior_days = [day for day in p.ordered_days if day <= d]
+        if prior_days:
+            target_d = prior_days[-1]
+            pday = p.days[target_d]
+            dt = d - target_d
+            var = pday.var + self.w2 * dt
+            return (pday.r * GLICKO2_SCALE + DEFAULT_RATING, min(DEFAULT_RD, math.sqrt(var) * GLICKO2_SCALE))
+        else:
+            first_d = p.ordered_days[0]
+            pday = p.days[first_d]
+            return (pday.r * GLICKO2_SCALE + DEFAULT_RATING, math.sqrt(pday.var) * GLICKO2_SCALE)
+

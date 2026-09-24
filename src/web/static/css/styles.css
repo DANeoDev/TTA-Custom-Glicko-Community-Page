@@ -17,8 +17,7 @@
 
 /* Background Implementation */
 body {
-  background: var(--bg-dark) url('tta-background.jpg') no-repeat center top fixed;
-  background-size: cover;
+  background-color: var(--bg-dark);
   color: var(--text-main);
   font-family: var(--font-body);
 }
@@ -31,3 +30,36 @@ body {
   border-radius: 6px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
 }
+
+/* Shared Subpage Navigation */
+.subpage-nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+  margin-bottom: 1.5rem;
+  background: rgba(18, 12, 8, 0.85);
+  padding: 0.4rem;
+  border-radius: 6px;
+  border: 1px solid var(--border-subtle);
+}
+.subpage-btn {
+  padding: 0.4rem 1rem;
+  border-radius: 4px;
+  font-family: var(--font-stats);
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: all 0.2s;
+  border: 1px solid transparent;
+}
+.subpage-btn:hover {
+  color: var(--text-main);
+  background: rgba(229, 169, 60, 0.12);
+}
+.subpage-btn.active {
+  background: var(--accent-gold);
+  color: #1c130d;
+  font-weight: 700;
+  box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+}

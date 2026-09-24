@@ -5,14 +5,20 @@
 {% block extra_head %}
 <style>
   .profile-header {
+    background: rgba(26, 17, 12, 0.95);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin: 0.5rem auto 2rem auto;
+    max-width: 100%;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     gap: 1.25rem;
-    margin: 0.5rem auto 2rem auto;
-    max-width: 900px;
   }
   .player-identity {
     display: flex;
@@ -21,12 +27,6 @@
     justify-content: center;
     text-align: center;
     gap: 0.6rem;
-  }
-  .player-name-h1 {
-    font-family: var(--font-heading);
-    font-size: 2.2rem;
-    color: var(--accent-gold);
-    letter-spacing: 1px;
   }
   .cards-grid {
     display: grid;
@@ -87,8 +87,8 @@
     margin-bottom: 2rem;
   }
   .tables-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    display: flex;
+    flex-direction: column;
     gap: 2rem;
   }
   .data-table {
@@ -131,28 +131,39 @@
 {% block content %}
 <div class="profile-header">
   <div class="player-identity">
-    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
-      <h1 class="player-profile-name">{{ player.name }}</h1>
-      {% if player.title == 'GM' %}
-        <span class="badge badge-gm" data-tooltip="Official Competitive Title: Grandmaster">Grandmaster</span>
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;">
+      {% if player.title == 'WC' or player.name == 'a440' %}
+        <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" data-tooltip="{{ player.badge_reason or 'Reigning World Champion (World Championship 2025)' }}">World Champion</span>
+      {% elif player.title == 'GM' %}
+        <span class="badge badge-gm" data-tooltip="{{ player.badge_reason or 'Grandmaster' }}">Grandmaster</span>
       {% elif player.title == 'M' %}
-        <span class="badge badge-m" data-tooltip="Official Competitive Title: Master">Master</span>
+        <span class="badge badge-m" data-tooltip="{{ player.badge_reason or 'Master' }}">Master</span>
       {% elif player.title == 'P' %}
-        <span class="badge badge-p" data-tooltip="Official Competitive Title: Platinum">Platinum</span>
+        <span class="badge badge-p" data-tooltip="{{ player.badge_reason or 'Platinum' }}">Platinum</span>
       {% elif player.title == 'G' %}
-        <span class="badge badge-g" data-tooltip="Official Competitive Title: Gold">Gold</span>
+        <span class="badge badge-g" data-tooltip="{{ player.badge_reason or 'Gold' }}">Gold</span>
+      {% elif player.title == 'S' %}
+        <span class="badge badge-s" data-tooltip="{{ player.badge_reason or 'Silver' }}">Silver</span>
+      {% elif player.title == 'B' %}
+        <span class="badge badge-b" data-tooltip="{{ player.badge_reason or 'Bronze' }}">Bronze</span>
+      {% elif player.title == 'W' %}
+        <span class="badge badge-w" data-tooltip="{{ player.badge_reason or 'Wood' }}">Wood</span>
       {% endif %}
+      <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}{% if is_calibrating %} <span style="font-size: 1.1rem; vertical-align: middle; cursor: help;" data-tooltip="Provisional / Calibrating Prior: {{ total_matches_count }}/15 matches completed">⏳</span>{% endif %}</h1>
     </div>
-    <div style="color: #1a0f08; font-family: var(--font-stats); font-size: 0.88rem; font-weight: 600; margin-top: 0.2rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; background: rgba(212, 163, 67, 0.28); padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(138, 90, 36, 0.45);">
+    <div class="player-meta-pill">
       <span title="Nationality / Flag">{{ get_flag(player.country_code) }}</span>
-      <span style="color: #5a3518;">&bull;</span>
-      <span>Last Match: <strong style="color: #0c0603;">{{ player.last_played or 'N/A' }}</strong></span>
+      <span class="meta-separator">&bull;</span>
+      <span>First Match: <strong>{{ player.first_played or player.last_played or 'N/A' }}</strong></span>
     </div>
   </div>
 
   <div style="display: flex; gap: 1rem; align-items: center; justify-content: center; flex-wrap: wrap; margin-top: 0.25rem;">
     <a href="{{ url_for('player.player_achievements', player_name=player.name) }}" class="btn-tournament-achievements">
       <span>🏆</span> Tournament Achievements &raquo;
+    </a>
+    <a href="{{ url_for('player.player_matrix', player_name=player.name) }}" class="btn-tournament-achievements" style="border-color: var(--accent-gold); color: #ffd54f;">
+      <span>📊</span> Comparison Matrix &amp; Career Years &raquo;
     </a>
     <a href="{{ url_for('leaderboard.index', model=active_model, format=active_format) }}" 
        class="home-circle-btn tooltip-bottom tooltip-right" 
@@ -163,15 +174,31 @@
   </div>
 </div>
 
-<!-- Format Selector on Player Profile -->
-<div class="format-bar" style="margin: 0 auto 2rem auto; width: fit-content; display: flex; justify-content: center;">
-  {% for f_id, f_name in formats.items() %}
-    <a href="?model={{ active_model }}&format={{ f_id }}" 
-       class="format-btn {% if active_format == f_id %}active{% endif %}"
-       data-tooltip="View rating and history for {{ f_name }}">
-      {{ f_name }}
-    </a>
-  {% endfor %}
+<!-- Engine Mode & Format Selectors on Player Profile -->
+<div style="display: flex; flex-direction: column; align-items: center; gap: 0.5rem; margin: 0 auto 2rem auto;">
+  <!-- Reset Mode Bar -->
+  <div class="format-bar" style="margin: 0; width: fit-content; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+    <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.25rem;">Reset Mode:</span>
+    {% for rm_key, rm_info in reset_modes.items() %}
+      <a href="?model={{ active_model }}&format={{ active_format }}&reset_mode={{ rm_key }}"
+         class="format-btn {% if (active_reset_mode or reset_mode) == rm_key %}active{% endif %}"
+         data-tooltip="{{ rm_info.desc }}">
+        {{ rm_info.name }}
+      </a>
+    {% endfor %}
+  </div>
+
+  <!-- Format Selector Bar -->
+  <div class="format-bar" style="margin: 0; width: fit-content; display: flex; align-items: center; justify-content: center; gap: 0.4rem;">
+    <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase; margin-right: 0.25rem;">Format:</span>
+    {% for f_id, f_name in formats.items() %}
+      <a href="?model={{ active_model }}&format={{ f_id }}&reset_mode={{ active_reset_mode or reset_mode }}" 
+         class="format-btn {% if active_format == f_id %}active{% endif %}"
+         data-tooltip="View rating and history for {{ f_name }}">
+        {{ f_name }}
+      </a>
+    {% endfor %}
+  </div>
 </div>
 
 <!-- Dynamic Career Narrative Summary Box -->
@@ -214,6 +241,29 @@
       </div>
     {% endif %}
 
+    {% if career_peak_year %}
+      <div style="margin: 0.8rem 0; padding: 0.75rem 1rem; background: linear-gradient(135deg, rgba(229, 169, 60, 0.15) 0%, rgba(30, 20, 14, 0.8) 100%); border: 1.5px solid var(--accent-gold); border-radius: 6px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
+        <div style="display: flex; align-items: center; gap: 0.75rem;">
+          <span style="font-size: 1.8rem;">🌟</span>
+          <div>
+            <div style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.05rem; font-weight: 700;">
+              Peak Career Season: {{ career_peak_year.year }}
+              {% if career_peak_year.has_wc %}
+                <span class="badge badge-wc" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">World Champion</span>
+              {% endif %}
+            </div>
+            <div style="font-family: var(--font-stats); font-size: 0.85rem; color: #f3e5c8;">
+              {{ career_peak_year.wins }} Wins / {{ career_peak_year.opps }} Matches (<strong>{{ career_peak_year.win_rate }}%</strong> Win Rate)
+              {% if career_peak_year.peak_rating %} &bull; Peak Rating: <strong style="color: #ffd700;">{{ career_peak_year.peak_rating }}</strong>{% endif %}
+            </div>
+          </div>
+        </div>
+        <a href="{{ url_for('player.player_matrix', player_name=player.name) }}" style="font-family: var(--font-heading); font-size: 0.82rem; color: var(--accent-gold); text-decoration: underline;">
+          View Year-by-Year Matrix &raquo;
+        </a>
+      </div>
+    {% endif %}
+
     {% if narrative and narrative.peaks %}
       <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; margin: 0.6rem 0; padding: 0.6rem 0.85rem; background: rgba(18, 12, 8, 0.7); border-radius: 4px; border: 1px solid var(--border-subtle); font-family: var(--font-stats); font-size: 0.85rem;">
         {% for m_key, pk in narrative.peaks.items() %}
@@ -238,8 +288,46 @@
   </div>
 </div>
 
-<!-- 3 Models Rating Summary Cards -->
-<div class="cards-grid">
+{% set p_bio = get_cms('player', 'bio_' ~ player.name|lower, 'Editorial Note: ' ~ player.name) %}
+{% if p_bio.is_custom or session.is_admin %}
+<div class="rating-card cms-card" data-page="player" data-block="bio_{{ player.name|lower }}" style="padding: 1.25rem 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--accent-gold); background: rgba(30, 20, 14, 0.75);">
+  <h3 class="cms-title" style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin-bottom: 0.5rem;">
+    {{ p_bio.title }}
+  </h3>
+  <div class="cms-content">
+    {% if p_bio.is_custom %}
+      {{ p_bio.content }}
+    {% else %}
+      <p style="color: var(--text-muted); font-size: 0.88rem; font-style: italic;">
+        No custom webmaster note added yet. Click ✎ Edit to add an editorial biography or tournament citation for {{ player.name }}.
+      </p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+
+<!-- 5 Models Rating Summary Cards -->
+<div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
+  <!-- GlickoD* (Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo) -->
+  {% set daneo = ratings.get('glicko2_daneo', {}) %}
+  <div class="model-card {% if active_model == 'glicko2_daneo' %}active-card{% endif %}" style="border: 1.5px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95) 0%, rgba(22, 14, 9, 0.98) 100%); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(229, 169, 60, 0.2);">
+    <h3 style="color: #ffd54f;">
+      <span>👑 GlickoD*</span>
+      <span class="badge badge-rank" style="background: #332211; color: #ffd54f; border: 1.5px solid #b8860b; font-weight: 700;">#{{ daneo.get('rank', '-') }}</span>
+    </h3>
+    <div class="rating-number" style="color: #ffde8a; font-weight: 800;">
+      {{ "%.1f"|format(daneo.get('rating', 1500.0)) }}
+      <span class="rd-tag" style="color: #c7a76d;">&plusmn;{{ "%.1f"|format(daneo.get('rd', 350.0)) }}</span>
+    </div>
+    <div class="c-rating-box" style="border-top-color: rgba(184, 134, 11, 0.4);">
+      <span style="color: #bfaea0;">Conservative (C = &mu; - 3&sigma;):</span>
+      <strong style="color: #ffd54f;">{{ "%.2f"|format(daneo.get('c_rating', 450.0)) }}</strong>
+    </div>
+    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #a89880;">
+      Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo
+    </div>
+  </div>
+
   <!-- Glicko-2 Standard -->
   {% set std = ratings.get('glicko2_std', {}) %}
   <div class="model-card {% if active_model == 'glicko2_std' %}active-card{% endif %}">
@@ -280,6 +368,26 @@
     </div>
   </div>
 
+  <!-- Glicko-2 Adaptive-T -->
+  {% set adapt = ratings.get('glicko2_adapt', {}) %}
+  <div class="model-card {% if active_model == 'glicko2_adapt' %}active-card{% endif %}">
+    <h3>
+      <span>Glicko-2 Adaptive-T</span>
+      <span class="badge badge-rank" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4);">#{{ adapt.get('rank', '-') }}</span>
+    </h3>
+    <div class="rating-number" style="color: #4ade80;">
+      {{ "%.1f"|format(adapt.get('rating', 1500.0)) }}
+      <span class="rd-tag">&plusmn;{{ "%.1f"|format(adapt.get('rd', 350.0)) }}</span>
+    </div>
+    <div class="c-rating-box">
+      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
+      <strong style="color: #22c55e;">{{ "%.2f"|format(adapt.get('c_rating', 450.0)) }}</strong>
+    </div>
+    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
+      Adaptive format temperature $T(P, N)$
+    </div>
+  </div>
+
   <!-- Whole-History Rating (WHR) -->
   {% set whr = ratings.get('whr', {}) %}
   <div class="model-card {% if active_model == 'whr' %}active-card{% endif %}">
@@ -303,13 +411,26 @@
 
 <!-- Interactive Chart.js Trajectory Comparison -->
 <div class="chart-container">
-  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 1rem;">
-    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.2rem;">
-      Historical Rating Trajectory (2017 - 2026)
-    </h3>
-    <span style="font-size: 0.85rem; color: var(--text-muted); font-family: var(--font-stats);">
-      Click legend items to toggle individual rating models
-    </span>
+  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.2rem; margin: 0 0 0.2rem 0;">
+        Historical Rating Trajectory (2017 - 2026)
+      </h3>
+      <span style="font-size: 0.82rem; color: var(--text-muted); font-family: var(--font-stats);">
+        Click legend items to toggle individual models
+      </span>
+    </div>
+    
+    <!-- Rating Metric Toggle (Expected E=Rating vs Conservative C=Rating - 2*RD) -->
+    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+      <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.2rem;">Curve:</span>
+      <button type="button" id="btnCurveExpected" class="format-btn active" onclick="switchRatingCurve('expected')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+        Expected Mean (E = R)
+      </button>
+      <button type="button" id="btnCurveConservative" class="format-btn" onclick="switchRatingCurve('conservative')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+        Conservative (C = R &minus; 2&sigma;)
+      </button>
+    </div>
   </div>
   <div style="position: relative; height: 360px; width: 100%;">
     <canvas id="ratingHistoryChart"></canvas>
@@ -318,11 +439,20 @@
 
 <!-- Recent Matches & Head-to-Head Grids -->
 <div class="tables-grid">
-  <!-- Recent Matches -->
+  <!-- Game History (Recent Matches) -->
   <div class="rating-card" style="padding: 1.25rem;">
-    <h3 style="font-family: var(--font-heading); color: var(--accent-gold); margin-bottom: 1rem; font-size: 1.1rem;">
-      Recent Matches ({{ recent_matches|length }})
-    </h3>
+    <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem;">
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); margin: 0; font-size: 1.1rem;">
+        Game History <span style="font-size: 0.85rem; color: var(--text-muted); font-weight: normal;">(Recent Matches: {{ total_matches_count }})</span>
+      </h3>
+      {% if is_calibrating %}
+        <span class="badge" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid #f59e0b; font-size: 0.8rem; padding: 0.25rem 0.6rem; cursor: help;"
+              title="Provisional Phase: Player ratings undergo prior calibration during their first 15 matches. Match deltas are displayed normally while the rating converges.">
+          ⏳ Prior Calibration ({{ total_matches_count }}/15)
+        </span>
+      {% endif %}
+    </div>
+
     <div style="overflow-x: auto;">
       <table class="data-table">
         <thead>
@@ -331,6 +461,8 @@
             <th>Tournament</th>
             <th>Type</th>
             <th>Place</th>
+            <th>&Delta;R</th>
+            <th>Replay</th>
             <th>Participants &amp; Scores</th>
           </tr>
         </thead>
@@ -348,6 +480,29 @@
               <span class="placement-badge place-{{ m.placement }}">{{ m.placement }}</span>
             </td>
             <td>
+              {% if m.rating_delta is not none %}
+                {% if m.rating_delta > 0 %}
+                  <span style="color: #4ade80; font-weight: 700; font-family: var(--font-stats);">+{{ "%.1f"|format(m.rating_delta) }}</span>
+                {% elif m.rating_delta < 0 %}
+                  <span style="color: #f87171; font-weight: 700; font-family: var(--font-stats);">{{ "%.1f"|format(m.rating_delta) }}</span>
+                {% else %}
+                  <span style="color: var(--text-muted); font-family: var(--font-stats);">0.0</span>
+                {% endif %}
+              {% else %}
+                <span style="color: var(--text-muted);">&mdash;</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if m.replay_code %}
+                <div style="display: flex; align-items: center; gap: 0.25rem;">
+                  <code style="background: rgba(18, 12, 8, 0.8); border: 1px solid var(--border-subtle); padding: 0.15rem 0.4rem; border-radius: 3px; color: #ffd54f; font-family: monospace; font-size: 0.82rem; letter-spacing: 0.5px;">{{ m.replay_code }}</code>
+                  <button type="button" class="btn-copy-code" onclick="copyReplayCode('{{ m.replay_code }}', this)" title="Copy replay code" style="background: transparent; border: none; color: var(--accent-gold); cursor: pointer; padding: 2px 4px; font-size: 0.85rem;">📋</button>
+                </div>
+              {% else %}
+                <span style="color: var(--text-muted); font-size: 0.8rem;">&mdash;</span>
+              {% endif %}
+            </td>
+            <td>
               <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                 {% for p in m.participants %}
                   <span style="{% if p.name == player.name %}color: var(--accent-gold); font-weight: bold;{% else %}color: var(--text-muted);{% endif %}">
@@ -359,7 +514,7 @@
           </tr>
           {% else %}
           <tr>
-            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 1.5rem;">
               No recent match history found.
             </td>
           </tr>
@@ -367,6 +522,30 @@
         </tbody>
       </table>
     </div>
+
+    <!-- Match History Pagination Controls -->
+    {% if total_match_pages > 1 %}
+    <div class="pagination-container" style="display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 1.25rem; flex-wrap: wrap;">
+      {% if match_page > 1 %}
+        <a href="?model={{ active_model }}&format={{ active_format }}&reset_mode={{ active_reset_mode }}&match_page=1" class="btn-antique" style="font-size: 0.85rem; padding: 0.3rem 0.75rem;">&laquo; First</a>
+        <a href="?model={{ active_model }}&format={{ active_format }}&reset_mode={{ active_reset_mode }}&match_page={{ match_page - 1 }}" class="btn-antique" style="font-size: 0.85rem; padding: 0.3rem 0.75rem;">&lsaquo; Prev</a>
+      {% endif %}
+
+      <div class="pagination-jump" style="display: inline-flex; align-items: center; gap: 0.35rem; font-family: var(--font-stats); font-size: 0.9rem; color: var(--text-muted);">
+        <span>Page</span>
+        <input type="number" id="matchPageInput" min="1" max="{{ total_match_pages }}" value="{{ match_page }}" 
+               class="input-antique" style="width: 50px; text-align: center; padding: 0.25rem; font-size: 0.85rem; background: rgba(14, 9, 6, 0.95); border: 1px solid var(--border-subtle); color: #f3e5c8; border-radius: 4px;"
+               onkeydown="if(event.key==='Enter') jumpToMatchPage(event)">
+        <span>of {{ total_match_pages }}</span>
+        <button type="button" onclick="jumpToMatchPage(event)" class="btn-antique" style="font-size: 0.8rem; padding: 0.25rem 0.6rem;">Go</button>
+      </div>
+
+      {% if match_page < total_match_pages %}
+        <a href="?model={{ active_model }}&format={{ active_format }}&reset_mode={{ active_reset_mode }}&match_page={{ match_page + 1 }}" class="btn-antique" style="font-size: 0.85rem; padding: 0.3rem 0.75rem;">Next &rsaquo;</a>
+        <a href="?model={{ active_model }}&format={{ active_format }}&reset_mode={{ active_reset_mode }}&match_page={{ total_match_pages }}" class="btn-antique" style="font-size: 0.85rem; padding: 0.3rem 0.75rem;">Last &raquo;</a>
+      {% endif %}
+    </div>
+    {% endif %}
   </div>
 
   <!-- Head-to-Head Records with natural height matching recent matches -->
@@ -375,22 +554,49 @@
       <h3 style="font-family: var(--font-heading); color: var(--accent-gold); margin: 0; font-size: 1.1rem;">
         Head-to-Head vs Rivals (<span id="rivalCount">{{ h2h|length }}</span>)
       </h3>
-      <input type="text" id="rivalFilter" onkeyup="filterRivals()" placeholder="🔍 Filter rival by name..." class="input-antique" style="font-size: 0.85rem; padding: 0.4rem 0.85rem; width: 210px; border: 1px solid var(--border-subtle); background: rgba(14, 9, 6, 0.95); color: #f3e5c8;">
+      <div style="display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;">
+        <select id="rivalsMinMatches" onchange="filterRivals()" class="input-antique" style="font-size: 0.85rem; padding: 0.35rem 0.6rem; border: 1px solid var(--border-subtle); background: rgba(14, 9, 6, 0.95); color: #f3e5c8; border-radius: 4px;">
+          <option value="1">Matches: All (1+)</option>
+          <option value="2">Matches: 2+</option>
+          <option value="3">Matches: 3+</option>
+          <option value="5">Matches: 5+</option>
+          <option value="10">Matches: 10+</option>
+          <option value="20">Matches: 20+</option>
+        </select>
+        <input type="text" id="rivalFilter" onkeyup="filterRivals()" placeholder="🔍 Filter rival by name..." class="input-antique" style="font-size: 0.85rem; padding: 0.35rem 0.85rem; width: 180px; border: 1px solid var(--border-subtle); background: rgba(14, 9, 6, 0.95); color: #f3e5c8; border-radius: 4px;">
+      </div>
     </div>
     <div style="overflow-x: auto;">
       <table class="data-table" id="rivalsTable">
         <thead>
           <tr>
-            <th>Opponent</th>
-            <th>Games</th>
-            <th>W - L - D</th>
-            <th>Win %</th>
+            <th onclick="sortRivals('opponent')" style="cursor: pointer;" title="Sort by Opponent Name">
+              Opponent <span id="sort-opponent-ind" class="sort-ind">↕</span>
+            </th>
+            <th onclick="sortRivals('games')" style="cursor: pointer;" title="Sort by Total Games">
+              Games <span id="sort-games-ind" class="sort-ind">↕</span>
+            </th>
+            <th style="user-select: none;">
+              <span onclick="sortRivals('wins')" style="cursor: pointer; color: #66bb6a; padding: 2px 4px; border-radius: 3px;" title="Click to sort by Wins">W <span id="sort-wins-ind" class="sort-ind">↕</span></span> -
+              <span onclick="sortRivals('losses')" style="cursor: pointer; color: #ef5350; padding: 2px 4px; border-radius: 3px;" title="Click to sort by Losses">L <span id="sort-losses-ind" class="sort-ind">↕</span></span> -
+              <span onclick="sortRivals('draws')" style="cursor: pointer; color: #ffa726; padding: 2px 4px; border-radius: 3px;" title="Click to sort by Draws">D <span id="sort-draws-ind" class="sort-ind">↕</span></span>
+            </th>
+            <th onclick="sortRivals('winrate')" style="cursor: pointer;" title="Sort by Win %">
+              Win % <span id="sort-winrate-ind" class="sort-ind">↕</span>
+            </th>
             <th>Head-to-Head</th>
           </tr>
         </thead>
         <tbody>
           {% for r in h2h %}
-          <tr class="rival-row {% if loop.index > 30 %}rival-overflow{% endif %}" {% if loop.index > 30 %}style="display: none;"{% endif %}>
+          <tr class="rival-row {% if loop.index > 30 %}rival-overflow{% endif %}"
+              data-opponent="{{ r.opponent|lower }}"
+              data-games="{{ r.games }}"
+              data-wins="{{ r.wins }}"
+              data-losses="{{ r.losses }}"
+              data-draws="{{ r.draws }}"
+              data-winrate="{{ r.win_rate }}"
+              {% if loop.index > 30 %}style="display: none;"{% endif %}>
             <td>
               <a href="{{ url_for('player.profile', player_name=r.opponent) }}" class="player-link rival-name" style="font-family: var(--font-body); font-weight: 600; color: #f7dfa5;">
                 {{ r.opponent }}
@@ -434,6 +640,7 @@
 </div>
 
 <!-- Exclusive Head-to-Head History Modal -->
+<!-- Exclusive Head-to-Head History Modal -->
 <div id="h2hModal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(6px); z-index: 10000; align-items: center; justify-content: center; padding: 1.5rem;">
   <div style="background: rgba(28, 19, 13, 0.98); border: 2px solid var(--accent-gold); border-radius: 8px; width: 100%; max-width: 900px; max-height: 85vh; display: flex; flex-direction: column; box-shadow: 0 8px 32px rgba(0,0,0,0.9);">
     <div style="padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--border-subtle); display: flex; justify-content: space-between; align-items: center;">
@@ -442,6 +649,20 @@
       </h3>
       <button onclick="closeH2HModal()" style="background: transparent; border: none; color: var(--accent-gold); font-size: 1.8rem; cursor: pointer; line-height: 1;">&times;</button>
     </div>
+    
+    <!-- Modal Format Filter Toolbar -->
+    <div style="padding: 0.6rem 1.5rem; background: rgba(22, 14, 10, 0.9); border-bottom: 1px solid var(--border-subtle); display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <span style="font-family: var(--font-heading); font-size: 0.78rem; color: var(--accent-gold); text-transform: uppercase;">Match Format:</span>
+        <div class="format-bar" style="margin: 0; width: fit-content; display: flex; gap: 0.3rem;">
+          <button type="button" class="format-btn h2h-fmt-btn" data-fmt="0" onclick="setH2HModalFormat(0, this)">All Formats</button>
+          <button type="button" class="format-btn h2h-fmt-btn" data-fmt="2" onclick="setH2HModalFormat(2, this)">2-Player</button>
+          <button type="button" class="format-btn h2h-fmt-btn" data-fmt="3" onclick="setH2HModalFormat(3, this)">3-Player</button>
+          <button type="button" class="format-btn h2h-fmt-btn" data-fmt="4" onclick="setH2HModalFormat(4, this)">4-Player</button>
+        </div>
+      </div>
+    </div>
+
     <div id="h2hModalStats" style="padding: 0.75rem 1.5rem; background: rgba(18, 12, 8, 0.7); font-family: var(--font-stats); font-size: 0.9rem; border-bottom: 1px solid var(--border-subtle); display: flex; gap: 1.5rem; flex-wrap: wrap;">
     </div>
     <div id="h2hModalBody" style="padding: 1rem 1.5rem; overflow-y: auto; flex: 1;">
@@ -451,11 +672,103 @@
 </div>
 
 <script>
+  let currentH2HData = null;
+  let currentH2HFormat = {{ active_format }};
+
+  function setH2HModalFormat(fmt, btn) {
+    currentH2HFormat = fmt;
+    document.querySelectorAll('.h2h-fmt-btn').forEach(b => b.classList.remove('active'));
+    if (btn) {
+      btn.classList.add('active');
+    } else {
+      const targetBtn = document.querySelector(`.h2h-fmt-btn[data-fmt="${fmt}"]`);
+      if (targetBtn) targetBtn.classList.add('active');
+    }
+    renderH2HContent();
+  }
+
+  function renderH2HContent() {
+    if (!currentH2HData) return;
+    const data = currentH2HData;
+    const statsEl = document.getElementById('h2hModalStats');
+    const bodyEl = document.getElementById('h2hModalBody');
+
+    const filtered = (currentH2HFormat === 0) 
+      ? (data.matches || [])
+      : (data.matches || []).filter(m => m.player_count === currentH2HFormat);
+
+    let p1Wins = 0, p2Wins = 0, draws = 0;
+    filtered.forEach(m => {
+      if (m.p1_place && m.p2_place) {
+        if (m.p1_place < m.p2_place) p1Wins++;
+        else if (m.p2_place < m.p1_place) p2Wins++;
+        else draws++;
+      }
+    });
+
+    statsEl.innerHTML = `
+      <div>Total Mutual Games: <strong style="color: #ffd54f;">${filtered.length}</strong></div>
+      <div><strong style="color: #66bb6a;">${data.player1} Wins: ${p1Wins}</strong></div>
+      <div><strong style="color: #ef5350;">${data.player2} Wins: ${p2Wins}</strong></div>
+      <div><strong style="color: #ffa726;">Draws / Splits: ${draws}</strong></div>
+    `;
+
+    if (filtered.length === 0) {
+      bodyEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No direct tournament encounters found for this player format.</div>';
+      return;
+    }
+
+    let html = `
+      <table class="data-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Tournament</th>
+            <th>Format</th>
+            <th>${data.player1} Finish</th>
+            <th>${data.player2} Finish</th>
+            <th>Table Scores</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    filtered.forEach(m => {
+      const p1Badge = m.p1_place ? `<span class="placement-badge place-${m.p1_place}">#${m.p1_place}</span>` : '-';
+      const p2Badge = m.p2_place ? `<span class="placement-badge place-${m.p2_place}">#${m.p2_place}</span>` : '-';
+      const parts = m.participants.map(p => {
+        const isTarget = p.name.toLowerCase() === data.player1.toLowerCase() || p.name.toLowerCase() === data.player2.toLowerCase();
+        const color = isTarget ? '#ffd54f' : 'var(--text-muted)';
+        const weight = isTarget ? '700' : 'normal';
+        return `<span style="color: ${color}; font-weight: ${weight};">${p.name}: ${p.score}</span>`;
+      }).join(', ');
+
+      html += `
+        <tr>
+          <td>${m.date}</td>
+          <td style="color: var(--accent-gold); font-weight: 600;">${m.tournament || 'Competitive Match'}</td>
+          <td>${m.player_count}p</td>
+          <td>${p1Badge}</td>
+          <td>${p2Badge}</td>
+          <td style="font-size: 0.82rem;">${parts}</td>
+        </tr>
+      `;
+    });
+
+    html += '</tbody></table>';
+    bodyEl.innerHTML = html;
+  }
+
   function showH2HHistory(player1, player2) {
     const modal = document.getElementById('h2hModal');
     const title = document.getElementById('h2hModalTitle');
     const statsEl = document.getElementById('h2hModalStats');
     const bodyEl = document.getElementById('h2hModalBody');
+
+    currentH2HFormat = {{ active_format }};
+    document.querySelectorAll('.h2h-fmt-btn').forEach(b => {
+      b.classList.toggle('active', parseInt(b.getAttribute('data-fmt'), 10) === currentH2HFormat);
+    });
 
     title.innerText = player1 + ' vs ' + player2 + ' - Exclusive History';
     statsEl.innerHTML = '<span style="color: var(--text-muted);">Fetching exclusive game records...</span>';
@@ -465,57 +778,8 @@
     fetch('/api/h2h/' + encodeURIComponent(player1) + '/' + encodeURIComponent(player2))
       .then(res => res.json())
       .then(data => {
-        statsEl.innerHTML = `
-          <div>Total Mutual Games: <strong style="color: #ffd54f;">${data.total_matches}</strong></div>
-          <div><strong style="color: #66bb6a;">${data.player1} Wins: ${data.p1_wins}</strong></div>
-          <div><strong style="color: #ef5350;">${data.player2} Wins: ${data.p2_wins}</strong></div>
-          <div><strong style="color: #ffa726;">Draws / Splits: ${data.draws}</strong></div>
-        `;
-
-        if (!data.matches || data.matches.length === 0) {
-          bodyEl.innerHTML = '<div style="text-align: center; color: var(--text-muted); padding: 2rem;">No direct tournament encounters found.</div>';
-          return;
-        }
-
-        let html = `
-          <table class="data-table" style="width: 100%;">
-            <thead>
-              <tr>
-                <th>Date</th>
-                <th>Tournament</th>
-                <th>Format</th>
-                <th>${data.player1} Finish</th>
-                <th>${data.player2} Finish</th>
-                <th>Table Scores</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        data.matches.forEach(m => {
-          const p1Badge = m.p1_place ? `<span class="placement-badge place-${m.p1_place}">#${m.p1_place}</span>` : '-';
-          const p2Badge = m.p2_place ? `<span class="placement-badge place-${m.p2_place}">#${m.p2_place}</span>` : '-';
-          const parts = m.participants.map(p => {
-            const isTarget = p.name.toLowerCase() === player1.toLowerCase() || p.name.toLowerCase() === player2.toLowerCase();
-            const color = isTarget ? '#ffd54f' : 'var(--text-muted)';
-            const weight = isTarget ? '700' : 'normal';
-            return `<span style="color: ${color}; font-weight: ${weight};">${p.name}: ${p.score}</span>`;
-          }).join(', ');
-
-          html += `
-            <tr>
-              <td>${m.date}</td>
-              <td style="color: var(--accent-gold); font-weight: 600;">${m.tournament || 'Competitive Match'}</td>
-              <td>${m.player_count}p</td>
-              <td>${p1Badge}</td>
-              <td>${p2Badge}</td>
-              <td style="font-size: 0.82rem;">${parts}</td>
-            </tr>
-          `;
-        });
-
-        html += '</tbody></table>';
-        bodyEl.innerHTML = html;
+        currentH2HData = data;
+        renderH2HContent();
       })
       .catch(err => {
         bodyEl.innerHTML = '<div style="text-align: center; color: #ef5350; padding: 2rem;">Failed to load match history: ' + err + '</div>';
@@ -554,20 +818,29 @@
 
   function filterRivals() {
     const input = document.getElementById('rivalFilter');
-    const filter = input.value.trim().toLowerCase();
+    const filter = input ? input.value.trim().toLowerCase() : '';
+    const minMatchesSelect = document.getElementById('rivalsMinMatches');
+    const minMatches = minMatchesSelect ? (parseInt(minMatchesSelect.value, 10) || 1) : 1;
     const rows = document.querySelectorAll('#rivalsTable tbody tr.rival-row');
     let visible = 0;
 
     rows.forEach(row => {
       const opp = row.querySelector('.rival-name');
+      const games = parseInt(row.getAttribute('data-games') || '0', 10);
       if (opp) {
         const txt = (opp.textContent || opp.innerText).toLowerCase();
+        const matchesName = (filter === '' || txt.indexOf(filter) > -1);
+        const matchesGames = (games >= minMatches);
+
         let match = false;
-        if (filter !== '') {
-          match = txt.indexOf(filter) > -1;
-        } else {
-          match = rivalsExpanded || !row.classList.contains('rival-overflow');
+        if (matchesName && matchesGames) {
+          if (filter !== '' || minMatches > 1) {
+            match = true;
+          } else {
+            match = rivalsExpanded || !row.classList.contains('rival-overflow');
+          }
         }
+
         row.style.display = match ? '' : 'none';
         if (match) visible++;
       }
@@ -578,23 +851,120 @@
 
     const expandBar = document.getElementById('rivalsExpandBar');
     if (expandBar) {
-      expandBar.style.display = filter !== '' ? 'none' : '';
+      expandBar.style.display = (filter !== '' || minMatches > 1) ? 'none' : '';
     }
+  }
+
+  let currentSortKey = null;
+  let currentSortAsc = false;
+
+  function sortRivals(key) {
+    const table = document.getElementById('rivalsTable');
+    if (!table) return;
+    const tbody = table.querySelector('tbody');
+    const rows = Array.from(tbody.querySelectorAll('tr.rival-row'));
+
+    if (currentSortKey === key) {
+      currentSortAsc = !currentSortAsc;
+    } else {
+      currentSortKey = key;
+      // Default ascending for opponent name, descending for stats (wins, games, winrate, etc.)
+      currentSortAsc = (key === 'opponent');
+    }
+
+    // Reset indicator icons
+    document.querySelectorAll('.sort-ind').forEach(el => {
+      el.textContent = '↕';
+      el.style.color = 'var(--text-muted)';
+    });
+    const activeInd = document.getElementById(`sort-${key}-ind`);
+    if (activeInd) {
+      activeInd.textContent = currentSortAsc ? '▲' : '▼';
+      activeInd.style.color = 'var(--accent-gold)';
+    }
+
+    rows.sort((a, b) => {
+      if (key === 'opponent') {
+        const valA = a.getAttribute('data-opponent') || '';
+        const valB = b.getAttribute('data-opponent') || '';
+        return currentSortAsc ? valA.localeCompare(valB) : valB.localeCompare(valA);
+      } else {
+        const valA = parseFloat(a.getAttribute(`data-${key}`) || 0);
+        const valB = parseFloat(b.getAttribute(`data-${key}`) || 0);
+        return currentSortAsc ? valA - valB : valB - valA;
+      }
+    });
+
+    // Re-tag overflow class for top 30 based on new sorted order
+    rows.forEach((r, idx) => {
+      if (idx >= 30) {
+        r.classList.add('rival-overflow');
+      } else {
+        r.classList.remove('rival-overflow');
+      }
+      tbody.appendChild(r);
+    });
+
+    filterRivals();
   }
 </script>
 
 <script>
+  let playerChart = null;
+  const rawData = {{ chart_json|safe }};
+
+  function switchRatingCurve(mode) {
+    document.getElementById('btnCurveExpected').classList.toggle('active', mode === 'expected');
+    document.getElementById('btnCurveConservative').classList.toggle('active', mode === 'conservative');
+
+    if (!playerChart) return;
+
+    if (mode === 'conservative') {
+      playerChart.data.datasets[0].data = rawData.glicko2_daneo_c || rawData.glicko2_daneo;
+      playerChart.data.datasets[0].label = '👑 GlickoD* (Conservative)';
+      playerChart.data.datasets[1].data = rawData.glicko2_std_c || rawData.glicko2_std;
+      playerChart.data.datasets[1].label = 'Glicko-2 Std (Conservative)';
+      playerChart.data.datasets[2].data = rawData.glicko2_mp_c || rawData.glicko2_mp;
+      playerChart.data.datasets[2].label = 'Glicko-2 MP (Conservative)';
+      playerChart.data.datasets[3].data = rawData.glicko2_adapt_c || rawData.glicko2_adapt;
+      playerChart.data.datasets[3].label = 'Glicko-2 Adapt (Conservative)';
+      playerChart.data.datasets[4].data = rawData.whr_c || rawData.whr;
+      playerChart.data.datasets[4].label = 'WHR (Conservative)';
+    } else {
+      playerChart.data.datasets[0].data = rawData.glicko2_daneo;
+      playerChart.data.datasets[0].label = '👑 GlickoD* (E)';
+      playerChart.data.datasets[1].data = rawData.glicko2_std;
+      playerChart.data.datasets[1].label = 'Glicko-2 Standard (E)';
+      playerChart.data.datasets[2].data = rawData.glicko2_mp;
+      playerChart.data.datasets[2].label = 'Glicko-2 MP-Weighted (E)';
+      playerChart.data.datasets[3].data = rawData.glicko2_adapt;
+      playerChart.data.datasets[3].label = 'Glicko-2 Adaptive-T (E)';
+      playerChart.data.datasets[4].data = rawData.whr;
+      playerChart.data.datasets[4].label = 'Whole-History Rating (E)';
+    }
+    playerChart.update();
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
-    const rawData = {{ chart_json|safe }};
     const ctx = document.getElementById('ratingHistoryChart').getContext('2d');
 
-    new Chart(ctx, {
+    playerChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: rawData.labels,
         datasets: [
           {
-            label: 'Glicko-2 Standard',
+            label: '👑 GlickoD* (E)',
+            data: rawData.glicko2_daneo,
+            borderColor: '#c084fc',
+            backgroundColor: 'rgba(168, 85, 247, 0.15)',
+            borderWidth: 2.5,
+            pointRadius: 1.5,
+            tension: 0.1,
+            spanGaps: true
+          },
+          {
+            label: 'Glicko-2 Standard (E)',
             data: rawData.glicko2_std,
             borderColor: '#e5a93c',
             backgroundColor: 'rgba(229, 169, 60, 0.1)',
@@ -604,7 +974,7 @@
             spanGaps: true
           },
           {
-            label: 'Glicko-2 MP-Weighted',
+            label: 'Glicko-2 MP-Weighted (E)',
             data: rawData.glicko2_mp,
             borderColor: '#8e1e1d',
             backgroundColor: 'rgba(142, 30, 29, 0.1)',
@@ -614,7 +984,17 @@
             spanGaps: true
           },
           {
-            label: 'Whole-History Rating (WHR)',
+            label: 'Glicko-2 Adaptive-T (E)',
+            data: rawData.glicko2_adapt,
+            borderColor: '#22c55e',
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderWidth: 2,
+            pointRadius: 1,
+            tension: 0.1,
+            spanGaps: true
+          },
+          {
+            label: 'Whole-History Rating (E)',
             data: rawData.whr,
             borderColor: '#4fc3f7',
             backgroundColor: 'rgba(79, 195, 247, 0.1)',
@@ -660,5 +1040,26 @@
       }
     });
   });
+
+  function copyReplayCode(code, btn) {
+    if (!navigator.clipboard) return;
+    navigator.clipboard.writeText(code).then(() => {
+      const orig = btn.innerText;
+      btn.innerText = '✓';
+      setTimeout(() => { btn.innerText = orig; }, 1500);
+    });
+  }
+
+  function jumpToMatchPage(e) {
+    if (e) e.preventDefault();
+    const input = document.getElementById('matchPageInput');
+    if (!input) return;
+    const p = parseInt(input.value, 10);
+    if (p && p >= 1 && p <= {{ total_match_pages }}) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('match_page', p);
+      window.location.href = url.toString();
+    }
+  }
 </script>
 {% endblock %}

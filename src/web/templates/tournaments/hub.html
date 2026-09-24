@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Hall of Fame | Competitive Circuits & Official Trophyboards{% endblock %}
+
+{% block extra_head %}
+<style>
+  .tournaments-header {
+    background: linear-gradient(135deg, rgba(28, 19, 13, 0.95), rgba(45, 30, 20, 0.9));
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    position: relative;
+    overflow: hidden;
+  }
+  .tournaments-header::after {
+    content: '🏛️';
+    position: absolute;
+    right: 1.5rem;
+    bottom: -1rem;
+    font-size: 8rem;
+    opacity: 0.08;
+    pointer-events: none;
+  }
+  .tournaments-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+  .tournaments-subtitle {
+    font-size: 1.05rem;
+    color: var(--text-muted);
+    max-width: 800px;
+    line-height: 1.6;
+  }
+  .tournaments-stats-bar {
+    display: flex;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(229, 169, 60, 0.15);
+  }
+  .stat-pill {
+    background: rgba(0, 0, 0, 0.35);
+    border: 1px solid rgba(229, 169, 60, 0.25);
+    padding: 0.4rem 0.9rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+  }
+  .stat-pill strong {
+    color: var(--accent-gold);
+    font-size: 1.05rem;
+  }
+  .series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2.5rem;
+  }
+  .series-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    color: inherit;
+    position: relative;
+  }
+  .series-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--accent-gold);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(229, 169, 60, 0.2);
+  }
+  .series-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+  .series-icon {
+    font-size: 2.4rem;
+    line-height: 1;
+  }
+  .series-badge {
+    background: rgba(229, 169, 60, 0.15);
+    border: 1px solid rgba(229, 169, 60, 0.3);
+    color: var(--accent-gold);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .series-name {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 0.4rem;
+  }
+  .series-summary {
+    color: var(--text-muted);
+    font-size: 0.92rem;
+    line-height: 1.5;
+    margin-bottom: 1.25rem;
+    flex-grow: 1;
+  }
+  .series-meta-row {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    padding: 0.35rem 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  }
+  .series-meta-row:last-of-type {
+    border-bottom: none;
+    margin-bottom: 1rem;
+  }
+  .series-meta-row span:last-child {
+    font-weight: 600;
+    color: var(--text-main);
+  }
+  .series-cta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(229, 169, 60, 0.15);
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+  }
+  .series-cta span.arrow {
+    transition: transform 0.2s ease;
+  }
+  .series-card:hover .series-cta span.arrow {
+    transform: translateX(4px);
+  }
+  .podium-preview-card {
+    background: linear-gradient(145deg, rgba(20, 14, 10, 0.95), rgba(30, 20, 15, 0.9));
+    border: 1px solid rgba(229, 169, 60, 0.25);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .podium-preview-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .champions-highlight-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+  }
+  .champ-highlight-box {
+    background: rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    padding: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+  .champ-highlight-avatar {
+    font-size: 2rem;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(229, 169, 60, 0.15);
+    border: 1px solid rgba(229, 169, 60, 0.3);
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .champ-highlight-info {
+    flex-grow: 1;
+  }
+  .champ-highlight-name {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    text-decoration: none;
+  }
+  .champ-highlight-name:hover {
+    color: var(--accent-gold);
+  }
+  .champ-highlight-desc {
+    font-size: 0.82rem;
+    color: var(--text-muted);
+    margin-top: 0.2rem;
+    line-height: 1.35;
+  }
+
+  /* WCS Bracket Analytics Section */
+  .wcs-analytics-card {
+    background: var(--surface-panel);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  }
+  .wcs-grid-two {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+  @media (max-width: 900px) {
+    .wcs-grid-two { grid-template-columns: 1fr; }
+  }
+  .wcs-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+  }
+  .wcs-table th {
+    background: rgba(30, 20, 14, 0.95);
+    color: var(--accent-gold);
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 2px solid var(--border-subtle);
+    font-size: 0.8rem;
+    text-transform: uppercase;
+  }
+  .wcs-table td {
+    padding: 0.5rem 0.75rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.3);
+    color: #f5eedb;
+  }
+  .wcs-table tr:hover td {
+    background: rgba(229, 169, 60, 0.08);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% set hof_hdr = get_cms('hall_of_fame', 'header', 'Official Through the Ages Hall of Fame') %}
+<div class="tournaments-header cms-card" data-page="hall_of_fame" data-block="header">
+  <div class="tournaments-title cms-title">
+    <span>🏛️</span> {{ hof_hdr.title }}
+  </div>
+  <div class="tournaments-subtitle cms-content">
+    {% if hof_hdr.is_custom %}
+      {{ hof_hdr.content }}
+    {% else %}
+      The definitive historical registry of competitive Through the Ages achievements. Explore verified trophyboards, matchdata-derived season champions, World Championship playoff bracket analytics, and career milestones of Master+ competitors.
+    {% endif %}
+  </div>
+  <div class="tournaments-stats-bar">
+    <div class="stat-pill">Series Active: <strong>6 Major Circuits</strong></div>
+    <div class="stat-pill">Derived Matches: <strong>{{ "{:,}".format(hof_data.metrics.intl_matches + hof_data.metrics.inter_matches + hof_data.metrics.rl_matches + hof_data.metrics.wcs_matches) }}+ Matches</strong></div>
+    <div class="stat-pill">Historical Span: <strong>2016 – Present</strong></div>
+    <div class="stat-pill">World Champions: <strong>3 Crowned Titleholders</strong></div>
+  </div>
+</div>
+
+<!-- World Champions Showcase -->
+{% set hof_wc = get_cms('hall_of_fame', 'world_champions', 'World Champions & Dynastic Benchmark Legends') %}
+<div class="podium-preview-card cms-card" data-page="hall_of_fame" data-block="world_champions">
+  <div class="podium-preview-title cms-title">
+    <span>👑</span> {{ hof_wc.title }}
+  </div>
+  <div class="cms-content">
+    {% if hof_wc.is_custom %}
+      {{ hof_wc.content }}
+    {% else %}
+      <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem; line-height: 1.5;">
+        The official annual World Championship crowns the definitive global Through the Ages champion. Staged across multi-round qualification groups and playoff brackets (with evolving structural formats across editions).
+      </p>
+    {% endif %}
+  </div>
+  <div class="champions-highlight-grid">
+    <div class="champ-highlight-box">
+      <div class="champ-highlight-avatar">👑</div>
+      <div class="champ-highlight-info">
+        <a href="{{ url_for('player.profile', player_name='a440') }}" class="champ-highlight-name">
+          a440 <span class="badge-wc">👑 2025 World Champion</span>
+        </a>
+        <div class="champ-highlight-desc">2025 Reigning World Champion • Stage 4 Upper Playoff Champion • Highest Elo/WHR ceiling in modern 3P &amp; 4P finals.</div>
+      </div>
+    </div>
+    <div class="champ-highlight-box">
+      <div class="champ-highlight-avatar">⚔️</div>
+      <div class="champ-highlight-info">
+        <a href="{{ url_for('player.profile', player_name='Martin_Pecheur') }}" class="champ-highlight-name">
+          Martin_Pecheur <span class="badge-wc">👑 2024 World Champion</span>
+        </a>
+        <div class="champ-highlight-desc">2024 World Champion • 3x Intermezzo Champion • 2x Royal League Champion • All-round multi-format master.</div>
+      </div>
+    </div>
+    <div class="champ-highlight-box">
+      <div class="champ-highlight-avatar">🏛️</div>
+      <div class="champ-highlight-info">
+        <a href="{{ url_for('player.profile', player_name='Weidenbaum') }}" class="champ-highlight-name">
+          Weidenbaum <span class="badge-wc">👑 2023 World Champion</span>
+        </a>
+        <div class="champ-highlight-desc">Inaugural 2023 World Champion • 6x International Champion • 8x Intermezzo Champion • All-time peak titleholder.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Tournament Series Cards Grid -->
+<div class="series-grid">
+  {% for series in series_list %}
+  <a href="{{ url_for('hall_of_fame.series_detail', series_slug=series.slug) }}" class="series-card">
+    <div>
+      <div class="series-card-top">
+        <div class="series-icon">{{ series.icon }}</div>
+        <div class="series-badge">{{ series.format_badge }}</div>
+      </div>
+      <div class="series-name">{{ series.name }}</div>
+      <div class="series-summary">{{ series.summary }}</div>
+      
+      <div class="series-meta-row">
+        <span>Structure &amp; Cadence</span>
+        <span>{{ series.frequency }}</span>
+      </div>
+      <div class="series-meta-row">
+        <span>Active History</span>
+        <span>{{ series.active_range }}</span>
+      </div>
+      <div class="series-meta-row">
+        <span>Recorded Database Matches</span>
+        <span>{{ "{:,}".format(series.total_matches) }} games ({{ series.seasons_count }} editions)</span>
+      </div>
+    </div>
+
+    <div class="series-cta">
+      <span>View Rules, Trophyboard &amp; Records</span>
+      <span class="arrow">&rarr;</span>
+    </div>
+  </a>
+  {% endfor %}
+</div>
+
+<!-- All-Time Major Circuits Hall of Fame (Core 4 Leagues Only) -->
+<div class="wcs-analytics-card">
+  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+    <div>
+      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0;">
+        👑 All-Time Major Circuits Hall of Fame
+      </h3>
+      <div style="font-size: 0.82rem; color: var(--text-muted);">
+        Verified Premier Division titles and podium medals won strictly in the 4 official major circuits: World Championship, International Championship (4P), Intermezzo Championship (3P), and Royal League (2P).
+      </div>
+    </div>
+    <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-gold); background: rgba(229, 169, 60, 0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(229, 169, 60, 0.25);">
+      Major League Titles Only
+    </span>
+  </div>
+
+  <div style="overflow-x: auto;">
+    <table class="wcs-table">
+      <thead>
+        <tr>
+          <th style="width: 50px;">Rank</th>
+          <th>Competitor</th>
+          <th style="text-align: center;">Major Titles 🏆</th>
+          <th style="text-align: center;">World (WCS) 👑</th>
+          <th style="text-align: center;">International (4P) 🌐</th>
+          <th style="text-align: center;">Intermezzo (3P) ⚔️</th>
+          <th style="text-align: center;">Royal League (2P) 👑</th>
+          <th style="text-align: right;">Major Medals (🥇 / 🥈 / 🥉)</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for leg in hof_data.all_time_major_legends %}
+        <tr>
+          <td style="font-weight: 700; color: #ffd700;">#{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('player.profile', player_name=leg.player) }}" style="color: #f5eedb; font-weight: 700; text-decoration: none;">
+              {{ leg.player }}
+            </a>
+            {% if leg.world_titles > 0 or leg.player in ['a440', 'Martin_Pecheur', 'Weidenbaum'] %}
+              <span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; margin-left: 0.3rem;">👑 WC</span>
+            {% elif leg.total_titles >= 3 %}
+              <span class="badge-tier badge-diamond" style="font-size: 0.65rem; padding: 0.1rem 0.35rem; margin-left: 0.3rem;">GM</span>
+            {% endif %}
+          </td>
+          <td style="text-align: center; font-weight: 800; color: #4ade80; font-size: 1.05rem;">
+            {{ leg.total_titles }}
+          </td>
+          <td style="text-align: center; color: #ffd700; font-weight: 700;">
+            {% if leg.world_titles > 0 %}{{ leg.world_titles }} 👑{% else %}-{% endif %}
+          </td>
+          <td style="text-align: center; color: #81d4fa; font-weight: 600;">
+            {% if leg.intl_titles > 0 %}{{ leg.intl_titles }}{% else %}-{% endif %}
+          </td>
+          <td style="text-align: center; color: #ffb74d; font-weight: 600;">
+            {% if leg.inter_titles > 0 %}{{ leg.inter_titles }}{% else %}-{% endif %}
+          </td>
+          <td style="text-align: center; color: #ce93d8; font-weight: 600;">
+            {% if leg.rl_titles > 0 %}{{ leg.rl_titles }}{% else %}-{% endif %}
+          </td>
+          <td style="text-align: right; color: var(--accent-gold); font-weight: 600;">
+            🥇{{ leg.gold }} &nbsp;🥈{{ leg.silver }} &nbsp;🥉{{ leg.bronze }} ({{ leg.total_medals }})
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Two-Column Section: Grand Slams & Competitive Ladders Halls of Fame -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(360px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+  <!-- All-Time Grand Slams Hall of Fame -->
+  <div class="wcs-analytics-card" style="margin-bottom: 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+          <span>🎾</span> All-Time Grand Slams &amp; Cups Hall of Fame
+        </h3>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          Survivors Cup, Wimbledon TTA, Eiffel Tower, Slow Burn &amp; Major Opens
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="wcs-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">Rank</th>
+            <th>Competitor</th>
+            <th style="text-align: center;">🥇 Gold</th>
+            <th style="text-align: center;">🥈 Silver</th>
+            <th>Notable Cup Titles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for gs in hof_data.gs_board[:10] %}
+          <tr>
+            <td style="font-weight: 700; color: #ffd700;">#{{ loop.index }}</td>
+            <td>
+              <a href="{{ url_for('player.profile', player_name=gs.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+                {{ gs.player }}
+              </a>
+            </td>
+            <td style="text-align: center; color: #f59e0b; font-weight: 800;">{{ gs.gold }}</td>
+            <td style="text-align: center; color: #cbd5e1; font-weight: 700;">{{ gs.silver }}</td>
+            <td style="color: var(--text-muted); font-size: 0.8rem;">{{ gs.details }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- All-Time Competitive Ladders Hall of Fame -->
+  <div class="wcs-analytics-card" style="margin-bottom: 0;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin: 0; display: flex; align-items: center; gap: 0.4rem;">
+          <span>🪜</span> All-Time Competitive Ladders Hall of Fame
+        </h3>
+        <div style="font-size: 0.8rem; color: var(--text-muted);">
+          Top competitors on the Mercurial, Sodium, and Transcontinental (TCL) challenge ladders
+        </div>
+      </div>
+    </div>
+    <div style="overflow-x: auto;">
+      <table class="wcs-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">Rank</th>
+            <th>Competitor</th>
+            <th style="text-align: right;">Ladder Wins</th>
+            <th style="text-align: right;">Matches</th>
+            <th style="text-align: center;">Win Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for ld in hof_data.ladder_board[:10] %}
+          <tr>
+            <td style="font-weight: 700; color: #ffd700;">#{{ loop.index }}</td>
+            <td>
+              <a href="{{ url_for('player.profile', player_name=ld.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+                {{ ld.player }}
+              </a>
+            </td>
+            <td style="text-align: right; color: #4ade80; font-weight: 800;">{{ ld.wins }} W</td>
+            <td style="text-align: right; color: var(--text-muted);">{{ ld.matches }}</td>
+            <td style="text-align: center; color: var(--accent-gold); font-weight: 700;">{{ ld.win_rate }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

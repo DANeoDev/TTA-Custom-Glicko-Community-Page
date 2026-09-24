@@ -5,14 +5,20 @@
 {% block extra_head %}
 <style>
   .achievements-header {
+    background: rgba(26, 17, 12, 0.95);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem 2rem;
+    margin: 0.5rem auto 2rem auto;
+    max-width: 920px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(8px);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     text-align: center;
     gap: 1.25rem;
-    margin: 0.5rem auto 2rem auto;
-    max-width: 900px;
   }
   .player-identity {
     display: flex;
@@ -21,12 +27,6 @@
     justify-content: center;
     text-align: center;
     gap: 0.6rem;
-  }
-  .player-name-h1 {
-    font-family: var(--font-heading);
-    font-size: 2.2rem;
-    color: var(--accent-gold);
-    letter-spacing: 1px;
   }
   .medals-grid {
     display: grid;
@@ -122,18 +122,50 @@
     font-size: 0.8rem;
     font-weight: 700;
   }
-  .medal-gold { background: rgba(255, 215, 0, 0.2); color: #ffd700; border: 1px solid rgba(255, 215, 0, 0.5); }
-  .medal-silver { background: rgba(207, 216, 220, 0.2); color: #cfd8dc; border: 1px solid rgba(207, 216, 220, 0.5); }
-  .medal-bronze { background: rgba(205, 127, 50, 0.2); color: #cd7f32; border: 1px solid rgba(205, 127, 50, 0.5); }
+  .records-tab-btn {
+    background: rgba(35, 23, 16, 0.9);
+    border: 1px solid rgba(138, 98, 51, 0.6);
+    color: #dfcfbc;
+    font-family: var(--font-subheading);
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 0.55rem 1.15rem;
+    border-radius: 6px;
+    cursor: pointer !important;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.4);
+  }
+  .records-tab-btn:hover {
+    color: #fff;
+    border-color: var(--accent-gold);
+    background: rgba(229, 169, 60, 0.22);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  }
+  .records-tab-btn.active {
+    background: linear-gradient(135deg, #e5a93c 0%, #b87c1c 100%);
+    color: #120904;
+    font-weight: 700;
+    border-color: #ffd700;
+    box-shadow: 0 3px 12px rgba(229, 169, 60, 0.45);
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="achievements-header">
   <div class="player-identity">
-    <div style="display: flex; align-items: center; justify-content: center; gap: 0.75rem; flex-wrap: wrap;">
-      <h1 class="player-profile-name">{{ player.name }}</h1>
-      {% if player.title == 'GM' %}
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;">
+      {% if player.title == 'WC' or player.name == 'a440' %}
+        <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem; box-shadow: 0 0 16px rgba(176, 38, 255, 0.8);" title="Official Competitive Title: Reigning World Champion (2025)">World Champion</span>
+      {% elif player.name == 'Martin_Pecheur' %}
+        <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" title="Official Competitive Title: World Champion (2024)">World Champion</span>
+      {% elif player.name == 'Weidenbaum' %}
+        <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" title="Official Competitive Title: World Champion (2023)">World Champion</span>
+      {% elif player.title == 'GM' %}
         <span class="badge badge-gm" title="Official Competitive Title: Grandmaster">Grandmaster</span>
       {% elif player.title == 'M' %}
         <span class="badge badge-m" title="Official Competitive Title: Master">Master</span>
@@ -142,11 +174,12 @@
       {% elif player.title == 'G' %}
         <span class="badge badge-g" title="Official Competitive Title: Gold">Gold</span>
       {% endif %}
+      <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}</h1>
     </div>
-    <div style="color: #1a0f08; font-family: var(--font-stats); font-size: 0.88rem; font-weight: 600; margin-top: 0.2rem; display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; background: rgba(212, 163, 67, 0.28); padding: 0.25rem 0.75rem; border-radius: 4px; border: 1px solid rgba(138, 90, 36, 0.45);">
+    <div class="player-meta-pill">
       <span title="Nationality / Flag">{{ get_flag(player.country_code) }}</span>
-      <span style="color: #5a3518;">&bull;</span>
-      <span>Tournament Records &amp; Career Hall of Fame Finishes &bull; Last Match: <strong style="color: #0c0603;">{{ player.last_played or 'N/A' }}</strong></span>
+      <span class="meta-separator">&bull;</span>
+      <span>Tournament Records &amp; Career Hall of Fame Finishes &bull; Last Match: <strong>{{ player.last_played or 'N/A' }}</strong></span>
     </div>
   </div>
 
@@ -201,8 +234,8 @@
 
 <!-- Top Career Accolades Pills -->
 {% if top_achievements %}
-<div style="margin-bottom: 1.5rem;">
-  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.1rem; margin-bottom: 0.75rem;">
+<div class="rating-card" style="padding: 1.25rem 1.5rem; margin-bottom: 2rem; border-left: 4px solid var(--accent-gold);">
+  <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin-bottom: 0.75rem;">
     Featured Career Accolades
   </h3>
   <div class="career-honors-grid">
@@ -224,11 +257,11 @@
         Historical Tournament Records
       </h2>
       <!-- Switch Selector -->
-      <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
-        <button id="tabBtnSeasons" class="faq-tab-btn active" onclick="switchRecordsTab('seasons')">
+      <div style="display: flex; gap: 0.65rem; flex-wrap: wrap;">
+        <button id="tabBtnSeasons" class="records-tab-btn active" onclick="switchRecordsTab('seasons')">
           🏆 Individual Seasons &amp; Tournaments ({{ season_records|length }})
         </button>
-        <button id="tabBtnCareer" class="faq-tab-btn" onclick="switchRecordsTab('career')">
+        <button id="tabBtnCareer" class="records-tab-btn" onclick="switchRecordsTab('career')">
           🎖️ Career Totals &amp; Hall of Fame ({{ career_records|length }})
         </button>
       </div>
@@ -393,8 +426,12 @@
       const cellA = (rowA.cells[colIndex]?.innerText || '').trim();
       const cellB = (rowB.cells[colIndex]?.innerText || '').trim();
 
-      const numA = parseFloat(cellA.replace(/[^0-9.-]/g, ''));
-      const numB = parseFloat(cellB.replace(/[^0-9.-]/g, ''));
+      let valA = cellA;
+      let valB = cellB;
+      if (cellA.includes('/')) valA = cellA.split('/')[0].trim();
+      if (cellB.includes('/')) valB = cellB.split('/')[0].trim();
+      const numA = parseFloat(valA.replace(/[^0-9.-]/g, ''));
+      const numB = parseFloat(valB.replace(/[^0-9.-]/g, ''));
       if (!isNaN(numA) && !isNaN(numB) && cellA.match(/^[0-9]/) && cellB.match(/^[0-9]/) && colIndex !== 0) {
         return newDir === 'asc' ? numA - numB : numB - numA;
       }

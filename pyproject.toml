@@ -16,3 +16,7 @@ dependencies = [
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = [".", "src"]
+markers = [
+    "slow: marks tests as computationally intensive (deselect with '-m \"not slow\"')",
+]
+

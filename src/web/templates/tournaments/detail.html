@@ -1,0 +1,645 @@
+{% extends "base.html" %}
+
+{% block title %}{{ series.name }} | Tournaments Circuit{% endblock %}
+
+{% block extra_head %}
+<style>
+  .series-nav-bar {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+    background: rgba(18, 12, 8, 0.85);
+    padding: 0.5rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .series-nav-btn {
+    padding: 0.4rem 0.9rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid transparent;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .series-nav-btn:hover {
+    color: var(--text-main);
+    background: rgba(229, 169, 60, 0.12);
+  }
+  .series-nav-btn.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    font-weight: 700;
+    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+
+  .detail-hero {
+    background: linear-gradient(135deg, rgba(28, 19, 13, 0.95), rgba(45, 30, 20, 0.9));
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  }
+  .detail-hero-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+  .detail-hero-left {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+  }
+  .detail-hero-icon {
+    font-size: 3.2rem;
+    line-height: 1;
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem;
+    border-radius: 12px;
+    border: 1px solid rgba(229, 169, 60, 0.25);
+  }
+  .detail-hero-title {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.3rem;
+  }
+  .detail-hero-badge {
+    background: rgba(229, 169, 60, 0.15);
+    border: 1px solid rgba(229, 169, 60, 0.3);
+    color: var(--accent-gold);
+    padding: 0.3rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    align-self: flex-start;
+  }
+  .detail-hero-desc {
+    color: var(--text-muted);
+    font-size: 1rem;
+    line-height: 1.6;
+    margin-top: 1rem;
+    max-width: 900px;
+  }
+  .detail-meta-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(229, 169, 60, 0.15);
+  }
+  .meta-box {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+  }
+  .meta-box-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-muted);
+    margin-bottom: 0.25rem;
+  }
+  .meta-box-val {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+  }
+
+  .content-two-col {
+    display: grid;
+    grid-template-columns: 1.1fr 1.9fr;
+    gap: 2rem;
+    margin-bottom: 2.5rem;
+  }
+  @media (max-width: 960px) {
+    .content-two-col {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .panel-card {
+    background: var(--surface-panel);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin-bottom: 1.25rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(229, 169, 60, 0.15);
+  }
+
+  /* Rules list */
+  .rules-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+  }
+  .rules-list li {
+    position: relative;
+    padding-left: 1.5rem;
+    font-size: 0.92rem;
+    line-height: 1.55;
+    color: var(--text-main);
+  }
+  .rules-list li::before {
+    content: '▶';
+    position: absolute;
+    left: 0;
+    color: var(--accent-gold);
+    font-size: 0.7rem;
+    top: 0.25rem;
+  }
+
+  /* Scrollable Trophyboard */
+  .trophy-table-container {
+    max-height: 480px;
+    overflow-y: auto;
+    border-radius: 6px;
+    border: 1px solid rgba(229, 169, 60, 0.2);
+    background: rgba(0, 0, 0, 0.25);
+    scrollbar-width: thin;
+    scrollbar-color: var(--accent-gold) rgba(0, 0, 0, 0.4);
+  }
+  .trophy-table thead th {
+    position: sticky;
+    top: 0;
+    z-index: 5;
+    background: #1e140d;
+    box-shadow: 0 1px 0 rgba(229, 169, 60, 0.25);
+  }
+  .trophy-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.92rem;
+  }
+  .trophy-table th {
+    color: var(--accent-gold);
+    font-weight: 700;
+    text-align: left;
+    padding: 0.75rem;
+    border-bottom: 1px solid rgba(229, 169, 60, 0.2);
+    font-size: 0.82rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .trophy-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-main);
+  }
+  .trophy-table tr:hover td {
+    background: rgba(229, 169, 60, 0.06);
+  }
+  .medal-count {
+    font-weight: 700;
+    font-family: var(--font-stats);
+  }
+  .medal-gold { color: #f59e0b; }
+  .medal-silver { color: #cbd5e1; }
+  .medal-bronze { color: #d97706; }
+  .medal-total { color: #fff; }
+
+  /* Success stories */
+  .stories-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+    gap: 1.25rem;
+  }
+  .story-card {
+    background: rgba(18, 12, 8, 0.75);
+    border: 1px solid rgba(229, 169, 60, 0.2);
+    border-radius: 6px;
+    padding: 1.25rem;
+    position: relative;
+    border-left: 4px solid var(--accent-gold);
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+  .story-card:hover {
+    transform: translateY(-2px);
+    border-color: var(--accent-gold);
+  }
+  .story-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .story-author {
+    font-weight: 700;
+    font-size: 1.05rem;
+    color: #fff;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .story-author:hover {
+    color: var(--accent-gold);
+  }
+  .story-badge {
+    background: rgba(229, 169, 60, 0.15);
+    border: 1px solid rgba(229, 169, 60, 0.3);
+    color: var(--accent-gold);
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    font-weight: 600;
+  }
+  .story-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+  }
+  .story-text {
+    font-size: 0.9rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Series Switcher Bar -->
+<div class="series-nav-bar">
+  <a href="{{ url_for('hall_of_fame.index') }}" class="series-nav-btn">
+    <span>🏆</span> Overview
+  </a>
+  {% for item in all_series %}
+  <a href="{{ url_for('hall_of_fame.series_detail', series_slug=item.slug) }}" 
+     class="series-nav-btn {% if item.slug == series.slug %}active{% endif %}">
+    <span>{{ item.icon }}</span> {{ item.short_name }}
+  </a>
+  {% endfor %}
+</div>
+
+<!-- Series Hero Banner -->
+<div class="detail-hero">
+  <div class="detail-hero-top">
+    <div class="detail-hero-left">
+      <div class="detail-hero-icon">{{ series.icon }}</div>
+      <div>
+        <div class="detail-hero-title">{{ series.name }}</div>
+        <div style="color: var(--accent-gold); font-size: 0.95rem; font-weight: 600;">
+          {{ series.player_count }}-Player Competitive Format
+        </div>
+      </div>
+    </div>
+    <div class="detail-hero-badge">{{ series.format_badge }}</div>
+  </div>
+
+  <div class="detail-hero-desc">
+    {{ series.summary }}
+  </div>
+
+  <div class="detail-meta-grid">
+    <div class="meta-box">
+      <div class="meta-box-label">Recorded Matches</div>
+      <div class="meta-box-val">{{ "{:,}".format(series.total_matches) }}</div>
+    </div>
+    <div class="meta-box">
+      <div class="meta-box-label">Seasons / Editions</div>
+      <div class="meta-box-val">{{ series.seasons_count }} Editions</div>
+    </div>
+    <div class="meta-box">
+      <div class="meta-box-label">Cadence & Schedule</div>
+      <div class="meta-box-val" style="font-size: 0.95rem;">{{ series.frequency }}</div>
+    </div>
+    <div class="meta-box">
+      <div class="meta-box-label">Historical Era</div>
+      <div class="meta-box-val" style="font-size: 0.95rem;">{{ series.active_range }}</div>
+    </div>
+  </div>
+</div>
+
+<!-- Two-Column Rules & Trophyboard -->
+<div class="content-two-col">
+  <!-- Rules & Structure -->
+  <div class="panel-card">
+    <div class="panel-header">
+      <span>📜</span> Format & Regulations
+    </div>
+    <ul class="rules-list">
+      {% for rule in series.rules %}
+      <li>{{ rule }}</li>
+      {% endfor %}
+    </ul>
+
+    <div style="margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.06); font-size: 0.85rem; color: var(--text-muted);">
+      <strong style="color: var(--accent-gold);">Rating Integration:</strong> Matches played in this circuit are parsed with match integrity validation and automatically update player Glicko-2 and WHR parameters according to their multiplayer weighting rules.
+    </div>
+  </div>
+
+  <!-- Official Trophyboard -->
+  <div class="panel-card">
+    <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        <span>🏅</span> Official Trophyboard & Hall of Fame
+      </div>
+      <span style="font-size: 0.78rem; font-weight: 600; color: var(--accent-gold); background: rgba(229, 169, 60, 0.12); padding: 0.15rem 0.5rem; border-radius: 4px; border: 1px solid rgba(229, 169, 60, 0.25);">
+        {{ series.trophyboard|length }} Competitors
+      </span>
+    </div>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem; font-size: 0.82rem; color: var(--text-muted);">
+      <span>Verified podium & title records</span>
+      <span style="color: var(--accent-gold); font-weight: 600;">Scroll table ↕</span>
+    </div>
+    <div class="trophy-table-container">
+      <table class="trophy-table">
+        <thead>
+          <tr>
+            <th style="width: 40px;">#</th>
+            <th>Competitor</th>
+            <th style="text-align: center;">🥇 Gold</th>
+            <th style="text-align: center;">🥈 Silver</th>
+            <th style="text-align: center;">🥉 Bronze</th>
+            <th style="text-align: center;">Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for entry in series.trophyboard %}
+          <tr>
+            <td style="color: var(--text-muted); font-weight: 600; font-family: var(--font-stats);">{{ loop.index }}</td>
+            <td>
+              <a href="{{ url_for('player.profile', player_name=entry.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+                {{ entry.player }}
+              </a>
+              {% if entry.title == 'WC' or entry.player in ['a440', 'Martin_Pecheur', 'Weidenbaum'] %}
+                <span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">💎 WC</span>
+              {% elif entry.title == 'GM' %}
+                <span class="badge-tier badge-diamond" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">GM</span>
+              {% elif entry.title == 'M' %}
+                <span class="badge-tier badge-platinum" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">M</span>
+              {% endif %}
+            </td>
+            <td style="text-align: center;" class="medal-count medal-gold">{{ entry.gold }}</td>
+            <td style="text-align: center;" class="medal-count medal-silver">{{ entry.silver }}</td>
+            <td style="text-align: center;" class="medal-count medal-bronze">{{ entry.bronze }}</td>
+            <td style="text-align: center;" class="medal-count medal-total">{{ entry.total }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Master+ Dynastic Milestones & Champion Chronicles (Enclosed in styled Panel Card) -->
+{% if series.stories %}
+<div class="panel-card" style="margin-bottom: 2.5rem;">
+  <div class="panel-header">
+    <span>⚡</span> Master+ Dynastic Milestones & Champion Chronicles
+  </div>
+  <div class="stories-grid">
+    {% for story in series.stories %}
+    <div class="story-card">
+      <div class="story-header">
+        <a href="{{ url_for('player.profile', player_name=story.player) }}" class="story-author">
+          <span>👤</span> {{ story.player }}
+        </a>
+        <div class="story-badge">{{ story.badge }}</div>
+      </div>
+      <div class="story-title">{{ story.title }}</div>
+      <div class="story-text">{{ story.text }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endif %}
+
+<!-- WCS Deep Bracket & Playoff Analytics (Shown specifically for Worlds) -->
+{% if series.slug == 'worlds' and hof_data and hof_data.wcs_deep %}
+<div class="panel-card" style="margin-bottom: 2.5rem;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span>⚔️</span> World Championship Playoff Bracket & Multi-Stage Records
+    </div>
+    <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-gold); background: rgba(229, 169, 60, 0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(229, 169, 60, 0.25);">
+      Derived Multi-Stage Match History
+    </span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+    Comprehensive bracket statistics across Stage 1 to Stage 4 Finalists, Upper & Lower bracket survival runs, and cumulative scoring records across all World Championship editions.
+  </p>
+
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem;">
+    <!-- Lower Bracket Survival Runs -->
+    <div>
+      <div style="font-weight: 700; color: var(--accent-gold); font-size: 0.95rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+        <span>🔥</span> Longest Lower-Bracket Survival Streaks
+      </div>
+      <div class="trophy-table-container" style="max-height: 320px;">
+        <table class="trophy-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th style="text-align: center;">Consecutive Elimination Wins</th>
+              <th style="text-align: center;">Lower Matches</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for run in hof_data.wcs_deep.top_lower_runs %}
+            <tr>
+              <td>
+                <a href="{{ url_for('player.profile', player_name=run.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+                  {{ run.player }}
+                </a>
+              </td>
+              <td style="text-align: center; font-weight: 800; font-family: var(--font-stats); color: #f59e0b;">
+                {{ run.streak }} W streak
+              </td>
+              <td style="text-align: center; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-stats);">
+                {{ run.wins }} / {{ run.matches }}
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Highest Total Scoring Legends -->
+    <div>
+      <div style="font-weight: 700; color: var(--accent-gold); font-size: 0.95rem; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.4rem;">
+        <span>📈</span> WCS Cumulative Scoring & Win Rates
+      </div>
+      <div class="trophy-table-container" style="max-height: 320px;">
+        <table class="trophy-table">
+          <thead>
+            <tr>
+              <th>Player</th>
+              <th style="text-align: right;">Total Culture</th>
+              <th style="text-align: right;">Peak Game</th>
+              <th style="text-align: center;">Win Rate</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for sc in hof_data.wcs_deep.top_scorers %}
+            <tr>
+              <td>
+                <a href="{{ url_for('player.profile', player_name=sc.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+                  {{ sc.player }}
+                </a>
+              </td>
+              <td style="text-align: right; font-weight: 700; font-family: var(--font-stats); color: var(--accent-gold);">
+                {{ "{:,.0f}".format(sc.total_points) }}
+              </td>
+              <td style="text-align: right; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-stats);">
+                {{ sc.highest_score|int }}
+              </td>
+              <td style="text-align: center; color: #22c55e; font-weight: 600; font-family: var(--font-stats); font-size: 0.85rem;">
+                {{ sc.win_rate }}%
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Premier Division All-Time Best Seasonal Campaigns (League Points Record) -->
+{% if seasonal_records %}
+<div class="panel-card" style="margin-bottom: 2rem;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span>🏆</span> Premier Division All-Time Seasonal Records ({{ series.name }})
+    </div>
+    <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-gold); background: rgba(229, 169, 60, 0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(229, 169, 60, 0.25);">
+      Highest Seasonal League Points
+    </span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+    All-time highest cumulative league points achieved in a single premier division season (4P: 6/3/1/0 pts; 3P: 5/2/0 pts; 2P: 2/1/0 pts; ties split points equally).
+  </p>
+  <div class="trophy-table-container" style="max-height: 420px;">
+    <table class="trophy-table">
+      <thead>
+        <tr>
+          <th style="width: 45px; text-align: center;">Rank</th>
+          <th>Competitor</th>
+          <th style="text-align: right;">League Points</th>
+          <th style="text-align: center;">Record (W / 2nd)</th>
+          <th>Season & Division</th>
+          <th style="text-align: right;">Season Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for srec in seasonal_records %}
+        <tr>
+          <td style="text-align: center; color: var(--text-muted); font-weight: 700; font-family: var(--font-stats);">#{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('player.profile', player_name=srec.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+              {{ srec.player }}
+            </a>
+            {% if srec.player in ['a440', 'Martin_Pecheur', 'Weidenbaum'] %}
+              <span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">💎 WC</span>
+            {% endif %}
+          </td>
+          <td style="text-align: right; font-weight: 800; font-family: var(--font-stats); color: var(--accent-gold); font-size: 1.05rem;">
+            {{ "%.1f"|format(srec.points) }} pts
+          </td>
+          <td style="text-align: center; color: var(--text-muted); font-size: 0.88rem; font-family: var(--font-stats);">
+            <span style="color: #22c55e; font-weight: 600;">{{ srec.wins }}W</span>
+            {% if srec.second_places > 0 %} / <span style="color: #94a3b8;">{{ srec.second_places }} 2nd</span>{% endif %}
+            <span style="color: var(--text-muted); font-size: 0.78rem;">({{ srec.games }}G)</span>
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.88rem;">{{ srec.season }} ({{ srec.division }})</td>
+          <td style="text-align: right; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-stats);">{{ srec.date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+<!-- Premier Division All-Time Single Game Scoring Records -->
+{% if records %}
+<div class="panel-card" style="margin-bottom: 2rem;">
+  <div class="panel-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+    <div style="display: flex; align-items: center; gap: 0.6rem;">
+      <span>📈</span> Premier Division Highest Single-Match Scores ({{ series.name }})
+    </div>
+    <span style="font-size: 0.8rem; font-weight: 600; color: var(--accent-gold); background: rgba(229, 169, 60, 0.12); padding: 0.2rem 0.6rem; border-radius: 4px; border: 1px solid rgba(229, 169, 60, 0.25);">
+      Top Single-Game Scores
+    </span>
+  </div>
+  <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 1.25rem; line-height: 1.5;">
+    Historic single-match cultural scoring peaks achieved in premier division competition (e.g. Master 1, Emperor, Championship Playoff Brackets) from official tournament match logs with full opponent matchups.
+  </p>
+  <div class="trophy-table-container" style="max-height: 420px;">
+    <table class="trophy-table">
+      <thead>
+        <tr>
+          <th style="width: 45px; text-align: center;">Rank</th>
+          <th>Competitor</th>
+          <th style="text-align: right;">Culture Score</th>
+          <th>Opponents & Match Scores</th>
+          <th>Division & Match ID</th>
+          <th style="text-align: right;">Match Date</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for rec in records %}
+        <tr>
+          <td style="text-align: center; color: var(--text-muted); font-weight: 700; font-family: var(--font-stats);">#{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('player.profile', player_name=rec.player) }}" style="color: #fff; font-weight: 700; text-decoration: none;">
+              {{ rec.player }}
+            </a>
+            {% if rec.player in ['a440', 'Martin_Pecheur', 'Weidenbaum'] %}
+              <span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.35rem;">💎 WC</span>
+            {% endif %}
+          </td>
+          <td style="text-align: right; font-weight: 800; font-family: var(--font-stats); color: var(--accent-gold); font-size: 1.05rem;">
+            {{ "%.0f"|format(rec.score) }} pts
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.85rem;">
+            {% if rec.opponents_display %}
+              <span style="color: #cbd5e1;">vs {{ rec.opponents_display }}</span>
+            {% else %}
+              <span style="color: var(--text-muted);">-</span>
+            {% endif %}
+          </td>
+          <td style="color: var(--text-muted); font-size: 0.88rem;">{{ rec.tournament }}</td>
+          <td style="text-align: right; color: var(--text-muted); font-size: 0.85rem; font-family: var(--font-stats);">{{ rec.date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
+

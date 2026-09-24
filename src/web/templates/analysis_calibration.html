@@ -4,37 +4,6 @@
 
 {% block extra_head %}
 <style>
-  .subpage-nav {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-    background: rgba(18, 12, 8, 0.85);
-    padding: 0.4rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-  }
-  .subpage-btn {
-    padding: 0.4rem 1rem;
-    border-radius: 4px;
-    font-family: var(--font-stats);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-  }
-  .subpage-btn:hover {
-    color: var(--text-main);
-    background: rgba(229, 169, 60, 0.12);
-  }
-  .subpage-btn.active {
-    background: var(--accent-gold);
-    color: #1c130d;
-    font-weight: 700;
-    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
-  }
   .calib-table {
     width: 100%;
     border-collapse: collapse;
@@ -305,8 +274,8 @@
           </tr>
         </thead>
         <tbody>
-          {% set bin_labels = wf_data.models.glicko2_std.labels if wf_data.models.glicko2_std else ['50-60%', '60-70%', '70-80%', '80-90%', '90-100%'] %}
-          {% set ideals = [55.0, 65.0, 75.0, 85.0, 95.0] %}
+          {% set bin_labels = wf_data.models.glicko2_std.labels if wf_data.models.glicko2_std else ['50-55%', '55-60%', '60-65%', '65-70%', '70-75%', '75-80%', '80-85%', '85-90%', '90-95%', '95-100%'] %}
+          {% set ideals = [52.5, 57.5, 62.5, 67.5, 72.5, 77.5, 82.5, 87.5, 92.5, 97.5] %}
           {% for idx in range(bin_labels|length) %}
             {% set bin_lbl = bin_labels[idx] %}
             {% set ideal = ideals[idx] %}
@@ -400,19 +369,19 @@
         </thead>
         <tbody>
           {% set engine_list = [
-            ('whr', 'Whole-History Rating (WHR)', 'Continuous', '#4fc3f7', '★ Benchmark Calibration — Full retrospective Brownian smoothing maximizes likelihood across entire career history (lowest ECE & Brier).'),
-            ('whr_soft', 'Whole-History Rating (WHR)', 'Soft Reset', '#4fc3f7', '★ Retrospective Soft Reset — 3-year phi decay preserves Bayesian continuity while allowing seasonal trophy reset dynamics.'),
-            ('whr_amplified', 'Whole-History Rating (WHR)', 'Hard Reset', '#4fc3f7', '★ Retrospective Hard Reset — Deep annual variance reset with smooth multi-year retrospective recovery.'),
+            ('glicko2_daneo', 'GlickoD* (Flagship)', 'Continuous', '#ffd54f', '👑 All-Time Predictive Champion — 15-game re-calibration and Golden Ratio MP weighting.'),
+            ('glicko2_daneo_softer', 'GlickoD* (Flagship)', 'Season Reset', '#ffd54f', '👑 Peak Calibration Harmony — Decoupled RD uncertainty boost, dynamic phi-tier regression (0.30% ECE).'),
+            ('glicko2_adapt', 'Glicko-2 Adaptive-T', 'Continuous', '#22c55e', '★ Adaptive-T Baseline — Continuous Bayesian trajectory with dynamic game-tree variance calibration.'),
+            ('glicko2_adapt_softer', 'Glicko-2 Adaptive-T', 'Season Reset', '#22c55e', '★ Adaptive-T Season Reset — Decoupled uncertainty boost with mild dynamic tier reversion.'),
             ('glicko2_mp', 'Glicko-2 MP-Weighted', 'Continuous', '#ef5350', '★ Optimal Multiplayer Balance — Fractional variance weighting (w=1/(N-1)) eliminates overconfidence in 3P/4P tables.'),
-            ('glicko2_mp_soft', 'Glicko-2 MP-Weighted', 'Soft Reset', '#ef5350', '★ Balanced Seasonal Turnover — Golden Ratio phi RD expansion with controlled multiplayer variance dampening.'),
-            ('glicko2_mp_amplified', 'Glicko-2 MP-Weighted', 'Hard Reset', '#ef5350', '★ High-Mobility Multiplayer — Strongest annual reset for active title contenders in multiplayer tournaments.'),
+            ('glicko2_mp_softer', 'Glicko-2 MP-Weighted', 'Season Reset', '#ef5350', '★ Gentle Multiplayer Turnover — Calibrated season reset with fractional multiplayer weighting.'),
             ('glicko2_std', 'Glicko-2 Standard', 'Continuous', '#e5a93c', '★ High Forward Responsiveness — Standard pairwise Elo dynamics; sharp and decisive but slightly sensitive to multiplayer hot streaks.'),
-            ('glicko2_std_soft', 'Glicko-2 Standard', 'Soft Reset', '#e5a93c', '★ Standard Soft Reset — Moderate seasonal rating decay promoting annual leaderboard activity.'),
-            ('glicko2_std_amplified', 'Glicko-2 Standard', 'Hard Reset', '#e5a93c', '★ Standard Hard Reset — Maximum ladder mobility, requiring regular tournament play to defend title tiers.')
+            ('glicko2_std_softer', 'Glicko-2 Standard', 'Season Reset', '#e5a93c', '★ Standard Season Reset — Gentle annual decay with dynamic tier reversion.'),
+            ('whr', 'Whole-History Rating (WHR)', 'Continuous', '#4fc3f7', '★ Benchmark Calibration — Full retrospective Brownian smoothing maximizes likelihood across entire career history.')
           ] %}
           {% for e_key, e_name, e_rm, e_color, e_desc in engine_list %}
             {% set m_obj = calib_data.models.get(e_key, {}) %}
-            {% set is_active_row = (active_reset_mode == 'continuous' and e_rm == 'Continuous') or (active_reset_mode == 'soft' and e_rm == 'Soft Reset') or (active_reset_mode == 'amplified' and e_rm == 'Hard Reset') %}
+            {% set is_active_row = (active_reset_mode == 'continuous' and e_rm == 'Continuous') or (active_reset_mode == 'softer' and e_rm == 'Season Reset') %}
             <tr style="{% if is_active_row %}background: rgba(229, 169, 60, 0.08);{% endif %}">
               <td style="text-align: left; font-weight: 700; color: {{ e_color }};">{{ e_name }}</td>
               <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">{{ e_rm }}</span></td>
@@ -594,8 +563,8 @@
     // 2. Walk-Forward Reliability Chart
     const wfCalibCtx = document.getElementById('wfCalibChart');
     if (wfCalibCtx) {
-      const ideals = [55.0, 65.0, 75.0, 85.0, 95.0];
-      const labels = ['50-60%', '60-70%', '70-80%', '80-90%', '90-100%'];
+      const ideals = [52.5, 57.5, 62.5, 67.5, 72.5, 77.5, 82.5, 87.5, 92.5, 97.5];
+      const labels = ['50-55%', '55-60%', '60-65%', '65-70%', '70-75%', '75-80%', '80-85%', '85-90%', '90-95%', '95-100%'];
       const mpAct = rawWf.models.glicko2_mp ? rawWf.models.glicko2_mp.actuals.map(x => (x * 100).toFixed(1)) : [];
       const stdAct = rawWf.models.glicko2_std ? rawWf.models.glicko2_std.actuals.map(x => (x * 100).toFixed(1)) : [];
       const whrAct = rawWf.models.whr ? rawWf.models.whr.actuals.map(x => (x * 100).toFixed(1)) : [];

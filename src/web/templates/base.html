@@ -10,17 +10,28 @@
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=Marcellus&family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <!-- Marked for Markdown parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <!-- KaTeX for formula rendering -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.css">
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.10/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body, {delimiters: [{left: '$$', right: '$$', display: true}, {left: '$', right: '$', display: false}, {left: '\\(', right: '\\)', display: false}, {left: '\\[', right: '\\]', display: true}]});"></script>
   <style>
+    :root {
+      --header-height: 68px;
+    }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       min-height: 100vh;
       display: flex;
       flex-direction: column;
-      background: var(--bg-dark) url('{{ url_for("static", filename="img/background.png") }}') no-repeat center top fixed;
+      background-color: var(--bg-dark);
+      background-image: url('{{ url_for("static", filename="img/background.png") }}');
+      background-repeat: no-repeat;
+      background-position: center var(--header-height, 68px);
+      background-position-x: center;
+      background-position-y: var(--header-height, 68px);
+      background-attachment: fixed;
       background-size: cover;
       color: var(--text-main);
       font-family: var(--font-body);
@@ -148,10 +159,31 @@
       font-family: var(--font-stats);
       text-align: center;
     }
-    .badge-gm { background: #e5a93c; color: #1c130d; border: 1px solid #ffcc66; }
-    .badge-m { background: #8a9ba8; color: #111; border: 1px solid #cfd8dc; }
-    .badge-p { background: #b87333; color: #fff; border: 1px solid #d7995b; }
-    .badge-g { background: #d4af37; color: #1c130d; border: 1px solid #ffd700; font-weight: 700; }
+    .badge-wc {
+      background: linear-gradient(135deg, #450a0a 0%, #7f1d1d 30%, #991b1b 60%, #450a0a 100%);
+      color: #ffd700;
+      border: 1.5px solid #d4af37;
+      box-shadow: 0 0 14px rgba(212, 175, 55, 0.6), inset 0 1px 2px rgba(255, 235, 150, 0.4), 0 2px 6px rgba(0, 0, 0, 0.7);
+      font-weight: 800;
+      letter-spacing: 0.6px;
+      text-shadow: 0 0 6px rgba(255, 215, 0, 0.6), 0 1px 2px rgba(0, 0, 0, 0.9);
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      border-radius: 4px;
+    }
+    .badge-wc::before {
+      content: '👑';
+      font-size: 0.85em;
+      filter: drop-shadow(0 0 4px rgba(255, 215, 0, 0.95));
+    }
+    .badge-gm { background: #e5a93c; color: #1c130d; border: 1px solid #ffcc66; font-weight: 700; }
+    .badge-m { background: #94a3b8; color: #0f172a; border: 1px solid #cbd5e1; font-weight: 700; }
+    .badge-p { background: #38bdf8; color: #082f49; border: 1px solid #7dd3fc; font-weight: 700; }
+    .badge-g { background: #eab308; color: #1c130d; border: 1px solid #fde047; font-weight: 700; }
+    .badge-s { background: #94a3b8; color: #1c130d; border: 1px solid #cbd5e1; font-weight: 700; }
+    .badge-b { background: #b45309; color: #fffbeb; border: 1px solid #d97706; font-weight: 700; }
+    .badge-w { background: #78350f; color: #fef3c7; border: 1px solid #92400e; font-weight: 700; }
     .badge-rank {
       background: rgba(229, 169, 60, 0.15);
       color: var(--accent-gold);
@@ -256,17 +288,60 @@
       color: #bfaea0 !important;
       text-shadow: 0 1px 2px rgba(0,0,0,0.9);
     }
-    /* Player Profile Name - darker rich wine-red with perfectly aligned vector border */
+    /* Player Profile Name - rich antique gold with smooth, crisp contrast */
     .player-profile-name {
       font-family: var(--font-heading);
-      font-size: 2.4rem;
-      font-weight: 800;
-      color: #98222b;
-      letter-spacing: 1.2px;
-      -webkit-text-stroke: 1.5px #120203;
-      paint-order: stroke fill;
-      text-shadow: 0 3px 8px rgba(0, 0, 0, 0.95);
+      font-size: 2.35rem;
+      font-weight: 700;
+      color: #ffd54f;
+      letter-spacing: 1px;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      text-shadow: 
+        0 2px 4px rgba(0, 0, 0, 0.95),
+        0 4px 14px rgba(0, 0, 0, 0.85);
       display: inline-block;
+      line-height: 1.2;
+    }
+    /* Player Nationality & Last Match Pill - high-contrast solid gold/parchment with dark text */
+    .player-meta-pill {
+      color: #120904;
+      font-family: var(--font-stats);
+      font-size: 0.88rem;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      background: linear-gradient(180deg, #dfb975 0%, #be9045 100%);
+      padding: 0.35rem 0.95rem;
+      border-radius: 4px;
+      border: 1px solid #7a5420;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+    .player-meta-pill .meta-separator {
+      color: #5a3518;
+      font-weight: 900;
+    }
+    .player-meta-pill strong {
+      color: #0c0603;
+    }
+    /* Profile Hero Header Card */
+    .profile-hero-card {
+      background: rgba(26, 17, 12, 0.95);
+      border: 1.5px solid var(--border-subtle);
+      border-radius: 8px;
+      padding: 1.5rem 2rem;
+      margin: 0.5rem auto 2rem auto;
+      max-width: 920px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(8px);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      gap: 1.25rem;
     }
     /* Global Format Switcher Toolbar & Pill Buttons */
     .format-bar {
@@ -539,6 +614,118 @@
       color: var(--text-muted);
       opacity: 0.6;
     }
+    /* Universal CMS In-Place Webmaster Styling */
+    .cms-card {
+      position: relative;
+    }
+    .cms-header {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .cms-actions-container {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      z-index: 15;
+    }
+    /* CMS In-Place Editor Controls: Hidden by default per design specification; preserved for future reuse */
+    .cms-actions-container,
+    .cms-edit-trigger,
+    .cms-revert-trigger {
+      display: none !important;
+    }
+    .cms-edit-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-family: var(--font-stats, monospace);
+      font-weight: 600;
+      color: var(--accent-gold, #e5a93c);
+      background: rgba(229, 169, 60, 0.15);
+      border: 1px solid rgba(229, 169, 60, 0.35);
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0.45;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .cms-revert-trigger {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 3px 8px;
+      font-size: 0.72rem;
+      font-family: var(--font-stats, monospace);
+      font-weight: 600;
+      color: #ff8a80;
+      background: rgba(239, 83, 80, 0.18);
+      border: 1px solid rgba(239, 83, 80, 0.4);
+      border-radius: 4px;
+      cursor: pointer;
+      opacity: 0.75;
+      transition: all 0.2s ease;
+      text-decoration: none;
+      line-height: 1;
+    }
+    .cms-card:hover .cms-edit-trigger,
+    .cms-card:hover .cms-revert-trigger,
+    .cms-header:hover .cms-edit-trigger,
+    .cms-header:hover .cms-revert-trigger,
+    .cms-edit-trigger:hover,
+    .cms-revert-trigger:hover {
+      opacity: 1;
+      transform: translateY(-1px);
+    }
+    .cms-edit-trigger:hover {
+      background: rgba(229, 169, 60, 0.35);
+      border-color: var(--accent-gold, #e5a93c);
+      box-shadow: 0 0 10px rgba(229, 169, 60, 0.4);
+    }
+    .cms-revert-trigger:hover {
+      background: rgba(239, 83, 80, 0.35);
+      border-color: #ef5350;
+      box-shadow: 0 0 10px rgba(239, 83, 80, 0.4);
+      color: #fff;
+    }
+    .btn-cms-tool {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(229, 169, 60, 0.25);
+      color: var(--accent-gold);
+      border-radius: 3px;
+      padding: 2px 7px;
+      font-size: 0.75rem;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .btn-cms-tool:hover {
+      background: var(--accent-gold);
+      color: #1c130d;
+    }
+    .cms-mode-btn {
+      padding: 0.35rem 0.85rem;
+      font-size: 0.78rem;
+      font-family: var(--font-heading);
+      border: 1px solid var(--border-subtle);
+      border-radius: 4px;
+      background: rgba(14, 9, 6, 0.85);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    .cms-mode-btn.active {
+      background: var(--accent-gold);
+      color: #120904;
+      font-weight: 700;
+      border-color: #ffd700;
+    }
   </style>
   {% block extra_head %}{% endblock %}
 </head>
@@ -554,26 +741,12 @@
       </a>
 
       <nav>
-        <a href="{{ url_for('leaderboard.index') }}" class="{% if request.endpoint and 'leaderboard' in request.endpoint %}active{% endif %}">Leaderboard</a>
+        <a href="{{ url_for('leaderboard.index') }}" class="{% if request.endpoint and 'leaderboard' in request.endpoint %}active{% endif %}">Ratings</a>
+        <a href="{{ url_for('hall_of_fame.index') }}" class="{% if request.endpoint and ('hall_of_fame' in request.endpoint or 'tournaments' in request.endpoint) %}active{% endif %}">Hall of Fame</a>
+        <a href="{{ url_for('community.index') }}" class="{% if request.endpoint and 'community' in request.endpoint %}active{% endif %}">Community Leaderboard</a>
         <a href="{{ url_for('analysis.index') }}" class="{% if request.endpoint and 'analysis' in request.endpoint %}active{% endif %}">Model Analysis</a>
         <a href="{{ url_for('faq.index') }}" class="{% if request.endpoint and 'faq' in request.endpoint %}active{% endif %}">FAQ & Guide</a>
       </nav>
-
-      <div class="model-switcher" title="Select Rating Model">
-        {% for m_id, m_name in models.items() %}
-          <a href="?model={{ m_id }}" 
-             class="model-btn {% if active_model == m_id %}active{% endif %}"
-             {% if m_id == 'glicko2_std' %}
-               data-tooltip="Standard naive 1v1 pairwise decomposition without multiplayer downweighting (official online baseline)."
-             {% elif m_id == 'glicko2_mp' %}
-               data-tooltip="Coulom fractional weighting w=1/(N-1) variance-calibrated for 3p/4p games to prevent overconfidence."
-             {% else %}
-               data-tooltip="Rémi Coulom Whole-History Rating with continuous retrospective Brownian motion across 2017-2026."
-             {% endif %}>
-            {{ m_name }}
-          </a>
-        {% endfor %}
-      </div>
     </div>
   </header>
 
@@ -590,9 +763,980 @@
         Matches Analyzed: <strong>131,424</strong> | Unique Players: <strong>3,489</strong>
       </p>
       <p style="margin-top: 0.5rem; font-size: 0.8rem; color: #887864;">
-        Data from competitive online TTA tournaments (2017-2026).
+        Data from competitive online TTA tournaments (2017-2026). &bull; <a href="{{ url_for('admin.dashboard') }}" style="color: #887864; text-decoration: none;" onmouseover="this.style.color='var(--accent-gold)'" onmouseout="this.style.color='#887864'">Webmaster</a>
       </p>
     </div>
   </footer>
+
+
+  <script>
+    function updateHeaderHeight() {
+      const header = document.querySelector('header');
+      if (header) {
+        document.documentElement.style.setProperty('--header-height', header.offsetHeight + 'px');
+      }
+    }
+    window.addEventListener('resize', updateHeaderHeight);
+    window.addEventListener('orientationchange', updateHeaderHeight);
+    document.addEventListener('DOMContentLoaded', updateHeaderHeight);
+    updateHeaderHeight();
+  </script>
+
+{% if session.is_admin %}
+<!-- Universal Webmaster In-Place Card & Header CMS Modal -->
+<div id="universalCmsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0,0,0,0.8); z-index: 10000; justify-content: center; align-items: center; backdrop-filter: blur(4px);">
+  <div style="background: rgba(22, 14, 10, 0.98); border: 2px solid var(--accent-gold); border-radius: 10px; width: 92%; max-width: 860px; max-height: 92vh; display: flex; flex-direction: column; box-shadow: 0 12px 48px rgba(0,0,0,0.9); overflow: hidden;">
+    
+    <!-- Modal Header -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-bottom: 1px solid rgba(229, 169, 60, 0.25); background: rgba(14, 9, 6, 0.6);">
+      <div style="display: flex; align-items: center; gap: 0.75rem;">
+        <span style="font-size: 1.25rem; color: var(--accent-gold);">✎</span>
+        <div>
+          <div style="display: flex; align-items: center; gap: 0.5rem;">
+            <h3 id="universalCmsModalTitle" style="margin: 0; font-family: var(--font-heading); font-size: 1.15rem; color: var(--accent-gold); letter-spacing: 0.5px;">Edit Content Block</h3>
+            <span id="universalCmsStatusBadge" style="padding: 2px 8px; border-radius: 4px; font-size: 0.72rem; font-family: var(--font-stats); font-weight: 600;"></span>
+          </div>
+          <div style="font-size: 0.72rem; color: var(--text-muted); font-family: var(--font-stats); margin-top: 2px;">
+            Target: <code id="universalCmsTargetBadge" style="background: rgba(0,0,0,0.4); padding: 1px 6px; border-radius: 3px; color: #ffde8a;">page:key</code>
+          </div>
+        </div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 0.5rem;">
+        <button type="button" id="cms_btn_add_above" onclick="cmsStartAddCard('above')" class="btn-antique" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #7dd3fc; font-weight: 600;" title="Insert a new card directly above this card">➕ Add Above</button>
+        <button type="button" id="cms_btn_add_below" onclick="cmsStartAddCard('below')" class="btn-antique" style="font-size: 0.75rem; padding: 0.25rem 0.65rem; background: rgba(56, 189, 248, 0.15); border: 1px solid #38bdf8; color: #7dd3fc; font-weight: 600;" title="Insert a new card directly below this card">➕ Add Below</button>
+        <button type="button" onclick="closeUniversalCmsModal()" style="background: transparent; border: none; color: var(--text-muted); font-size: 1.6rem; cursor: pointer; line-height: 1; transition: color 0.15s; margin-left: 0.5rem;" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--text-muted)'">&times;</button>
+      </div>
+    </div>
+
+    <!-- Modal Body / Form -->
+    <div style="padding: 1.25rem 1.5rem; overflow-y: auto; flex: 1;">
+      <!-- Active Override Warning Banner -->
+      <div id="universalCmsNotice" style="display: none; margin-bottom: 1rem; border-radius: 6px; padding: 0.75rem 1rem; font-size: 0.84rem; line-height: 1.5; background: rgba(239, 83, 80, 0.12); border-left: 4px solid #ef5350; color: #ffcdd2;">
+        <strong>⚡ Customized Override Active:</strong> This card has custom content stored in the database. To delete this override and restore the pristine template source code with its original formulas, click <strong>"↺ Revert to Default"</strong> below.
+      </div>
+
+      <form id="universalCmsForm" onsubmit="handleUniversalCmsSave(event)">
+        <input type="hidden" id="cms_input_page" name="page_id">
+        <input type="hidden" id="cms_input_block" name="block_key">
+        <input type="hidden" id="cms_input_relative_to" name="relative_to">
+        <input type="hidden" id="cms_input_placement" name="placement">
+        <input type="hidden" id="cms_input_is_custom_card" name="is_custom_card" value="0">
+
+        <div style="margin-bottom: 1rem;">
+          <label style="display: block; font-family: var(--font-subheading); font-size: 0.85rem; color: var(--accent-gold); margin-bottom: 0.35rem; font-weight: 600;">
+            Block Title (Optional / Heading):
+          </label>
+          <input type="text" id="cms_input_title" name="title" placeholder="Leave empty if editing standalone card text..." style="width: 100%; padding: 0.6rem 0.75rem; background: rgba(10,7,5,0.9); border: 1px solid var(--border-subtle); color: #fff; border-radius: 6px; font-size: 0.95rem; outline: none; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-gold)'" onblur="this.style.borderColor='var(--border-subtle)'">
+        </div>
+
+        <div style="margin-bottom: 0.5rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+          <!-- Tabs: Write vs Preview -->
+          <div style="display: flex; gap: 4px;">
+            <button type="button" id="cms_tab_write" class="cms-mode-btn active" onclick="switchCmsEditorTab('write')">✍ Write Markdown</button>
+            <button type="button" id="cms_tab_preview" class="cms-mode-btn" onclick="switchCmsEditorTab('preview')">👁 Live Math Preview</button>
+          </div>
+
+          <!-- Quick Math & Markdown Toolbar -->
+          <div id="cms_toolbar" style="display: flex; gap: 4px; font-size: 0.75rem; flex-wrap: wrap;">
+            <button type="button" onclick="cmsInsertMarkdown('**', '**', 'bold text')" class="btn-cms-tool" title="Bold"><strong>B</strong></button>
+            <button type="button" onclick="cmsInsertMarkdown('*', '*', 'italic text')" class="btn-cms-tool" title="Italic"><em>I</em></button>
+            <button type="button" onclick="cmsInsertMarkdown('`', '`', 'code')" class="btn-cms-tool" title="Code">&lt;/&gt;</button>
+            <button type="button" onclick="cmsInsertMarkdown('$', '$', 'x')" class="btn-cms-tool" title="Inline Math: $formula$">$x$</button>
+            <button type="button" onclick="cmsInsertMarkdown('\n$$\n', '\n$$\n', 'E = mc^2')" class="btn-cms-tool" title="Display Block Math: $$formula$$">$$</button>
+            <button type="button" onclick="cmsInsertMarkdown('\\frac{', '}{b}', 'a')" class="btn-cms-tool" title="Fraction: \frac{a}{b}">½</button>
+            <button type="button" onclick="cmsInsertMarkdown('\\mu', '', '')" class="btn-cms-tool" title="Mu: \mu">&mu;</button>
+            <button type="button" onclick="cmsInsertMarkdown('\\phi', '', '')" class="btn-cms-tool" title="Phi: \phi">&phi;</button>
+            <button type="button" onclick="cmsInsertMarkdown('\\mathrm{RD}', '', '')" class="btn-cms-tool" title="RD: \mathrm{RD}">RD</button>
+            <button type="button" onclick="cmsInsertMarkdown('\\sigma', '', '')" class="btn-cms-tool" title="Sigma: \sigma">&sigma;</button>
+            <button type="button" onclick="cmsInsertMarkdown('_{', '}', 'i')" class="btn-cms-tool" title="Subscript: x_{i}">x<sub>i</sub></button>
+            <button type="button" onclick="cmsInsertMarkdown('^{', '}', '2')" class="btn-cms-tool" title="Superscript: x^{2}">x<sup>2</sup></button>
+            <button type="button" onclick="cmsInsertMarkdown('- ', '', 'list item')" class="btn-cms-tool" title="Bullet List">&bull; List</button>
+          </div>
+        </div>
+
+        <!-- Write Pane (Textarea) -->
+        <div id="cms_write_pane" style="margin-bottom: 0.5rem;">
+          <textarea id="cms_input_content" name="content" rows="12" placeholder="Write card content in Markdown... Use $...$ or $$...$$ for KaTeX formulas. Use | Col 1 | Col 2 | for tables." style="width: 100%; padding: 0.75rem; background: rgba(10,7,5,0.95); border: 1px solid var(--border-subtle); color: #f5eedb; border-radius: 6px; font-family: 'Consolas', 'Fira Code', monospace; font-size: 0.9rem; line-height: 1.5; outline: none; resize: vertical; transition: border-color 0.2s;" onfocus="this.style.borderColor='var(--accent-gold)'" onblur="this.style.borderColor='var(--border-subtle)'"></textarea>
+        </div>
+
+        <!-- Preview Pane (Rendered KaTeX + Markdown) -->
+        <div id="cms_preview_pane" style="display: none; margin-bottom: 0.5rem;">
+          <div id="cms_preview_content" style="min-height: 250px; max-height: 420px; overflow-y: auto; padding: 1rem 1.25rem; background: rgba(12, 8, 5, 0.98); border: 1px solid rgba(229, 169, 60, 0.35); border-radius: 6px; color: #f5eedb; line-height: 1.6;"></div>
+        </div>
+
+        <div style="font-size: 0.72rem; color: var(--text-muted); line-height: 1.4;">
+          💡 <strong>KaTeX Math &amp; Interactive Tables:</strong> Formulas inside <code>$...$</code> and <code>$$...$$</code> are protected. Markdown tables (<code>| Header | ... |</code>) and HTML tables are automatically enhanced with click-to-sort headers and responsive layouts.
+        </div>
+      </form>
+    </div>
+
+    <!-- Modal Footer -->
+    <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem 1.5rem; border-top: 1px solid rgba(229, 169, 60, 0.2); background: rgba(14, 9, 6, 0.7); flex-wrap: wrap; gap: 0.75rem;">
+      <div style="display: flex; gap: 0.5rem; align-items: center;">
+        <button type="button" id="cms_btn_revert" onclick="handleUniversalCmsRevert()" class="btn-antique" style="background: rgba(142, 30, 29, 0.25); border: 1px solid #8e1e1d; color: #ffb4a2; font-size: 0.82rem; padding: 0.45rem 1rem;" title="Delete database override and restore default template code">
+          ↺ Revert to Default
+        </button>
+        <button type="button" id="cms_btn_delete" onclick="handleUniversalCmsDelete()" class="btn-antique" style="background: rgba(220, 38, 38, 0.25); border: 1px solid #dc2626; color: #fca5a5; font-size: 0.82rem; padding: 0.45rem 1rem;" title="Delete this card entirely (hides default card, removes custom card)">
+          🗑 Delete Card
+        </button>
+      </div>
+      <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+        <button type="button" onclick="closeUniversalCmsModal()" class="btn-antique" style="background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.15); color: #ccc; padding: 0.45rem 1.15rem; font-size: 0.85rem;">
+          Cancel
+        </button>
+        <button type="button" id="cms_btn_save_dynamic" onclick="handleUniversalCmsSave(event, 'dynamic')" class="btn-antique" style="background: rgba(229, 169, 60, 0.18); border: 1px solid var(--accent-gold); color: #ffd700; font-weight: 700; padding: 0.45rem 1.15rem; font-size: 0.85rem;" title="Saves in database as an overridable draft. Can be reverted anytime with ↺ Revert.">
+          💾 Save (Overridable)
+        </button>
+        <button type="button" id="cms_btn_save_hardcode" onclick="handleUniversalCmsSave(event, 'hardcode')" class="btn-antique" style="background: var(--accent-gold); border: 1px solid #c88a27; color: #1c130d; font-weight: 700; padding: 0.45rem 1.35rem; font-size: 0.85rem;" title="Bakes changes directly into the HTML template on disk. Permanently changes page source code.">
+          ⚡ Hardcode to HTML
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  let currentCmsTargetElement = null;
+
+  // --- 1. KaTeX Math Masking & Markdown Compiler ---
+  function compileMarkdownWithKaTeX(markdownText) {
+    if (!markdownText) return '';
+    if (typeof marked === 'undefined') return markdownText;
+
+    const mathBlocks = [];
+    const mathInlines = [];
+
+    // Mask Display Math: $$...$$
+    let masked = markdownText.replace(/\$\$([\s\S]*?)\$\$/g, (match, tex) => {
+      const idx = mathBlocks.length;
+      mathBlocks.push(tex.trim());
+      return `%%CMS_MATH_BLOCK_${idx}%%`;
+    });
+
+    // Also support \[...\] display math
+    masked = masked.replace(/\\\[([\s\S]*?)\\\]/g, (match, tex) => {
+      const idx = mathBlocks.length;
+      mathBlocks.push(tex.trim());
+      return `%%CMS_MATH_BLOCK_${idx}%%`;
+    });
+
+    // Mask Inline Math: $...$ (avoiding escaped \$)
+    masked = masked.replace(/(^|[^\\])\$((?:\\\$|[^\$])+?)\$/g, (match, prefix, tex) => {
+      const idx = mathInlines.length;
+      mathInlines.push(tex.trim());
+      return `${prefix}%%CMS_MATH_INLINE_${idx}%%`;
+    });
+
+    // Also support \(...\) inline math
+    masked = masked.replace(/(^|[^\\])\\\(([\s\S]*?)\\\)/g, (match, prefix, tex) => {
+      const idx = mathInlines.length;
+      mathInlines.push(tex.trim());
+      return `${prefix}%%CMS_MATH_INLINE_${idx}%%`;
+    });
+
+    // Parse with marked (math tokens have zero formatting characters, so formulas are 100% protected)
+    let html = marked.parse(masked);
+
+    // Unmask Display Math and wrap in .faq-formula
+    mathBlocks.forEach((tex, i) => {
+      const replacement = `<div class="faq-formula">\n$$\n${tex}\n$$\n</div>`;
+      const blockRegex = new RegExp(`<p>\\s*%%CMS_MATH_BLOCK_${i}%%\\s*<\\/p>|%%CMS_MATH_BLOCK_${i}%%`, 'g');
+      html = html.replace(blockRegex, replacement);
+    });
+
+    // Unmask Inline Math
+    mathInlines.forEach((tex, i) => {
+      const inlineRegex = new RegExp(`%%CMS_MATH_INLINE_${i}%%`, 'g');
+      html = html.replace(inlineRegex, `$${tex}$`);
+    });
+
+    return html;
+  }
+
+  // --- 2. Smart KaTeX DOM Decompiler ---
+  // Recovers exact LaTeX formulas from KaTeX's rendered <annotation> tags or raw templates
+  function decompileDomToMarkdownWithKaTeX(container) {
+    if (!container) return '';
+    const clone = container.cloneNode(true);
+
+    // Remove UI triggers, buttons, and template tags
+    clone.querySelectorAll('.cms-actions-container, .cms-edit-trigger, .cms-revert-trigger, .cms-default-source, .cms-title').forEach(e => e.remove());
+
+    // Replace display math (.katex-display) with original TeX annotation
+    clone.querySelectorAll('.katex-display').forEach(kd => {
+      const ann = kd.querySelector('annotation[encoding="application/x-tex"]') || kd.querySelector('annotation');
+      const tex = ann ? ann.textContent.trim() : '';
+      const textNode = document.createTextNode(`\n\n$$\n${tex}\n$$\n\n`);
+      if (kd.parentNode) kd.parentNode.replaceChild(textNode, kd);
+    });
+
+    // Replace remaining inline math (.katex) with original TeX annotation
+    clone.querySelectorAll('.katex').forEach(k => {
+      const ann = k.querySelector('annotation[encoding="application/x-tex"]') || k.querySelector('annotation');
+      const tex = ann ? ann.textContent.trim() : '';
+      const textNode = document.createTextNode(`$${tex}$`);
+      if (k.parentNode) k.parentNode.replaceChild(textNode, k);
+    });
+
+    // Unwrap .faq-formula (if unrendered template source)
+    clone.querySelectorAll('.faq-formula').forEach(ff => {
+      let tex = ff.textContent.trim();
+      tex = tex.replace(/^\$\$?/, '').replace(/\$\$?$/, '').trim();
+      const textNode = document.createTextNode(`\n\n$$\n${tex}\n$$\n\n`);
+      if (ff.parentNode) ff.parentNode.replaceChild(textNode, ff);
+    });
+
+    // Convert inline elements: code, strong/b, em/i, a
+    clone.querySelectorAll('code').forEach(c => {
+      const textNode = document.createTextNode(`\`${c.textContent.trim()}\``);
+      if (c.parentNode) c.parentNode.replaceChild(textNode, c);
+    });
+    clone.querySelectorAll('strong, b').forEach(s => {
+      const textNode = document.createTextNode(`**${s.textContent.trim()}**`);
+      if (s.parentNode) s.parentNode.replaceChild(textNode, s);
+    });
+    clone.querySelectorAll('em, i').forEach(e => {
+      const textNode = document.createTextNode(`*${e.textContent.trim()}*`);
+      if (e.parentNode) e.parentNode.replaceChild(textNode, e);
+    });
+    clone.querySelectorAll('a').forEach(a => {
+      const href = a.getAttribute('href') || '#';
+      const textNode = document.createTextNode(`[${a.textContent.trim()}](${href})`);
+      if (a.parentNode) a.parentNode.replaceChild(textNode, a);
+    });
+
+    // Convert block elements: headings, li, p
+    for (let lvl = 1; lvl <= 6; lvl++) {
+      clone.querySelectorAll(`h${lvl}`).forEach(h => {
+        const hashes = '#'.repeat(lvl);
+        const textNode = document.createTextNode(`\n\n${hashes} ${h.textContent.trim()}\n\n`);
+        if (h.parentNode) h.parentNode.replaceChild(textNode, h);
+      });
+    }
+    clone.querySelectorAll('li').forEach(li => {
+      const textNode = document.createTextNode(`\n- ${li.textContent.trim()}`);
+      if (li.parentNode) li.parentNode.replaceChild(textNode, li);
+    });
+    clone.querySelectorAll('p').forEach(p => {
+      const textNode = document.createTextNode(`\n\n${p.textContent.trim()}\n\n`);
+      if (p.parentNode) p.parentNode.replaceChild(textNode, p);
+    });
+
+    // Extract raw text
+    let text = clone.textContent || clone.innerText || '';
+
+    // Convert LaTeX \( ... \) and \[ ... \] to $ and $$
+    text = text.replace(/\\\(([\s\S]*?)\\\)/g, '$$$1$$');
+    text = text.replace(/\\\[([\s\S]*?)\\\]/g, '\n\n$$\n$1\n$$\n\n');
+
+    return text.replace(/\n{3,}/g, '\n\n').trim();
+  }
+
+  // --- 3. Enhanced Interactive Table Engine ---
+  function enhanceCmsTables(root) {
+    if (!root) return;
+    const tables = root.querySelectorAll('table');
+    tables.forEach(table => {
+      // Avoid double-wrapping
+      if (!table.parentElement || !table.parentElement.classList.contains('cms-table-wrapper')) {
+        const wrapper = document.createElement('div');
+        wrapper.className = 'cms-table-wrapper';
+        wrapper.style.overflowX = 'auto';
+        wrapper.style.margin = '1rem 0';
+        wrapper.style.borderRadius = '6px';
+        wrapper.style.border = '1px solid rgba(229, 169, 60, 0.3)';
+        table.parentNode.insertBefore(wrapper, table);
+        wrapper.appendChild(table);
+      }
+
+      table.classList.add('faq-table', 'cms-interactive-table');
+      table.style.width = '100%';
+      table.style.borderCollapse = 'collapse';
+      table.style.fontFamily = 'var(--font-stats, monospace)';
+      table.style.fontSize = '0.9rem';
+      table.style.background = 'rgba(14, 9, 6, 0.9)';
+
+      // Style and activate headers for sorting
+      const ths = table.querySelectorAll('th');
+      ths.forEach((th, colIdx) => {
+        th.style.padding = '0.75rem 1rem';
+        th.style.background = 'rgba(30, 20, 14, 0.95)';
+        th.style.color = 'var(--accent-gold, #ffd700)';
+        th.style.borderBottom = '2px solid rgba(229, 169, 60, 0.4)';
+        th.style.cursor = 'pointer';
+        th.style.userSelect = 'none';
+        th.title = 'Click to sort table by this column';
+
+        if (!th.querySelector('.cms-sort-indicator')) {
+          const ind = document.createElement('span');
+          ind.className = 'cms-sort-indicator';
+          ind.style.marginLeft = '6px';
+          ind.style.opacity = '0.4';
+          ind.style.fontSize = '0.75rem';
+          ind.innerText = '⇅';
+          th.appendChild(ind);
+        }
+
+        th.onclick = (e) => {
+          e.stopPropagation();
+          const tbody = table.querySelector('tbody') || table;
+          const rows = Array.from(tbody.querySelectorAll('tr')).filter(r => r.querySelectorAll('td').length > 0);
+          const isAsc = th.dataset.sortDir !== 'asc';
+          th.dataset.sortDir = isAsc ? 'asc' : 'desc';
+
+          // Reset all other th indicators
+          ths.forEach(otherTh => {
+            const ind = otherTh.querySelector('.cms-sort-indicator');
+            if (otherTh === th) {
+              if (ind) { ind.innerText = isAsc ? ' ▲' : ' ▼'; ind.style.opacity = '1'; ind.style.color = 'var(--accent-gold)'; }
+            } else {
+              delete otherTh.dataset.sortDir;
+              if (ind) { ind.innerText = '⇅'; ind.style.opacity = '0.4'; ind.style.color = ''; }
+            }
+          });
+
+          rows.sort((rowA, rowB) => {
+            const cellA = rowA.querySelectorAll('td')[colIdx]?.innerText.trim() || '';
+            const cellB = rowB.querySelectorAll('td')[colIdx]?.innerText.trim() || '';
+            
+            // Try numeric parse
+            const numA = parseFloat(cellA.replace(/[$,%]/g, ''));
+            const numB = parseFloat(cellB.replace(/[$,%]/g, ''));
+
+            let comp = 0;
+            if (!isNaN(numA) && !isNaN(numB)) {
+              comp = numA - numB;
+            } else {
+              comp = cellA.localeCompare(cellB, undefined, { numeric: true, sensitivity: 'base' });
+            }
+            return isAsc ? comp : -comp;
+          });
+
+          rows.forEach(r => tbody.appendChild(r));
+        };
+      });
+
+      // Style td cells & alternate row zebra striping
+      const trs = table.querySelectorAll('tr');
+      trs.forEach((tr, rIdx) => {
+        if (rIdx > 0 && rIdx % 2 === 1) {
+          tr.style.background = 'rgba(255, 255, 255, 0.02)';
+        }
+        tr.querySelectorAll('td').forEach(td => {
+          td.style.padding = '0.65rem 1rem';
+          td.style.borderBottom = '1px solid rgba(74, 53, 37, 0.25)';
+          td.style.color = '#f5eedb';
+        });
+      });
+    });
+  }
+
+  // --- 4. Mode Switcher: Write vs Preview ---
+  function switchCmsEditorTab(mode) {
+    const writeBtn = document.getElementById('cms_tab_write');
+    const prevBtn = document.getElementById('cms_tab_preview');
+    const writePane = document.getElementById('cms_write_pane');
+    const prevPane = document.getElementById('cms_preview_pane');
+    const prevContent = document.getElementById('cms_preview_content');
+    const toolbar = document.getElementById('cms_toolbar');
+    const contentText = document.getElementById('cms_input_content').value;
+
+    if (mode === 'preview') {
+      writeBtn.classList.remove('active');
+      prevBtn.classList.add('active');
+      writePane.style.display = 'none';
+      toolbar.style.opacity = '0.35';
+      toolbar.style.pointerEvents = 'none';
+      prevPane.style.display = 'block';
+
+      // Compile Markdown & render KaTeX
+      const compiledHtml = compileMarkdownWithKaTeX(contentText);
+      prevContent.innerHTML = compiledHtml || '<em style="color: var(--text-muted);">Nothing to preview yet.</em>';
+
+      // Enhance any tables in preview
+      enhanceCmsTables(prevContent);
+
+      if (typeof renderMathInElement !== 'undefined') {
+        renderMathInElement(prevContent, {
+          delimiters: [
+            {left: '$$', right: '$$', display: true},
+            {left: '$', right: '$', display: false},
+            {left: '\\(', right: '\\)', display: false},
+            {left: '\\[', right: '\\]', display: true}
+          ]
+        });
+      }
+    } else {
+      prevBtn.classList.remove('active');
+      writeBtn.classList.add('active');
+      prevPane.style.display = 'none';
+      toolbar.style.opacity = '1';
+      toolbar.style.pointerEvents = 'auto';
+      writePane.style.display = 'block';
+    }
+  }
+
+  // --- 5. Start Adding a Card (Above / Below) ---
+  function cmsStartAddCard(placement) {
+    const currentAnchorBlockKey = document.getElementById('cms_input_block').value;
+    const pageId = document.getElementById('cms_input_page').value;
+    const uniqueKey = 'card_' + Date.now().toString(36) + '_' + Math.random().toString(36).substring(2, 6);
+
+    document.getElementById('cms_input_block').value = uniqueKey;
+    document.getElementById('cms_input_relative_to').value = currentAnchorBlockKey;
+    document.getElementById('cms_input_placement').value = placement;
+    document.getElementById('cms_input_is_custom_card').value = '1';
+
+    document.getElementById('cms_input_title').value = '';
+    document.getElementById('cms_input_content').value = '';
+
+    document.getElementById('universalCmsModalTitle').innerText = `➕ Add Card (${placement === 'above' ? 'Above' : 'Below'})`;
+    const statusBadge = document.getElementById('universalCmsStatusBadge');
+    statusBadge.innerText = '✨ New Dynamic Card';
+    statusBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+    statusBadge.style.color = '#7dd3fc';
+    statusBadge.style.border = '1px solid #38bdf8';
+
+    document.getElementById('universalCmsTargetBadge').innerText = `${pageId} : ${uniqueKey} (${placement} ${currentAnchorBlockKey})`;
+    document.getElementById('universalCmsNotice').style.display = 'none';
+    document.getElementById('cms_btn_revert').style.display = 'none';
+    document.getElementById('cms_btn_delete').style.display = 'none';
+
+    switchCmsEditorTab('write');
+    document.getElementById('cms_input_title').focus();
+  }
+
+  // --- 6. Delete Card ---
+  async function handleUniversalCmsDelete() {
+    const pageId = document.getElementById('cms_input_page').value;
+    const blockKey = document.getElementById('cms_input_block').value;
+
+    if (!confirm(`Are you sure you want to delete card "${pageId}:${blockKey}"?\n\nIf this is a default template card, it will be hidden from all site visitors. If it is a custom-created card, it will be removed.`)) {
+      return;
+    }
+
+    const delBtn = document.getElementById('cms_btn_delete');
+    if (delBtn) {
+      delBtn.disabled = true;
+      delBtn.innerText = 'Deleting...';
+    }
+
+    try {
+      const res = await fetch('/admin/cms/delete_block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page_id: pageId, block_key: blockKey })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        if (currentCmsTargetElement) {
+          currentCmsTargetElement.remove();
+        }
+        closeUniversalCmsModal();
+      } else {
+        alert('Error deleting card: ' + (data.message || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Failed to delete card: ' + e);
+    } finally {
+      if (delBtn) {
+        delBtn.disabled = false;
+        delBtn.innerText = '🗑 Delete Card';
+      }
+    }
+  }
+
+  // --- 7. Initialize Triggers on All Cards & Headers ---
+  function initUniversalCms() {
+    const targets = document.querySelectorAll('.cms-card, .cms-header');
+    targets.forEach(el => {
+      // Avoid duplicate containers
+      if (el.querySelector(':scope > .cms-actions-container')) return;
+
+      const pageId = el.dataset.page || 'site';
+      const blockKey = el.dataset.block;
+      if (!blockKey) return;
+
+      const isCustom = el.dataset.isCustom === 'true';
+      const isDeleted = el.dataset.isDeleted === 'true';
+
+      const actions = document.createElement('div');
+      actions.className = 'cms-actions-container';
+
+      // Edit Button
+      const editBtn = document.createElement('button');
+      editBtn.type = 'button';
+      editBtn.className = 'cms-edit-trigger';
+      editBtn.innerHTML = isDeleted ? '✎ Restore/Edit' : '✎ Edit';
+      editBtn.title = `Edit block: ${pageId}.${blockKey} (Webmaster)`;
+      editBtn.onclick = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openUniversalCmsModal(el, pageId, blockKey);
+      };
+      actions.appendChild(editBtn);
+
+      // If block is currently customized, also provide 1-click Revert button right on the card!
+      if (isCustom) {
+        const revertBtn = document.createElement('button');
+        revertBtn.type = 'button';
+        revertBtn.className = 'cms-revert-trigger';
+        revertBtn.innerHTML = isDeleted ? '↺ Restore' : '↺ Revert';
+        revertBtn.title = isDeleted ? `Restore ${pageId}.${blockKey} to active default` : `Revert ${pageId}.${blockKey} to default template code`;
+        revertBtn.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          handleDirectRevert(pageId, blockKey);
+        };
+        actions.appendChild(revertBtn);
+      }
+
+      if (el.classList.contains('cms-header')) {
+        el.appendChild(actions);
+      } else {
+        el.insertBefore(actions, el.firstChild);
+      }
+    });
+
+    // Enhance all tables on page
+    enhanceCmsTables(document.body);
+  }
+
+  // Load dynamic custom cards created by webmaster
+  async function loadCustomCards() {
+    const sampleEl = document.querySelector('.cms-card, .cms-header');
+    if (!sampleEl) return;
+    const pageId = sampleEl.dataset.page || 'site';
+    try {
+      const res = await fetch(`/admin/cms/custom_cards?page_id=${encodeURIComponent(pageId)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && data.cards) {
+          data.cards.forEach(card => {
+            if (document.querySelector(`[data-block="${card.block_key}"]`)) return; // already in DOM
+            const anchor = document.querySelector(`[data-block="${card.relative_to}"]`);
+            if (anchor && anchor.parentNode) {
+              const newCard = document.createElement('div');
+              newCard.className = 'faq-card cms-card';
+              newCard.dataset.page = card.page_id;
+              newCard.dataset.block = card.block_key;
+              newCard.dataset.isCustom = 'true';
+              newCard.dataset.isCustomCard = 'true';
+              newCard.style.borderLeft = '4px solid var(--accent-gold)';
+              newCard.innerHTML = `
+                ${card.title ? `<h3 class="cms-title">${card.title}</h3>` : ''}
+                <div class="cms-content">${card.content_html || ''}</div>
+              `;
+              if (card.placement === 'above') {
+                anchor.parentNode.insertBefore(newCard, anchor);
+              } else {
+                anchor.parentNode.insertBefore(newCard, anchor.nextSibling);
+              }
+              enhanceCmsTables(newCard);
+              if (typeof renderMathInElement !== 'undefined') {
+                renderMathInElement(newCard, {
+                  delimiters: [
+                    {left: '$$', right: '$$', display: true},
+                    {left: '$', right: '$', display: false},
+                    {left: '\\(', right: '\\)', display: false},
+                    {left: '\\[', right: '\\]', display: true}
+                  ]
+                });
+              }
+            }
+          });
+          initUniversalCms();
+        }
+      }
+    } catch (e) {
+      console.warn('CMS load custom cards error:', e);
+    }
+  }
+
+  // Direct revert from card trigger
+  async function handleDirectRevert(pageId, blockKey) {
+    if (!confirm(`Are you sure you want to revert block "${pageId}:${blockKey}" to the original default template code? Any custom text overrides will be deleted.`)) {
+      return;
+    }
+    try {
+      const res = await fetch('/admin/cms/revert_block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page_id: pageId, block_key: blockKey })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        window.location.reload();
+      } else {
+        alert('Error reverting block: ' + (data.message || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Failed to revert block: ' + e);
+    }
+  }
+
+  // --- 8. Open Universal CMS Modal ---
+  async function openUniversalCmsModal(el, pageId, blockKey) {
+    currentCmsTargetElement = el;
+    const modal = document.getElementById('universalCmsModal');
+    if (!modal) return;
+
+    // Reset editor tab to 'write'
+    switchCmsEditorTab('write');
+
+    document.getElementById('universalCmsModalTitle').innerText = 'Edit Content Block';
+    document.getElementById('cms_input_page').value = pageId;
+    document.getElementById('cms_input_block').value = blockKey;
+    document.getElementById('cms_input_relative_to').value = '';
+    document.getElementById('cms_input_placement').value = '';
+    document.getElementById('cms_input_is_custom_card').value = el.dataset.isCustomCard === 'true' ? '1' : '0';
+    document.getElementById('universalCmsTargetBadge').innerText = `${pageId} : ${blockKey}`;
+
+    const titleInput = document.getElementById('cms_input_title');
+    const contentInput = document.getElementById('cms_input_content');
+    const statusBadge = document.getElementById('universalCmsStatusBadge');
+    const noticeBox = document.getElementById('universalCmsNotice');
+    const revertBtn = document.getElementById('cms_btn_revert');
+    const deleteBtn = document.getElementById('cms_btn_delete');
+
+    titleInput.value = '';
+    contentInput.value = '';
+    deleteBtn.style.display = 'inline-block';
+    let hasCustomOverride = false;
+    let isCustomCard = el.dataset.isCustomCard === 'true';
+
+    // Fetch existing customized block from server
+    try {
+      const res = await fetch(`/admin/cms/get_block?page_id=${encodeURIComponent(pageId)}&block_key=${encodeURIComponent(blockKey)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.status === 'success' && data.block) {
+          titleInput.value = data.block.title || '';
+          contentInput.value = data.block.content_markdown || '';
+          hasCustomOverride = true;
+          if (data.block.is_custom_card) isCustomCard = true;
+        }
+      }
+    } catch (err) {
+      console.warn('CMS fetch block error:', err);
+    }
+
+    // Configure status indicators
+    if (isCustomCard) {
+      statusBadge.innerText = '✨ Custom Dynamic Card';
+      statusBadge.style.background = 'rgba(56, 189, 248, 0.2)';
+      statusBadge.style.color = '#7dd3fc';
+      statusBadge.style.border = '1px solid #38bdf8';
+      noticeBox.style.display = 'none';
+      revertBtn.style.display = 'none';
+    } else if (hasCustomOverride) {
+      statusBadge.innerText = '⚡ Custom Override Active';
+      statusBadge.style.background = 'rgba(239, 83, 80, 0.2)';
+      statusBadge.style.color = '#ff8a80';
+      statusBadge.style.border = '1px solid #ef5350';
+      noticeBox.style.display = 'block';
+      revertBtn.style.display = 'inline-block';
+      revertBtn.disabled = false;
+    } else {
+      statusBadge.innerText = '📄 Default Template Code';
+      statusBadge.style.background = 'rgba(34, 197, 94, 0.15)';
+      statusBadge.style.color = '#81c784';
+      statusBadge.style.border = '1px solid #2e7d32';
+      noticeBox.style.display = 'none';
+      revertBtn.style.display = 'inline-block';
+      revertBtn.disabled = false;
+    }
+
+    // Title fallback
+    if (!titleInput.value) {
+      const titleEl = el.querySelector('.cms-title') || (el.classList.contains('cms-header') ? el : null);
+      if (titleEl) {
+        const clone = titleEl.cloneNode(true);
+        clone.querySelectorAll('.cms-actions-container, .cms-edit-trigger, .cms-revert-trigger').forEach(e => e.remove());
+        titleInput.value = (clone.textContent || clone.innerText || '').trim();
+      }
+    }
+
+    // Content fallback
+    if (!contentInput.value) {
+      // 1. Highest priority: pristine raw markdown embedded in template
+      const mdScript = el.querySelector('.cms-markdown-source');
+      if (mdScript && mdScript.textContent.trim()) {
+        contentInput.value = mdScript.textContent.trim();
+      }
+
+      // 2. Second priority: raw default source template if present
+      if (!contentInput.value) {
+        const defaultTpl = el.querySelector('.cms-default-source');
+        if (defaultTpl) {
+          const tempDiv = document.createElement('div');
+          if (defaultTpl.content && defaultTpl.content.childNodes && defaultTpl.content.childNodes.length > 0) {
+            tempDiv.appendChild(defaultTpl.content.cloneNode(true));
+          } else {
+            tempDiv.innerHTML = defaultTpl.innerHTML || defaultTpl.textContent || '';
+          }
+          contentInput.value = decompileDomToMarkdownWithKaTeX(tempDiv);
+        }
+      }
+
+      // 3. Third priority: live card content (decompiling KaTeX rendered annotations if present)
+      if (!contentInput.value) {
+        const contentEl = el.querySelector('.cms-content') || (el.classList.contains('cms-card') ? el : null);
+        if (contentEl) {
+          contentInput.value = decompileDomToMarkdownWithKaTeX(contentEl);
+        } else if (el.classList.contains('cms-header')) {
+          contentInput.value = titleInput.value;
+        }
+      }
+    }
+
+    modal.style.display = 'flex';
+  }
+
+  function closeUniversalCmsModal() {
+    const modal = document.getElementById('universalCmsModal');
+    if (modal) modal.style.display = 'none';
+    currentCmsTargetElement = null;
+  }
+
+  function cmsInsertMarkdown(before, after, placeholder) {
+    const textarea = document.getElementById('cms_input_content');
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+    const selected = text.substring(start, end) || placeholder;
+    const replacement = before + selected + after;
+    textarea.value = text.substring(0, start) + replacement + text.substring(end);
+    textarea.focus();
+    textarea.setSelectionRange(start + before.length, start + before.length + selected.length);
+  }
+
+  // --- 9. Save Block (Dynamic vs Hardcode) ---
+  async function handleUniversalCmsSave(event, mode = 'dynamic') {
+    if (event) event.preventDefault();
+    const pageId = document.getElementById('cms_input_page').value;
+    const blockKey = document.getElementById('cms_input_block').value;
+    const title = document.getElementById('cms_input_title').value;
+    const contentMarkdown = document.getElementById('cms_input_content').value;
+    const relativeTo = document.getElementById('cms_input_relative_to').value || null;
+    const placement = document.getElementById('cms_input_placement').value || null;
+    const isCustomCard = document.getElementById('cms_input_is_custom_card').value === '1';
+
+    // Use math-safe markdown compiler
+    const contentHtml = compileMarkdownWithKaTeX(contentMarkdown);
+
+    if (mode === 'hardcode') {
+      const confirmMsg = `Are you sure you want to HARDCODE this content directly into the HTML template on disk?\n\n` +
+        `• Target: ${pageId} : ${blockKey}\n` +
+        `• The underlying HTML template file will be permanently updated.\n` +
+        `• Any database override will be removed because the file itself becomes the new default source of truth.\n\n` +
+        `Proceed with hardcoding to disk?`;
+      if (!confirm(confirmMsg)) return;
+
+      const hardcodeBtn = document.getElementById('cms_btn_save_hardcode');
+      if (hardcodeBtn) {
+        hardcodeBtn.disabled = true;
+        hardcodeBtn.innerText = 'Writing to Disk...';
+      }
+
+      try {
+        const res = await fetch('/admin/cms/hardcode_block', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            page_id: pageId,
+            block_key: blockKey,
+            title: title,
+            content_markdown: contentMarkdown,
+            content_html: contentHtml,
+            relative_to: relativeTo,
+            placement: placement,
+            is_custom_card: isCustomCard ? 1 : 0
+          })
+        });
+        const data = await res.json();
+        if (res.ok && data.status === 'success') {
+          alert(`⚡ Success! Content hardcoded directly into template:\n\n${data.file}\n\nThe page will now reload.`);
+          window.location.reload();
+          return;
+        } else {
+          alert('Error hardcoding block: ' + (data.message || 'Unknown error'));
+        }
+      } catch (e) {
+        alert('Failed to hardcode block: ' + e);
+      } finally {
+        if (hardcodeBtn) {
+          hardcodeBtn.disabled = false;
+          hardcodeBtn.innerText = '⚡ Hardcode to HTML';
+        }
+      }
+      return;
+    }
+
+    // Dynamic Mode (Overridable in DB)
+    const saveBtn = document.getElementById('cms_btn_save_dynamic');
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.innerText = 'Saving...';
+    }
+
+    try {
+      const res = await fetch('/admin/cms/save_block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          page_id: pageId,
+          block_key: blockKey,
+          title: title,
+          content_markdown: contentMarkdown,
+          content_html: contentHtml,
+          relative_to: relativeTo,
+          placement: placement,
+          is_custom_card: isCustomCard ? 1 : 0
+        })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        if (isCustomCard && relativeTo) {
+          // Dynamic insertion next to anchor
+          const anchorEl = document.querySelector(`[data-block="${relativeTo}"]`) || currentCmsTargetElement;
+          const newCard = document.createElement('div');
+          newCard.className = 'faq-card cms-card';
+          newCard.dataset.page = pageId;
+          newCard.dataset.block = blockKey;
+          newCard.dataset.isCustom = 'true';
+          newCard.dataset.isCustomCard = 'true';
+          newCard.style.borderLeft = '4px solid var(--accent-gold)';
+          newCard.innerHTML = `
+            ${title ? `<h3 class="cms-title">${title}</h3>` : ''}
+            <div class="cms-content">${contentHtml}</div>
+          `;
+          if (anchorEl && anchorEl.parentNode) {
+            if (placement === 'above') {
+              anchorEl.parentNode.insertBefore(newCard, anchorEl);
+            } else {
+              anchorEl.parentNode.insertBefore(newCard, anchorEl.nextSibling);
+            }
+          }
+          currentCmsTargetElement = newCard;
+          enhanceCmsTables(newCard);
+          if (typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(newCard, {
+              delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+              ]
+            });
+          }
+        } else if (currentCmsTargetElement) {
+          // Update title
+          const titleEl = currentCmsTargetElement.querySelector('.cms-title');
+          if (titleEl && title) {
+            titleEl.innerText = title;
+          } else if (currentCmsTargetElement.classList.contains('cms-header')) {
+            const actions = currentCmsTargetElement.querySelector('.cms-actions-container');
+            currentCmsTargetElement.innerText = title;
+            if (actions) currentCmsTargetElement.appendChild(actions);
+          }
+
+          // Update content
+          const contentEl = currentCmsTargetElement.querySelector('.cms-content');
+          if (contentEl) {
+            contentEl.innerHTML = contentHtml;
+          } else if (currentCmsTargetElement.classList.contains('cms-card')) {
+            const actions = currentCmsTargetElement.querySelector('.cms-actions-container');
+            const tit = currentCmsTargetElement.querySelector('.cms-title');
+            currentCmsTargetElement.innerHTML = '';
+            if (actions) currentCmsTargetElement.appendChild(actions);
+            if (tit) currentCmsTargetElement.appendChild(tit);
+            const newBody = document.createElement('div');
+            newBody.className = 'cms-content';
+            newBody.innerHTML = contentHtml;
+            currentCmsTargetElement.appendChild(newBody);
+          }
+
+          currentCmsTargetElement.dataset.isCustom = 'true';
+          enhanceCmsTables(currentCmsTargetElement);
+          if (typeof renderMathInElement !== 'undefined') {
+            renderMathInElement(currentCmsTargetElement, {
+              delimiters: [
+                {left: '$$', right: '$$', display: true},
+                {left: '$', right: '$', display: false},
+                {left: '\\(', right: '\\)', display: false},
+                {left: '\\[', right: '\\]', display: true}
+              ]
+            });
+          }
+        }
+
+        // Re-initialize triggers
+        initUniversalCms();
+        closeUniversalCmsModal();
+      } else {
+        alert('Error saving block: ' + (data.message || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Failed to save block: ' + e);
+    } finally {
+      if (saveBtn) {
+        saveBtn.disabled = false;
+        saveBtn.innerText = '💾 Save (Overridable)';
+      }
+    }
+  }
+
+  // --- 10. Revert Block from Modal ---
+  async function handleUniversalCmsRevert() {
+    const pageId = document.getElementById('cms_input_page').value;
+    const blockKey = document.getElementById('cms_input_block').value;
+
+    if (!confirm(`Are you sure you want to revert block "${pageId}:${blockKey}" to the original default template code? Any custom text overrides will be permanently deleted.`)) {
+      return;
+    }
+
+    const revertBtn = document.getElementById('cms_btn_revert');
+    if (revertBtn) {
+      revertBtn.disabled = true;
+      revertBtn.innerText = 'Reverting...';
+    }
+
+    try {
+      const res = await fetch('/admin/cms/revert_block', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ page_id: pageId, block_key: blockKey })
+      });
+      const data = await res.json();
+      if (res.ok && data.status === 'success') {
+        alert(`Block "${pageId}:${blockKey}" successfully reverted to default! The page will now reload.`);
+        window.location.reload();
+      } else {
+        alert('Error reverting block: ' + (data.message || 'Unknown error'));
+      }
+    } catch (e) {
+      alert('Failed to revert block: ' + e);
+    } finally {
+      if (revertBtn) {
+        revertBtn.disabled = false;
+        revertBtn.innerText = '↺ Revert to Default';
+      }
+    }
+  }
+
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeUniversalCmsModal();
+  });
+
+  document.addEventListener('DOMContentLoaded', () => {
+    initUniversalCms();
+    loadCustomCards();
+  });
+</script>
+{% endif %}
+
 </body>
 </html>

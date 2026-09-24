@@ -1,0 +1,36 @@
+{
+  "Royal_League": {
+    "default_format": "round_robin_2p",
+    "rules": [
+      {
+        "from_season": 1,
+        "to_season": null,
+        "format": "round_robin_2p",
+        "default_players_per_group": 8,
+        "description": "Standard 2-player round-robin divisions. Standard 8-player groups have 28 games (n*(n-1)/2)."
+      }
+    ]
+  },
+  "International_Championship": {
+    "default_format": "round_robin_4p",
+    "rules": [
+      {
+        "from_season": 1,
+        "to_season": null,
+        "format": "round_robin_4p",
+        "description": "4-player championship groups."
+      }
+    ]
+  },
+  "Intermezzo_Championship": {
+    "default_format": "round_robin_4p",
+    "rules": [
+      {
+        "from_season": 1,
+        "to_season": null,
+        "format": "round_robin_4p",
+        "description": "4-player intermezzo groups."
+      }
+    ]
+  }
+}

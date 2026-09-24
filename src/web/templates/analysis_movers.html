@@ -1,242 +1,175 @@
 {% extends "base.html" %}
 
-{% block title %}Top Movers & Divergence Analysis | Through the Ages{% endblock %}
+{% block title %}Multi-Engine Player Comparison | Through the Ages{% endblock %}
 
 {% block extra_head %}
 <style>
-  .subpage-nav {
-    display: flex;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-    margin-bottom: 1.5rem;
-    background: rgba(18, 12, 8, 0.85);
-    padding: 0.4rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
+  .player-comp-card {
+    background: var(--surface-panel);
+    border: 1.5px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.3);
   }
-  .subpage-btn {
-    padding: 0.4rem 1rem;
-    border-radius: 4px;
-    font-family: var(--font-stats);
-    font-size: 0.88rem;
-    font-weight: 600;
-    color: var(--text-muted);
-    text-decoration: none;
-    transition: all 0.2s;
-    border: 1px solid transparent;
-  }
-  .subpage-btn:hover {
-    color: var(--text-main);
-    background: rgba(229, 169, 60, 0.12);
-  }
-  .subpage-btn.active {
-    background: var(--accent-gold);
-    color: #1c130d;
-    font-weight: 700;
-    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
-  }
-  .movers-controls {
+  .player-comp-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    margin-bottom: 1rem;
     flex-wrap: wrap;
-    gap: 1rem;
-    background: rgba(28, 19, 13, 0.6);
-    padding: 0.75rem 1rem;
-    border-radius: 6px;
-    border: 1px solid var(--border-subtle);
-    margin-bottom: 1.5rem;
+    gap: 0.5rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.5);
   }
-  .movers-table {
+  .comp-table {
     width: 100%;
     border-collapse: collapse;
     font-family: var(--font-stats);
-    text-align: left;
+    font-size: 0.9rem;
   }
-  .movers-table th {
+  .comp-table th {
     background: rgba(30, 20, 14, 0.95);
     color: var(--accent-gold);
-    padding: 0.75rem;
-    font-family: var(--font-heading);
-    font-size: 0.85rem;
+    padding: 0.65rem 0.6rem;
+    font-family: var(--font-subheading);
+    font-size: 0.82rem;
     text-transform: uppercase;
     border-bottom: 2px solid var(--border-subtle);
-    text-align: center;
+    text-align: right;
   }
-  .movers-table td {
-    padding: 0.75rem;
-    text-align: center;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
-    font-size: 0.92rem;
+  .comp-table th:first-child { text-align: left; }
+  .comp-table td {
+    padding: 0.65rem 0.6rem;
+    text-align: right;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.3);
   }
-  .movers-table tr:hover td {
-    background: rgba(229, 169, 60, 0.06);
-  }
+  .comp-table td:first-child { text-align: left; font-weight: 600; color: #f5eedb; }
 </style>
 {% endblock %}
 
 {% block content %}
 <!-- Subpage Navigation -->
 <div class="subpage-nav">
-  <a href="{{ url_for('analysis.index', format=active_format) }}" class="subpage-btn">Overview</a>
-  <a href="{{ url_for('analysis.calibration', format=active_format) }}" class="subpage-btn">Calibration &amp; Reliability</a>
-  <a href="{{ url_for('analysis.movers', format=active_format) }}" class="subpage-btn active">Top Movers &amp; Divergence</a>
-  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn">Activity &amp; Demographics</a>
+  <a href="{{ url_for('analysis.index') }}" class="subpage-btn">&#128200; Overview &amp; Calibration</a>
+  <a href="{{ url_for('analysis.movers', format=active_format) }}" class="subpage-btn active">&#9878; Multi-Engine Player Comparison</a>
+  <a href="{{ url_for('analysis.activity') }}" class="subpage-btn">&#127758; Activity &amp; Demographics</a>
 </div>
 
-<div class="analysis-hero-card">
+<div class="analysis-hero-card" style="margin-bottom: 1.5rem;">
   <div>
     <h1 class="analysis-hero-title">
-      Top Rank Movers &amp; Model Divergence
+      Multi-Engine Player Comparison Tool
     </h1>
     <p class="analysis-hero-desc">
-      Explore players experiencing the most substantial rank shifts between mathematical models.
+      Inspect and compare individual player rating trajectories across all <strong>9 rating configurations</strong> (Glicko-2 Standard, Glicko-2 MP-Weighted, and WHR under Continuous, Soft Reset, and Hard Reset modes).
     </p>
   </div>
 </div>
 
-<!-- Controls: Model Pair, Format, Min Opponents -->
-<div class="movers-controls">
-  <form method="GET" action="{{ url_for('analysis.movers') }}" style="display: flex; gap: 0.75rem; align-items: center; flex-wrap: wrap;">
-    <input type="hidden" name="format" value="{{ active_format }}">
+<!-- Search & Format Filter Bar -->
+<div style="background: var(--surface-panel); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem; box-shadow: 0 4px 16px rgba(0,0,0,0.3);">
+  <form method="GET" action="{{ url_for('analysis.movers') }}" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+    <div style="flex: 1; min-width: 280px;">
+      <label style="display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem; font-family: var(--font-subheading); text-transform: uppercase;">
+        Search Player Name(s) (comma-separated):
+      </label>
+      <input type="text" name="search" value="{{ search }}" placeholder="e.g. Weidenbaum, a440, Martin_Pecheur" style="width: 100%; padding: 0.55rem 0.85rem; background: rgba(10, 7, 5, 0.85); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.9rem; font-family: var(--font-stats);">
+    </div>
 
-    <label style="font-family: var(--font-subheading); color: var(--accent-gold); font-size: 0.95rem;">Model Pair:</label>
-    <select name="compare" class="input-antique" onchange="this.form.submit()">
-      <option value="std_vs_mp" {% if comparison == 'std_vs_mp' %}selected{% endif %}>Standard vs MP-Weighted (Coulom Effect)</option>
-      <option value="std_vs_whr" {% if comparison == 'std_vs_whr' %}selected{% endif %}>Standard vs Whole-History Rating</option>
-      <option value="mp_vs_whr" {% if comparison == 'mp_vs_whr' %}selected{% endif %}>MP-Weighted vs Whole-History Rating</option>
-    </select>
+    <!-- Format Switcher -->
+    <div>
+      <label style="display: block; font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.35rem; font-family: var(--font-subheading); text-transform: uppercase;">
+        Tournament Format:
+      </label>
+      <select name="format" style="padding: 0.55rem 0.85rem; background: rgba(10, 7, 5, 0.85); border: 1px solid var(--border-subtle); border-radius: 5px; color: #ffd700; font-size: 0.9rem; font-family: var(--font-stats);">
+        {% for f_id, f_name in formats.items() %}
+          <option value="{{ f_id }}" {% if active_format == f_id %}selected{% endif %}>{{ f_name }}</option>
+        {% endfor %}
+      </select>
+    </div>
 
-    <label style="font-family: var(--font-subheading); color: var(--accent-gold); font-size: 0.95rem; margin-left: 0.5rem;">Min Matches:</label>
-    <select name="min_games" class="input-antique" onchange="this.form.submit()">
-      <option value="10" {% if min_games == 10 %}selected{% endif %}>&ge; 10 matches</option>
-      <option value="15" {% if min_games == 15 %}selected{% endif %}>&ge; 15 matches</option>
-      <option value="30" {% if min_games == 30 %}selected{% endif %}>&ge; 30 matches</option>
-      <option value="50" {% if min_games == 50 %}selected{% endif %}>&ge; 50 matches</option>
-    </select>
+    <div style="align-self: flex-end;">
+      <button type="submit" class="btn-antique" style="background: var(--accent-gold); color: #1c130d; font-weight: 700; padding: 0.55rem 1.4rem; font-size: 0.9rem;">
+        &#128269; Compare Ratings
+      </button>
+    </div>
   </form>
-
-  <!-- Format Selector -->
-  <div class="format-bar">
-    {% for f_id, f_name in formats.items() %}
-      <a href="?compare={{ comparison }}&min_games={{ min_games }}&format={{ f_id }}" 
-         class="format-btn {% if active_format == f_id %}active{% endif %}"
-         data-tooltip="Filter movers for {{ f_name }}">
-        {{ f_name }}
-      </a>
-    {% endfor %}
-  </div>
 </div>
 
-<!-- Top Climbers Card -->
-<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
-    <h3 style="font-family: var(--font-heading); color: #66bb6a; font-size: 1.3rem;">
-      &uarr; Top Rank Climbers ({{ label2 }} over {{ label1 }})
-    </h3>
-    <span style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
-      {{ climbers|length }} players shown
-    </span>
-  </div>
-  <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-    Players whose relative position rises the most under <strong>{{ label2 }}</strong> compared to <strong>{{ label1 }}</strong>.
-  </p>
+<!-- Player Comparison Cards -->
+{% if player_comparisons %}
+  {% for item in player_comparisons %}
+  {% set p = item.player %}
+  <div class="player-comp-card">
+    <div class="player-comp-header">
+      <div style="display: flex; align-items: center; gap: 0.6rem;">
+        {% if p.country_code %}
+          {{ get_flag(p.country_code) }}
+        {% endif %}
+        <a href="{{ url_for('player.profile', player_name=p.name) }}" style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--accent-gold); text-decoration: none;" title="Open Profile &nearr;">
+          {{ p.name }} &nearr;
+        </a>
+        {% if p.title == 'WC' %}
+          <span class="badge badge-wc">WC</span>
+        {% elif p.title == 'GM' %}
+          <span class="badge badge-gm">GM</span>
+        {% elif p.title == 'M' %}
+          <span class="badge badge-m">M</span>
+        {% elif p.title == 'P' %}
+          <span class="badge badge-p">P</span>
+        {% elif p.title == 'G' %}
+          <span class="badge badge-g">G</span>
+        {% elif p.title == 'S' %}
+          <span class="badge badge-s">S</span>
+        {% elif p.title == 'B' %}
+          <span class="badge badge-b">B</span>
+        {% elif p.title == 'W' %}
+          <span class="badge badge-w">W</span>
+        {% endif %}
+      </div>
+      <div style="font-size: 0.85rem; color: var(--text-muted);">
+        Format: <strong style="color: #ffd700;">{{ formats[active_format] }}</strong>
+      </div>
+    </div>
 
-  <div style="overflow-x: auto;">
-    <table class="movers-table">
-      <thead>
-        <tr>
-          <th style="text-align: left;">Player</th>
-          <th>Flag</th>
-          <th>Title</th>
-          <th>{{ label1 }} Rank</th>
-          <th>{{ label2 }} Rank</th>
-          <th style="color: #66bb6a;">Rank Climb (&uarr;)</th>
-          <th>{{ label1 }} C-Rating</th>
-          <th>{{ label2 }} C-Rating</th>
-          <th>Opps</th>
-          <th>Win %</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in climbers %}
-        <tr>
-          <td style="font-weight: 600; text-align: left;">
-            <a href="{{ url_for('player.profile', player_name=p.name) }}" style="color: var(--text-main); text-decoration: none;">
-              {{ p.name }}
-            </a>
-          </td>
-          <td><span style="font-size: 1.1rem;">{{ get_flag(p.country_code) }}</span></td>
-          <td>
-            {% if p.title %}<span class="badge badge-{{ p.title.lower() }}">{{ p.title }}</span>{% else %}-{% endif %}
-          </td>
-          <td style="color: var(--text-muted);">#{{ p.rank1 }}</td>
-          <td style="color: var(--accent-gold); font-weight: 700;">#{{ p.rank2 }}</td>
-          <td style="color: #66bb6a; font-weight: 700;">+{{ p.rank_diff }} &uarr;</td>
-          <td>{{ "%.1f"|format(p.c_rating1) }}</td>
-          <td style="color: #ffde8a;">{{ "%.1f"|format(p.c_rating2) }}</td>
-          <td>{{ p.opps }}</td>
-          <td>{{ "%.1f"|format(p.win_rate) }}%</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+    <div style="overflow-x: auto;">
+      <table class="comp-table">
+        <thead>
+          <tr>
+            <th>Rating Engine &amp; Reset Mode</th>
+            <th>Ladder Rank</th>
+            <th>Conservative Rating (C)</th>
+            <th>Expected Rating (E)</th>
+            <th>Uncertainty (RD)</th>
+            <th>Opponents</th>
+            <th>Win Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for st in item.stats %}
+          <tr {% if 'mp' in st.model_key and 'soft' not in st.model_key and 'amplified' not in st.model_key %}style="background: rgba(229, 169, 60, 0.08);"{% endif %}>
+            <td>
+              <span style="font-weight: 600; color: #f5eedb;">{{ st.engine }}</span>
+              <span class="badge badge-rank" style="margin-left: 0.4rem; font-size: 0.72rem; padding: 2px 6px;">{{ st.reset_mode }}</span>
+            </td>
+            <td style="color: #ffd700; font-weight: 700;">#{{ st.rank }}</td>
+            <td style="color: #81c784; font-weight: 700;">{{ "%.1f"|format(st.c_rating) }}</td>
+            <td style="color: #f5eedb;">{{ "%.1f"|format(st.rating) }}</td>
+            <td style="color: var(--text-muted);">&plusmn;{{ "%.1f"|format(st.rd) }}</td>
+            <td style="color: var(--text-muted);">{{ st.opps }}</td>
+            <td style="color: var(--text-muted);">{{ "%.1f"|format(st.win_rate) }}%</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
-</div>
+  {% endfor %}
+{% else %}
+  <div style="background: var(--surface-panel); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 2rem; text-align: center; color: var(--text-muted);">
+    No matching players found. Try searching for a different player name or adjusting your filters.
+  </div>
+{% endif %}
 
-<!-- Top Fallers Card -->
-<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-  <div style="display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem;">
-    <h3 style="font-family: var(--font-heading); color: #ef5350; font-size: 1.3rem;">
-      &darr; Top Rank Fallers ({{ label2 }} under {{ label1 }})
-    </h3>
-    <span style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
-      {{ fallers|length }} players shown
-    </span>
-  </div>
-  <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 1rem;">
-    Players whose rank drops the most under <strong>{{ label2 }}</strong> due to variance adjustments or career curve modeling.
-  </p>
-
-  <div style="overflow-x: auto;">
-    <table class="movers-table">
-      <thead>
-        <tr>
-          <th style="text-align: left;">Player</th>
-          <th>Flag</th>
-          <th>Title</th>
-          <th>{{ label1 }} Rank</th>
-          <th>{{ label2 }} Rank</th>
-          <th style="color: #ef5350;">Rank Drop (&darr;)</th>
-          <th>{{ label1 }} C-Rating</th>
-          <th>{{ label2 }} C-Rating</th>
-          <th>Opps</th>
-          <th>Win %</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for p in fallers %}
-        <tr>
-          <td style="font-weight: 600; text-align: left;">
-            <a href="{{ url_for('player.profile', player_name=p.name) }}" style="color: var(--text-main); text-decoration: none;">
-              {{ p.name }}
-            </a>
-          </td>
-          <td><span style="font-size: 1.1rem;">{{ get_flag(p.country_code) }}</span></td>
-          <td>
-            {% if p.title %}<span class="badge badge-{{ p.title.lower() }}">{{ p.title }}</span>{% else %}-{% endif %}
-          </td>
-          <td style="color: var(--text-muted);">#{{ p.rank1 }}</td>
-          <td style="color: var(--accent-gold); font-weight: 700;">#{{ p.rank2 }}</td>
-          <td style="color: #ef5350; font-weight: 700;">{{ p.rank_diff }} &darr;</td>
-          <td>{{ "%.1f"|format(p.c_rating1) }}</td>
-          <td style="color: #ffde8a;">{{ "%.1f"|format(p.c_rating2) }}</td>
-          <td>{{ p.opps }}</td>
-          <td>{{ "%.1f"|format(p.win_rate) }}%</td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-</div>
 {% endblock %}

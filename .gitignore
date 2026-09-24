@@ -1,4 +1,4 @@
-﻿# Virtual Environments
+# Virtual Environments
 .venv/
 venv/
 env/
@@ -16,6 +16,16 @@ data/tta_ratings.db
 *.sqlite3
 *.db-journal
 *.db-wal
+
+# Data pipeline caches, backups and staging
+data/cache/
+data/staging/
+data/updates/
+data/raw/backups/
+data/**/backups/
+data/**/*_backup_*.csv
+data/raw/*_t0.csv
+data/tournaments/**/*.html
 
 # Secrets & Environment
 .env

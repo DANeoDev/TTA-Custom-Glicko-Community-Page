@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+
+{% block title %}Tournament Consistency & Sanity Check - Through the Ages{% endblock %}
+
+{% block content %}
+<div class="content-container" style="max-width: 1200px; margin: 2rem auto; padding: 0 1.5rem;">
+
+  <div class="analysis-hero-card" style="margin-bottom: 2rem;">
+    <div>
+      <h2 class="analysis-hero-title">Tournament Consistency & Sanity Checker</h2>
+      <p class="analysis-hero-desc">
+        Cross-reference decomposed match records from the database against official standings in <code>result.csv</code> to ensure 100% games and points integrity.
+      </p>
+    </div>
+    <div>
+      <a href="{{ url_for('admin.dashboard') }}" class="btn-antique" style="font-size: 0.88rem;">
+        &larr; Return to Dashboard
+      </a>
+    </div>
+  </div>
+
+  <!-- Audit Explanation Banner -->
+  <div style="background: rgba(18, 12, 8, 0.85); border: 1px solid rgba(229, 169, 60, 0.35); border-radius: 8px; padding: 1.1rem 1.4rem; margin-bottom: 2rem; font-size: 0.88rem; line-height: 1.5; color: #f5eedb;">
+    <strong style="color: var(--accent-gold); font-size: 0.95rem;">&#8505;&#65039; What this Sanity Check Audits:</strong>
+    <ul style="margin: 0.5rem 0 0 1.25rem; padding: 0; color: #cfbeab;">
+      <li><strong>Match Coverage:</strong> Compares total matches played per player in our database against games reported in official standings (<code>result.csv</code>).</li>
+      <li><strong>Win/Loss Consistency:</strong> Verifies that pairwise wins and points match official tournament tables.</li>
+      <li><strong>Tiebreakers &amp; Missing Games:</strong> Highlights any games that might have been omitted or played outside the official platform.</li>
+    </ul>
+  </div>
+
+  <!-- Tournament Selector -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; margin-bottom: 2rem;">
+    <form method="GET" action="{{ url_for('admin.consistency') }}" style="display: flex; gap: 1rem; align-items: center; flex-wrap: wrap;">
+      <label style="font-family: var(--font-subheading); color: #f5eedb; font-size: 0.95rem;">Select Tournament Directory:</label>
+      <select name="tournament" style="padding: 0.5rem 1rem; background: rgba(18, 12, 8, 0.9); border: 1px solid var(--border-subtle); border-radius: 5px; color: #fff; font-size: 0.9rem;">
+        {% for t in all_tourneys %}
+          <option value="{{ t.folder }}" {% if selected_tournament == t.folder %}selected{% endif %}>
+            {{ t.folder }} {% if t.result_files %}({{ t.result_files|join(', ') }}){% endif %}
+          </option>
+        {% endfor %}
+      </select>
+      <button type="submit" class="btn-antique" style="padding: 0.5rem 1.2rem; font-size: 0.9rem;">
+        Run Sanity Check
+      </button>
+    </form>
+  </div>
+
+  <!-- Report Card -->
+  <div style="background: rgba(26, 17, 12, 0.94); border: 1.5px solid var(--border-subtle); border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 0.75rem;">
+      <div>
+        <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.3rem;">
+          Report: {{ report.tournament }}
+        </h3>
+        <div style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.2rem;">
+          Standings Source:
+          {% if report.is_live_online %}
+            <span style="color: #64b5f6; font-weight: 600;">&#127760; Live Online Standings</span> (<code>{{ report.result_file }}</code>)
+          {% else %}
+            <code>{{ report.result_file or 'None' }}</code>
+          {% endif %}
+        </div>
+      </div>
+
+      <div>
+        {% if report.status == 'PASSED' %}
+          <span style="background: rgba(46, 125, 50, 0.3); border: 1.5px solid #81c784; color: #c8e6c9; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 700; font-size: 0.95rem;">
+            &#10004; PASSED (100% Consistent)
+          </span>
+        {% elif report.status == 'WARNING' %}
+          <span style="background: rgba(239, 108, 0, 0.3); border: 1.5px solid #ffb74d; color: #ffe0b2; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 700; font-size: 0.95rem;">
+            &#9888; WARNING (Partial Discrepancies)
+          </span>
+        {% else %}
+          <span style="background: rgba(198, 40, 40, 0.3); border: 1.5px solid #ef5350; color: #ffcdd2; padding: 0.4rem 0.8rem; border-radius: 6px; font-weight: 700; font-size: 0.95rem;">
+            &#10008; {{ report.status }}
+          </span>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 1.5rem;">
+      <div style="background: rgba(18, 12, 8, 0.8); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem;">
+        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Players in Result Table</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: #f5eedb; margin-top: 0.25rem;">{{ report.players_in_result_file or 0 }}</div>
+      </div>
+
+      <div style="background: rgba(18, 12, 8, 0.8); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem;">
+        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Players Matched in DB</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: #81c784; margin-top: 0.25rem;">{{ report.players_matched or 0 }}</div>
+      </div>
+
+      <div style="background: rgba(18, 12, 8, 0.8); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem;">
+        <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted);">Discrepancies Flagged</div>
+        <div style="font-size: 1.5rem; font-weight: 700; color: {% if report.discrepancies_count %}#ef5350{% else %}#81c784{% endif %}; margin-top: 0.25rem;">
+          {{ report.discrepancies_count or 0 }}
+        </div>
+      </div>
+    </div>
+
+    {% if report.message %}
+      <div style="background: rgba(18, 12, 8, 0.6); padding: 1rem; border-radius: 6px; font-size: 0.9rem; color: #cfbeab;">
+        {{ report.message }}
+      </div>
+    {% endif %}
+
+    <!-- Discrepancies Table -->
+    {% if report.discrepancies %}
+      <h4 style="font-family: var(--font-heading); color: #ffb74d; font-size: 1.1rem; margin: 1.5rem 0 0.75rem 0;">
+        Flagged Discrepancies
+      </h4>
+      <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
+        <thead>
+          <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--accent-gold); text-align: left;">
+            <th style="padding: 0.6rem;">Player</th>
+            <th style="padding: 0.6rem;">Issue</th>
+            <th style="padding: 0.6rem;">Expected</th>
+            <th style="padding: 0.6rem;">Found in Matches</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in report.discrepancies %}
+          <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.4);">
+            <td style="padding: 0.6rem; color: #f5eedb; font-weight: 600;">{{ d.player }}</td>
+            <td style="padding: 0.6rem; color: #ffcdd2;">{{ d.issue }}</td>
+            <td style="padding: 0.6rem; color: var(--accent-gold);">{{ d.expected or '-' }}</td>
+            <td style="padding: 0.6rem; color: #a99684;">{{ d.found_in_matches }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

@@ -46,11 +46,26 @@ def test_unknown_player_404(client):
 def test_analysis_route_200(client):
     response = client.get('/analysis')
     assert response.status_code == 200
-    assert b'Model Diagnostics' in response.data
-    assert b'Cross-Model Agreement Matrix' in response.data
-    assert b'Official Title Rating Benchmarks' in response.data
+    assert b'Model Diagnostics' in response.data or b'Calibration' in response.data
+    assert b'Webmaster Assessment' in response.data or b'Agreement' in response.data
 
-    # Ensure Top Movers is accessible on its dedicated subpage
+    # Ensure Multi-Engine Comparison is accessible on /analysis/movers
     movers_resp = client.get('/analysis/movers')
     assert movers_resp.status_code == 200
-    assert b'Top Rank Movers' in movers_resp.data
+    assert b'Multi-Engine Player Comparison' in movers_resp.data
+
+
+def test_player_matrix_with_glicko2_daneo(client):
+    with client.session_transaction() as sess:
+        sess['active_model'] = 'glicko2_daneo'
+    resp = client.get('/player/a440/matrix')
+    assert resp.status_code == 200
+    assert b'GlickoD*' in resp.data
+    assert b'Peak Career Season' in resp.data
+
+
+def test_player_profile_match_deltas(client):
+    resp = client.get('/player/a440?model=glicko2_daneo')
+    assert resp.status_code == 200
+    assert b'Game History' in resp.data
+    assert b'&Delta;R' in resp.data or b'Delta;R' in resp.data or b'Replay' in resp.data

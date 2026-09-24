@@ -1,16 +1,18 @@
 {% extends "base.html" %}
 
-{% block title %}Leaderboard - {{ active_model_name }} ({{ formats.get(active_format, 'All Formats') }}) | Through the Ages{% endblock %}
+{% block title %}{% if selected_year %}{{ selected_year }} Season Standings - {% else %}Competitive Ratings - {% endif %}{{ active_model_name }} ({{ formats.get(active_format, 'All Formats') }}) | Through the Ages{% endblock %}
 
 {% block extra_head %}
 <style>
   .format-bar {
     display: flex;
-    gap: 0.5rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
     flex-wrap: wrap;
     margin-bottom: 1.5rem;
     background: rgba(18, 12, 8, 0.85);
-    padding: 0.4rem;
+    padding: 0.5rem 0.75rem;
     border-radius: 6px;
     border: 1px solid var(--border-subtle);
   }
@@ -34,6 +36,182 @@
     color: #1c130d;
     font-weight: 700;
     box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+  /* Season Reset Mode Switcher */
+  .reset-mode-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-left: auto;
+  }
+  .reset-mode-label {
+    font-family: var(--font-heading);
+    font-size: 0.78rem;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
+  .reset-btn-group {
+    display: inline-flex;
+    background: rgba(14, 9, 6, 0.95);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 2px;
+    gap: 2px;
+  }
+  .reset-btn {
+    padding: 0.35rem 0.75rem;
+    border-radius: 3px;
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-decoration: none !important;
+    color: #cfbeab;
+    background: transparent;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+  .reset-btn:hover {
+    color: #fff;
+    background: rgba(229, 169, 60, 0.15);
+  }
+  .reset-btn.active {
+    background: linear-gradient(135deg, #e5a93c 0%, #b87c1c 100%);
+    color: #120904 !important;
+    font-weight: 700;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.5);
+  }
+  /* Advanced Options Drawer */
+  .options-drawer {
+    display: none;
+    background: rgba(20, 13, 8, 0.95);
+    border: 1px solid rgba(229, 169, 60, 0.35);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
+    animation: fadeIn 0.2s ease-out;
+  }
+  .options-drawer.open {
+    display: block;
+  }
+  .options-drawer-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 1rem;
+  }
+  .options-group-title {
+    font-family: var(--font-heading);
+    font-size: 0.8rem;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+  .btn-options-toggle {
+    background: rgba(28, 19, 13, 0.9);
+    color: var(--text-main);
+    border: 1px solid var(--border-subtle);
+    padding: 0.45rem 0.9rem;
+    border-radius: 4px;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+  }
+  .btn-options-toggle:hover, .btn-options-toggle.active {
+    border-color: var(--accent-gold);
+    background: rgba(229, 169, 60, 0.15);
+    color: var(--accent-gold);
+  }
+  .btn-tour-trigger {
+    background: linear-gradient(135deg, rgba(229, 169, 60, 0.18), rgba(229, 169, 60, 0.08));
+    color: var(--accent-gold);
+    border: 1px solid rgba(229, 169, 60, 0.4);
+    padding: 0.45rem 0.85rem;
+    border-radius: 4px;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    transition: all 0.2s;
+  }
+  .btn-tour-trigger:hover {
+    background: var(--accent-gold);
+    color: #120904;
+    box-shadow: 0 0 10px rgba(229, 169, 60, 0.4);
+  }
+  /* Tour Modal */
+  .tour-modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100vw; height: 100vh;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(5px);
+    z-index: 99999;
+    align-items: center;
+    justify-content: center;
+  }
+  .tour-modal-backdrop.open {
+    display: flex;
+  }
+  .tour-modal-card {
+    background: linear-gradient(145deg, #1c130d 0%, #2a1b12 100%);
+    border: 1px solid var(--accent-gold);
+    border-radius: 10px;
+    max-width: 620px;
+    width: 90%;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(229, 169, 60, 0.25);
+    padding: 2rem;
+    position: relative;
+  }
+  .tour-step {
+    display: none;
+  }
+  .tour-step.active {
+    display: block;
+  }
+  .tour-step-counter {
+    font-family: var(--font-stats);
+    font-size: 0.8rem;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.5rem;
+  }
+  .tour-step-title {
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #fff;
+    margin-bottom: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .tour-step-body {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: var(--text-muted);
+    margin-bottom: 1.5rem;
+  }
+  .tour-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(229, 169, 60, 0.2);
   }
   .controls-bar {
     display: flex;
@@ -203,6 +381,41 @@
     border-color: var(--accent-gold);
     color: var(--accent-gold);
   }
+  .page-jumper {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0 0.4rem;
+  }
+  .page-jumper input {
+    width: 55px;
+    background: rgba(22, 14, 10, 0.9);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--accent-gold);
+    font-family: var(--font-stats);
+    font-size: 0.88rem;
+    text-align: center;
+    padding: 0.3rem 0.4rem;
+  }
+  .page-jumper input:focus {
+    border-color: var(--accent-gold);
+    outline: none;
+  }
+  .page-jumper button {
+    background: rgba(43, 29, 20, 0.9);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    color: var(--text-main);
+    font-family: var(--font-stats);
+    font-size: 0.85rem;
+    padding: 0.3rem 0.6rem;
+    cursor: pointer;
+  }
+  .page-jumper button:hover {
+    border-color: var(--accent-gold);
+    color: var(--accent-gold);
+  }
   .rank-col {
     font-family: var(--font-heading);
     font-weight: 700;
@@ -223,42 +436,324 @@
     margin-left: 0.4rem;
     font-family: var(--font-stats);
   }
+  .calibrating-badge {
+    color: #f59e0b;
+    font-size: 0.85rem;
+    margin-left: 0.35rem;
+    cursor: help;
+    vertical-align: middle;
+  }
+  .year-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+    background: rgba(18, 12, 8, 0.92);
+    padding: 0.5rem 0.8rem;
+    border-radius: 6px;
+    border: 1px solid var(--border-subtle);
+  }
+  .year-bar-label {
+    font-family: var(--font-subheading);
+    font-size: 0.82rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 0.4rem;
+  }
+  .year-pill {
+    padding: 0.35rem 0.75rem;
+    border-radius: 4px;
+    font-family: var(--font-stats);
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-decoration: none;
+    transition: all 0.2s;
+    border: 1px solid var(--border-subtle);
+    background: rgba(28, 19, 13, 0.7);
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+  .year-pill:hover {
+    color: var(--text-main);
+    border-color: var(--accent-gold);
+    background: rgba(229, 169, 60, 0.15);
+  }
+  .year-pill.active {
+    background: var(--accent-gold);
+    color: #1c130d;
+    font-weight: 700;
+    border-color: var(--accent-gold);
+    box-shadow: 0 2px 6px rgba(229, 169, 60, 0.35);
+  }
+  .year-pill-wc {
+    background: #ffd700;
+    color: #1c130d;
+    font-size: 0.68rem;
+    font-weight: 800;
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+    line-height: 1;
+  }
+  .year-pill.active .year-pill-wc {
+    background: #1c130d;
+    color: #ffd700;
+  }
+  .archive-hero-banner {
+    background: linear-gradient(135deg, rgba(35, 22, 14, 0.95), rgba(20, 13, 9, 0.95));
+    border: 1px solid rgba(229, 169, 60, 0.35);
+    border-radius: 6px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 1.25rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .archive-badge {
+    background: rgba(229, 169, 60, 0.15);
+    border: 1px solid var(--accent-gold);
+    color: var(--accent-gold);
+    padding: 0.25rem 0.6rem;
+    border-radius: 4px;
+    font-family: var(--font-heading);
+    font-size: 0.85rem;
+    letter-spacing: 0.5px;
+    font-weight: 700;
+  }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
 
-  <!-- Format Selector (2p / 3p / 4p / All) -->
-  <div class="format-bar">
-    {% for f_id, f_name in formats.items() %}
-      <a href="?model={{ active_model }}&format={{ f_id }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}"
-         class="format-btn {% if active_format == f_id %}active{% endif %}">
-        {{ f_name }}
+  <!-- Season / Historical Archive Navigation -->
+  <div class="year-bar">
+    <span class="year-bar-label">Season / Archive:</span>
+    <a href="{{ url_for('leaderboard.index', model=active_model, format=active_format) }}" 
+       class="year-pill {% if not selected_year %}active{% endif %}"
+       title="Current live ratings across all competitive tournament history">
+      Live / All-Time
+    </a>
+    {% for y in available_years %}
+      <a href="{{ url_for('leaderboard.yearly', year=y, model=active_model, format=active_format) }}" 
+         class="year-pill {% if selected_year == y %}active{% endif %}"
+         title="Historical standings at end of Season {{ y }}">
+        {{ y }}
+        {% if y == 2026 %}
+          <span class="year-pill-wc" style="background: #2e7d32; color: #fff;">Active</span>
+        {% elif y in (2023, 2024, 2025) %}
+          <span class="year-pill-wc">WC</span>
+        {% endif %}
       </a>
     {% endfor %}
   </div>
 
-  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
-    <div>
-      <h2 style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 1px;">
-        Competitive Leaderboard
-      </h2>
-      <p style="color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5;">
-        Model: <strong style="color: var(--text-main);">{{ active_model_name }}</strong>
-        <span class="badge" style="background: rgba(229, 169, 60, 0.18); color: var(--accent-gold); border: 1px solid var(--accent-gold); margin-left: 0.3rem;">
-          {{ formats.get(active_format, 'All Formats') }}
-        </span>
-        <span style="color: var(--text-muted); margin-left: 0.5rem; font-size: 0.88rem;">
-          {% if active_model == 'glicko2_std' %}
-            (Standard naive 1v1 pairwise baseline)
-          {% elif active_model == 'glicko2_mp' %}
-            (Multiplayer fractional weighting &mdash; variance-calibrated)
-          {% else %}
-            (Whole-History Rating retrospective MAP)
+  {% set non_default_options = (active_model != 'glicko2_std') or (reset_mode != 'continuous') or (delta_window != 'none') or (status != 'active') or (title_filter and title_filter != 'ALL') or (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
+
+  <!-- Format Selector (2p / 3p / 4p / All) & Progressive Actions Bar -->
+  <div class="format-bar">
+    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
+      {% for f_id, f_name in formats.items() %}
+        <a href="{{ make_url({'format': f_id, 'page': 1}) }}"
+           class="format-btn {% if active_format == f_id %}active{% endif %}">
+          {{ f_name }}
+        </a>
+      {% endfor %}
+    </div>
+
+    <!-- Quick Action Controls: Options Toggle & Tour Button -->
+    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
+      <button type="button" class="btn-options-toggle {% if non_default_options %}active{% endif %}" onclick="toggleOptionsDrawer()" id="optionsToggleBtn" title="Toggle advanced rating engines, season reset modes, and delta filters">
+        <span>⚙️ Options</span>
+        {% if non_default_options %}
+          <span style="background: var(--accent-gold); color: #120904; font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 10px; font-weight: 800;">Active</span>
+        {% endif %}
+        <span id="optionsToggleArrow" style="font-size: 0.75rem;">▼</span>
+      </button>
+
+      <button type="button" class="btn-tour-trigger" onclick="openTour()" title="Interactive walkthrough explaining all rating models, reset options, and format rules">
+        <span>🎓 Guide & Tour</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Collapsible Advanced Options Drawer -->
+  <div id="optionsDrawer" class="options-drawer {% if non_default_options %}open{% endif %}">
+    <div class="options-drawer-grid">
+      <!-- 1. Rating Engine Selector (Moved from top navbar) -->
+      <div>
+        <div class="options-group-title">
+          <span>⚡ Rating Engine</span>
+        </div>
+        <div class="reset-btn-group" style="display: flex; flex-wrap: wrap; width: 100%;">
+          {% for m_id, m_name in models.items() %}
+            <a href="{{ make_url({'model': m_id, 'page': 1}) }}"
+               class="reset-btn {% if active_model == m_id %}active{% endif %}"
+               style="flex: 1; text-align: center;"
+                data-tooltip="{% if m_id == 'glicko2_daneo' %}👑 Gold Standard Glicko-2 by DANeo: φ^(N-2) multiplayer decomposition and 15-game emergent prior re-calibration.{% elif m_id == 'glicko2_std' %}Standard naive 1v1 pairwise baseline without multiplayer calibration.{% elif m_id == 'glicko2_mp' %}1/(N-1) scaling of 3P/4P matches.{% elif m_id == 'glicko2_adapt' %}Adaptive temperature scaling T(P,N).{% else %}Rémi Coulom Whole-History Rating{% endif %}">
+              {{ m_name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Season Reset Mode Switcher -->
+      <div>
+        <div class="options-group-title">
+          <span>⚙️ Season Reset Mode</span>
+        </div>
+        <div class="reset-btn-group" style="display: flex; flex-wrap: wrap; width: 100%;">
+          {% for r_id, r_info in reset_modes.items() %}
+            <a href="{{ make_url({'reset_mode': r_id, 'page': 1}) }}"
+               class="reset-btn {% if reset_mode == r_id %}active{% endif %}"
+               style="flex: 1; text-align: center;"
+               data-tooltip="{{ r_info.desc }}">
+              {{ r_info.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 3. Rating Deltas Window -->
+      <div>
+        <div class="options-group-title">
+          <span>⏱️ Rating Deltas</span>
+        </div>
+        <select name="delta_direct" class="input-antique" style="width: 100%;" onchange="window.location.href = '{{ make_url({}) }}' + (window.location.href.includes('?') ? '&' : '?') + 'delta=' + this.value">
+          <option value="none" {% if delta_window == 'none' %}selected{% endif %}>Deltas: Off</option>
+          <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Webmaster Update</option>
+          <option value="month" {% if delta_window == 'month' %}selected{% endif %}>&Delta; Last Month (30d)</option>
+          <option value="quarter" {% if delta_window == 'quarter' %}selected{% endif %}>&Delta; Last Quarter (90d)</option>
+          <option value="year" {% if delta_window == 'year' %}selected{% endif %}>&Delta; Last Year (365d)</option>
+          <option value="baseline" {% if delta_window == 'baseline' %}selected{% endif %}>&Delta; Official Online Baseline</option>
+        </select>
+      </div>
+
+      <!-- 4. Prior Calibration Lever (Glicko Models) -->
+      {% if active_model not in ('whr', 'glicko2_daneo') %}
+      <div>
+        <div class="options-group-title">
+          <span>🎯 Prior Calibration Lever</span>
+        </div>
+        <div class="reset-btn-group" style="display: flex; flex-wrap: wrap; width: 100%;">
+          <a href="{{ make_url({'retro': '0', 'page': 1}) }}"
+             class="reset-btn {% if not active_retro %}active{% endif %}"
+             style="flex: 1; text-align: center;"
+             data-tooltip="Standard initial priors (1500 / 350 RD)">
+            Standard Prior (1500)
+          </a>
+          <a href="{{ make_url({'retro': '1', 'page': 1}) }}"
+             class="reset-btn {% if active_retro %}active{% endif %}"
+             style="flex: 1; text-align: center;"
+             data-tooltip="Two-pass 15-game emergent calibration with frozen initial window">
+            15-Game Retro Prior (★)
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Active Drawer Status Note -->
+    <div style="font-size: 0.82rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
+      <div>
+        Active Engine: <strong style="color: var(--accent-gold);">{{ active_model_name }}</strong> &bull; 
+        Reset Mode: <strong style="color: #fff;">{{ reset_modes.get(reset_mode, {}).get('name', reset_mode) }}</strong>
+        {% if active_model == 'glicko2_daneo' %} &bull; Prior: <strong style="color: #c084fc;">15-Game Re-Calibrated (👑)</strong>{% elif active_retro and active_model != 'whr' %} &bull; Prior: <strong style="color: #4ade80;">15G Retro-Calibrated</strong>{% endif %} &bull; 
+        Format: <strong style="color: #fff;">{{ formats.get(active_format, 'All Formats') }}</strong>
+      </div>
+      <a href="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year, model='glicko2_std', reset_mode='continuous', retro='0', delta='none', status='active', min_opps=0) }}{% else %}{{ url_for('leaderboard.index', model='glicko2_std', reset_mode='continuous', retro='0', delta='none', status='active', min_opps=30) }}{% endif %}" class="btn-reset" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
+        Reset to Default Glicko-2
+      </a>
+    </div>
+  </div>
+
+  {% if selected_year %}
+    <div class="archive-hero-banner">
+      <div>
+        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+          <span class="archive-badge">
+            {% if selected_year == 2026 %}Active Season 2026 Standings{% else %}Season {{ selected_year }} Final Archive{% endif %}
+          </span>
+          <span style="font-family: var(--font-stats); font-size: 0.88rem; color: var(--text-muted);">
+            Snapshot Date: <strong style="color: var(--accent-gold);">{{ year_info.snapshot_date }}</strong>
+          </span>
+        </div>
+        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+          Recorded Matches in {{ selected_year }}: <strong style="color: #ffde8a;">{{ "{:,}".format(year_info.total_matches) }}</strong>
+          &bull; Ranked Competitors: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
+          {% if selected_year > 2017 %}
+            &bull; <span style="color: var(--accent-gold);">Deltas vs {{ selected_year - 1 }} Year-End</span>
           {% endif %}
-        </span>
-      </p>
+        </p>
+
+        <!-- Seasonal vs Career Stats Switcher -->
+        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
+          <span style="font-family: var(--font-heading); font-size: 0.8rem; color: var(--accent-gold); text-transform: uppercase;">📊 Match Stats Mode:</span>
+          <div class="reset-btn-group">
+            <a href="{{ make_url({'stats_view': 'season'}) }}" 
+               class="reset-btn {% if stats_view == 'season' %}active{% endif %}"
+               data-tooltip="Display wins, losses, and draws for Season {{ selected_year }} only. The Glicko-2 and WHR ratings are derived according to the selected reset mode.">
+              📅 Season {{ selected_year }} Only
+            </a>
+            <a href="{{ make_url({'stats_view': 'career'}) }}" 
+               class="reset-btn {% if stats_view == 'career' %}active{% endif %}"
+               data-tooltip="Display cumulative career wins, losses, and draws up through the end of Season {{ selected_year }}. The Glicko-2 and WHR ratings are derived according to the selected reset mode.">
+              📈 Career to Date
+            </a>
+          </div>
+        </div>
+      </div>
+      {% if year_info.world_champion %}
+        <div style="text-align: right; background: rgba(0,0,0,0.35); padding: 0.6rem 1rem; border-radius: 6px; border-left: 3px solid #ffd700;">
+          <div style="font-size: 0.76rem; font-family: var(--font-heading); color: var(--accent-gold); text-transform: uppercase; letter-spacing: 0.5px;">
+            🏆 {{ year_info.world_champion.title }}
+          </div>
+          <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; margin-top: 0.15rem;">
+            <a href="{{ url_for('player.profile', player_name=year_info.world_champion.player) }}" style="color: #ffd700; text-decoration: none;">
+              {{ year_info.world_champion.player }}
+            </a>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  {% endif %}
+
+  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
+    {% set lb_hero = get_cms('leaderboard', 'hero_title', 'Competitive Leaderboard') %}
+    <div class="cms-card" data-page="leaderboard" data-block="hero_title">
+      <h2 class="cms-title" style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 1px;">
+        {{ lb_hero.title }}
+      </h2>
+      <div class="cms-content">
+        {% if lb_hero.is_custom %}
+          {{ lb_hero.content }}
+        {% else %}
+          <p style="color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5;">
+            Engine: <strong style="color: var(--text-main);">{{ active_model_name }}</strong>
+            <span class="badge" style="background: rgba(229, 169, 60, 0.18); color: var(--accent-gold); border: 1px solid var(--accent-gold); margin-left: 0.3rem;">
+              {{ formats.get(active_format, 'All Formats') }}
+            </span>
+            <span class="badge" style="background: rgba(255, 255, 255, 0.08); color: #e0d0c0; border: 1px solid rgba(255,255,255,0.15); margin-left: 0.3rem;">
+              {{ reset_modes.get(reset_mode, {}).get('name', reset_mode) }}
+            </span>
+            <span style="color: var(--text-muted); margin-left: 0.5rem; font-size: 0.88rem;">
+              {% if active_model == 'glicko2_std' %}
+                (Standard 1v1 naive baseline)
+              {% elif active_model == 'glicko2_mp' %}
+                (Multiplayer fractional weighting &mdash; variance-calibrated)
+              {% else %}
+                (Whole-History Rating retrospective MAP)
+              {% endif %}
+            </span>
+          </p>
+        {% endif %}
+      </div>
     </div>
     <div style="font-family: var(--font-stats); font-size: 0.9rem; color: var(--text-muted);">
       Players: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
@@ -276,9 +771,13 @@
   </div>
 
   <div class="controls-bar">
-    <form method="GET" action="{{ url_for('leaderboard.index') }}" class="search-form">
+    <form method="GET" action="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year) }}{% else %}{{ url_for('leaderboard.index') }}{% endif %}" class="search-form">
       <input type="hidden" name="model" value="{{ active_model }}">
       <input type="hidden" name="format" value="{{ active_format }}">
+      <input type="hidden" name="reset_mode" value="{{ reset_mode }}">
+      {% if selected_year %}
+        <input type="hidden" name="stats_view" value="{{ stats_view }}">
+      {% endif %}
 
       <!-- Search Input with multi-name explainer -->
       <div style="display: flex; align-items: center; gap: 0.35rem;">
@@ -317,7 +816,7 @@
       <div class="stats-delta-selector">
         <select name="delta" class="input-antique" onchange="this.form.submit()">
           <option value="none" {% if delta_window == 'none' %}selected{% endif %}>Deltas: Off</option>
-          <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Update (~3M)</option>
+          <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Webmaster Update</option>
           <option value="month" {% if delta_window == 'month' %}selected{% endif %}>&Delta; Last Month (30d)</option>
           <option value="quarter" {% if delta_window == 'quarter' %}selected{% endif %}>&Delta; Last Quarter (90d)</option>
           <option value="year" {% if delta_window == 'year' %}selected{% endif %}>&Delta; Last Year (365d)</option>
@@ -326,8 +825,8 @@
       </div>
 
       <button type="submit" class="btn-antique">Filter</button>
-      {% if search or (title_filter and title_filter != 'ALL') or status != 'active' or delta_window != 'none' or min_opps != 30 %}
-        <a href="{{ url_for('leaderboard.index', model=active_model, format=active_format) }}" class="btn-reset">Reset</a>
+      {% if search or (title_filter and title_filter != 'ALL') or status != 'active' or delta_window != 'none' or (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
+        <a href="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year, model=active_model, format=active_format) }}{% else %}{{ url_for('leaderboard.index', model=active_model, format=active_format) }}{% endif %}" class="btn-reset">Reset</a>
       {% endif %}
     </form>
 
@@ -341,7 +840,7 @@
       <thead>
         <tr>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=rank&order={% if sort_by == 'rank' and order == 'asc' %}desc{% else %}asc{% endif %}"
+            <a href="{{ make_url({'sort': 'rank', 'order': 'desc' if sort_by == 'rank' and order == 'asc' else 'asc', 'page': 1}) }}"
                data-tooltip="Current competitive ranking based on Conservative Rating (C = μ - 3σ).">
               Rank
             </a>
@@ -350,7 +849,7 @@
             <span data-tooltip="Player's registered national flag.">Flag</span>
           </th>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=name&order={% if sort_by == 'name' and order == 'asc' %}desc{% else %}asc{% endif %}"
+            <a href="{{ make_url({'sort': 'name', 'order': 'desc' if sort_by == 'name' and order == 'asc' else 'asc', 'page': 1}) }}"
                data-tooltip="Player username. Click to view full career profile, rating trajectories, and match history.">
               Player
             </a>
@@ -359,34 +858,40 @@
             <span data-tooltip="Official TTA Titles: GM (Grandmaster), M (Master), P (Platinum), G (Gold). Number inside parentheses is total career title achievements.">Title</span>
           </th>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=c_rating&order={% if sort_by == 'c_rating' and order == 'desc' %}asc{% else %}desc{% endif %}"
+            <a href="{{ make_url({'sort': 'c_rating', 'order': 'asc' if sort_by == 'c_rating' and order == 'desc' else 'desc', 'page': 1}) }}"
                data-tooltip="Conservative Rating: C = Rating - 3 × RD (99.7% confidence lower bound). Prevents unearned top spots with high uncertainty.">
               C-Rating
             </a>
           </th>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=rating&order={% if sort_by == 'rating' and order == 'desc' %}asc{% else %}desc{% endif %}"
+            <a href="{{ make_url({'sort': 'rating', 'order': 'asc' if sort_by == 'rating' and order == 'desc' else 'desc', 'page': 1}) }}"
                data-tooltip="Glicko-2 / WHR Skill Rating (mean μ) and Rating Deviation (RD / σ). Default starting rating is 1500 ± 350.">
               Rating &plusmn; RD
             </a>
           </th>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=opps&order={% if sort_by == 'opps' and order == 'desc' %}asc{% else %}desc{% endif %}"
+            <a href="{{ make_url({'sort': 'opps', 'order': 'asc' if sort_by == 'opps' and order == 'desc' else 'desc', 'page': 1}) }}"
                data-tooltip="Total competitive opponents faced across all recorded tournament games in this format.">
               Opps
             </a>
           </th>
           <th>
-            <span data-tooltip="Total Wins, Losses, and Draws accumulated across competitive tournament matches.">W-L-D</span>
+            {% if selected_year %}
+              <span data-tooltip="{% if stats_view == 'career' %}Cumulative career match record through Season {{ selected_year }}. (Glicko-2 & WHR ratings are calculated based on the chosen reset mode).{% else %}Match record for Season {{ selected_year }} only. (Glicko-2 & WHR ratings are calculated based on the chosen reset mode).{% endif %}">
+                {% if stats_view == 'career' %}W-L-D (Career){% else %}W-L-D ({{ selected_year }}){% endif %}
+              </span>
+            {% else %}
+              <span data-tooltip="Total Wins, Losses, and Draws accumulated across competitive tournament matches.">W-L-D</span>
+            {% endif %}
           </th>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=win_rate&order={% if sort_by == 'win_rate' and order == 'desc' %}asc{% else %}desc{% endif %}"
+            <a href="{{ make_url({'sort': 'win_rate', 'order': 'asc' if sort_by == 'win_rate' and order == 'desc' else 'desc', 'page': 1}) }}"
                data-tooltip="Effective win percentage: (Wins + 0.5 × Draws) / Opponents × 100.">
               Win %
             </a>
           </th>
           <th>
-            <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort=last_played&order={% if sort_by == 'last_played' and order == 'desc' %}asc{% else %}desc{% endif %}"
+            <a href="{{ make_url({'sort': 'last_played', 'order': 'asc' if sort_by == 'last_played' and order == 'desc' else 'desc', 'page': 1}) }}"
                data-tooltip="Date of player's most recent competitive match. Players without games in > 12 months are retired.">
               Last Played
             </a>
@@ -411,19 +916,30 @@
             <a href="{{ url_for('player.profile', player_name=p.player_name) }}" class="player-link">
               {{ p.player_name }}
             </a>
+            {% if p.is_calibrating %}
+              <span class="calibrating-badge" data-tooltip="Provisional / Prior Calibration ({{ p.opponents_count }}/15 matches completed)">⏳</span>
+            {% endif %}
             {% if not p.is_active and status == 'all' %}
               <span class="retired-badge" data-tooltip="Inactive / Retired (no competitive match in > 12 months)">Retired</span>
             {% endif %}
           </td>
           <td>
-            {% if p.title == 'GM' %}
-              <span class="badge badge-gm" title="Grandmaster ({{ p.title_count }} tournament titles earned)">GM</span>
+            {% if p.title == 'WC' or p.player_name == 'a440' %}
+              <span class="badge badge-wc" title="{{ p.badge_reason or 'Reigning World Champion (World Championship 2025)' }}">WC</span>
+            {% elif p.title == 'GM' %}
+              <span class="badge badge-gm" title="{{ p.badge_reason or 'Grandmaster' }}">GM</span>
             {% elif p.title == 'M' %}
-              <span class="badge badge-m" title="Master ({{ p.title_count }} tournament titles earned)">M</span>
+              <span class="badge badge-m" title="{{ p.badge_reason or 'Master' }}">M</span>
             {% elif p.title == 'P' %}
-              <span class="badge badge-p" title="Platinum ({{ p.title_count }} tournament titles earned)">P</span>
+              <span class="badge badge-p" title="{{ p.badge_reason or 'Platinum' }}">P</span>
             {% elif p.title == 'G' %}
-              <span class="badge badge-g" title="Gold ({{ p.title_count }} tournament titles earned)">G</span>
+              <span class="badge badge-g" title="{{ p.badge_reason or 'Gold' }}">G</span>
+            {% elif p.title == 'S' %}
+              <span class="badge badge-s" title="{{ p.badge_reason or 'Silver' }}">S</span>
+            {% elif p.title == 'B' %}
+              <span class="badge badge-b" title="{{ p.badge_reason or 'Bronze' }}">B</span>
+            {% elif p.title == 'W' %}
+              <span class="badge badge-w" title="{{ p.badge_reason or 'Wood' }}">W</span>
             {% else %}
               <span style="color: #665544;">-</span>
             {% endif %}
@@ -471,21 +987,206 @@
 
   <div class="pagination">
     <div>
-      Showing page <strong>{{ page }}</strong> of <strong>{{ total_pages }}</strong>
+      Showing page <strong>{{ page }}</strong> of <strong>{{ total_pages }}</strong> ({{ "{:,}".format(total_count) }} players)
     </div>
-    <div style="display: flex; gap: 0.5rem;">
+    <div style="display: flex; gap: 0.4rem; align-items: center; flex-wrap: wrap;">
       {% if page > 1 %}
-        <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort={{ sort_by }}&order={{ order }}&page={{ page - 1 }}">&laquo; Previous</a>
+        <a href="{{ make_url({'page': 1}) }}" title="Jump to First Page">&laquo; First</a>
+        <a href="{{ make_url({'page': page - 1}) }}" title="Previous Page">&lsaquo; Prev</a>
       {% endif %}
+
+      <form id="leaderboard_page_form" onsubmit="jumpToLeaderboardPage(event)" class="page-jumper">
+        <span style="font-size: 0.82rem;">Page</span>
+        <input type="number" id="leaderboard_page_input" value="{{ page }}" min="1" max="{{ total_pages }}" aria-label="Page number">
+        <span style="font-size: 0.82rem;">/ {{ total_pages }}</span>
+        <button type="submit" title="Go to page">Go</button>
+      </form>
+
       {% if page < total_pages %}
-        <a href="?model={{ active_model }}&format={{ active_format }}&status={{ status }}&delta={{ delta_window }}&min_opps={{ min_opps }}&search={{ search }}&title={{ title_filter }}&sort={{ sort_by }}&order={{ order }}&page={{ page + 1 }}">Next &raquo;</a>
+        <a href="{{ make_url({'page': page + 1}) }}" title="Next Page">Next &rsaquo;</a>
+        <a href="{{ make_url({'page': total_pages}) }}" title="Jump to Last Page">Last &raquo;</a>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Leaderboard Guidelines CMS block -->
+  {% set lb_guide = get_cms('leaderboard', 'guidelines', 'Leaderboard Mechanics & Rating Principles') %}
+  <div class="rating-card cms-card" data-page="leaderboard" data-block="guidelines" style="margin-top: 1.5rem; background: rgba(22, 14, 10, 0.75); border: 1px solid var(--border-subtle); padding: 1.25rem 1.5rem;">
+    <h3 class="cms-title" style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.15rem; margin-bottom: 0.5rem;">
+      {{ lb_guide.title }}
+    </h3>
+    <div class="cms-content">
+      {% if lb_guide.is_custom %}
+        {{ lb_guide.content }}
+      {% else %}
+        <p style="font-size: 0.92rem; color: #cfbeab; line-height: 1.6; margin-bottom: 0.5rem;">
+          Rankings are calculated dynamically across all recorded competitive Through the Ages tournaments. The primary sorting metric is the <strong>Conservative Rating \(C = \mu - 3\sigma\)</strong>, guaranteeing that a player's standing represents an outcome that they can outperform 99.7% of the time.
+        </p>
+        <p style="font-size: 0.86rem; color: var(--text-muted); line-height: 1.5;">
+          Click on any player to inspect their full profile, head-to-head match histories, format breakdowns (2p, 3p, 4p), and career performance trajectories.
+        </p>
       {% endif %}
     </div>
   </div>
 </div>
 
-{% if jump_to_player %}
+<!-- Interactive Tour / Tutorial Walkthrough Modal -->
+<div id="tourModal" class="tour-modal-backdrop" onclick="handleTourBackdropClick(event)">
+  <div class="tour-modal-card">
+    <button type="button" onclick="closeTour()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--accent-gold); font-size: 1.4rem; cursor: pointer;">&times;</button>
+
+    <!-- Step 1: Rating Engines -->
+    <div id="tourStep1" class="tour-step active">
+      <div class="tour-step-counter">Guide: Step 1 of 5 &bull; Rating Engines</div>
+      <div class="tour-step-title">⚡ The Three Competitive Engines</div>
+      <div class="tour-step-body">
+        <p style="margin-bottom: 0.75rem;">Through the Ages features three distinct statistical algorithms to measure player skill:</p>
+        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+          <li style="margin-bottom: 0.4rem;"><strong>Glicko-2 Standard:</strong> Naive 1v1 pairwise decomposition without multiplayer downweighting (matches the legacy digital app baseline).</li>
+          <li style="margin-bottom: 0.4rem;"><strong>Glicko-2 MP-Weighted:</strong> Uses Coulom fractional weighting ($w = 1/(N-1)$) so a 4-player game generates 1 game worth of rating variance rather than 3, preventing overconfidence.</li>
+          <li><strong>Whole-History Rating (WHR):</strong> Rémi Coulom's retrospective Bayesian state-space model that optimizes career skill over time with daily Brownian motion drift ($w^2 \Delta t$).</li>
+        </ul>
+      </div>
+      <div class="tour-controls">
+        <span style="color: var(--text-muted); font-size: 0.85rem;">Engine Selector moved into ⚙️ Options</span>
+        <button type="button" class="btn-antique" onclick="nextTourStep(2)">Next: Formats &raquo;</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Formats & Player Counts -->
+    <div id="tourStep2" class="tour-step">
+      <div class="tour-step-counter">Guide: Step 2 of 5 &bull; Competitive Formats</div>
+      <div class="tour-step-title">👥 Player Counts & Circuits</div>
+      <div class="tour-step-body">
+        <p style="margin-bottom: 0.75rem;">TTA tournaments span different table sizes with wildly different tactical dynamics:</p>
+        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+          <li style="margin-bottom: 0.4rem;"><strong>4-Player:</strong> International Championship premier pyramid. Heavy diplomatic coalitions and split military focus.</li>
+          <li style="margin-bottom: 0.4rem;"><strong>3-Player:</strong> Intermezzo Championship. Balanced triangle warfare and high tactical density.</li>
+          <li style="margin-bottom: 0.4rem;"><strong>2-Player (Duel):</strong> Royal League. Zero-sum head-to-head tactical warfare.</li>
+          <li><strong>All Formats:</strong> Global combined ratings across every official match.</li>
+        </ul>
+      </div>
+      <div class="tour-controls">
+        <button type="button" class="btn-reset" onclick="nextTourStep(1)">&laquo; Back</button>
+        <button type="button" class="btn-antique" onclick="nextTourStep(3)">Next: Season Resets &raquo;</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Season Reset Modes -->
+    <div id="tourStep3" class="tour-step">
+      <div class="tour-step-counter">Guide: Step 3 of 5 &bull; Season Resets</div>
+      <div class="tour-step-title">⚙️ Golden Ratio Season Resets</div>
+      <div class="tour-step-body">
+        <p style="margin-bottom: 0.75rem;">Reset modes prevent ratings from stagnating across multiple calendar years using exact powers of the Golden Ratio ($\phi \approx 1.618034$):</p>
+        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+          <li style="margin-bottom: 0.4rem;"><strong>Continuous (Career):</strong> Standard uninterrupted trajectory without annual boundary resets.</li>
+          <li style="margin-bottom: 0.4rem;"><strong>Soft Reset ($\phi$):</strong> $\mathrm{RD} \cdot \phi$ uncertainty expansion & tier shrinkage $\lambda = \phi^{-3} \approx 23.61\%$ toward divisional means.</li>
+          <li><strong>Amplified Reset ($\phi^2$):</strong> $\mathrm{RD} \cdot \phi^2$ uncertainty expansion & amplified tier shrinkage $\lambda = \phi^{-1} \approx 61.80\%$.</li>
+        </ul>
+      </div>
+      <div class="tour-controls">
+        <button type="button" class="btn-reset" onclick="nextTourStep(2)">&laquo; Back</button>
+        <button type="button" class="btn-antique" onclick="nextTourStep(4)">Next: Deltas & Conservative Rating &raquo;</button>
+      </div>
+    </div>
+
+    <!-- Step 4: Deltas & Conservative Ranking -->
+    <div id="tourStep4" class="tour-step">
+      <div class="tour-step-counter">Guide: Step 4 of 5 &bull; Deltas & Ratings</div>
+      <div class="tour-step-title">📈 Conservative Rating & Deltas</div>
+      <div class="tour-step-body">
+        <p style="margin-bottom: 0.75rem;">How leaderboard ranks and rating changes are computed:</p>
+        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+          <li style="margin-bottom: 0.4rem;"><strong>Conservative Rating ($C = \mu - 2\mathrm{RD}$):</strong> Ranks players by their 95% statistical lower bound. This ensures inactive players with high uncertainty don't block the summit.</li>
+          <li style="margin-bottom: 0.4rem;"><strong>Webmaster Deltas:</strong> View exact rating gains ($\Delta$) since the last tournament batch was committed to the platform.</li>
+          <li><strong>Seasonal Stats Switcher:</strong> In any historical season, toggle match records between that season only or career-to-date.</li>
+        </ul>
+      </div>
+      <div class="tour-controls">
+        <button type="button" class="btn-reset" onclick="nextTourStep(3)">&laquo; Back</button>
+        <button type="button" class="btn-antique" onclick="nextTourStep(5)">Next: Community & Circuits &raquo;</button>
+      </div>
+    </div>
+
+    <!-- Step 5: Community & Tournaments -->
+    <div id="tourStep5" class="tour-step">
+      <div class="tour-step-counter">Guide: Step 5 of 5 &bull; Circuits & Community</div>
+      <div class="tour-step-title">🏆 Tournaments & Community Leaderboards</div>
+      <div class="tour-step-body">
+        <p style="margin-bottom: 0.75rem;">Explore beyond ratings:</p>
+        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
+          <li style="margin-bottom: 0.4rem;"><strong>Tournaments Hub:</strong> Rules, format pyramids, and official trophyboards for all 6 major competitive circuits.</li>
+          <li style="margin-bottom: 0.4rem;"><strong>Community Leaderboard:</strong> The official rolling ranking maintained by <strong>Wolvs</strong> with tournament placement points and multi-year archives.</li>
+          <li><strong>Player Profiles:</strong> Click any competitor to view head-to-head records with min-matches filter, career peak year, and comparison matrices!</li>
+        </ul>
+      </div>
+      <div class="tour-controls">
+        <button type="button" class="btn-reset" onclick="nextTourStep(4)">&laquo; Back</button>
+        <button type="button" class="btn-antique" onclick="closeTour()">Got It! Explore Leaderboard</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
+  function toggleOptionsDrawer() {
+    const drawer = document.getElementById('optionsDrawer');
+    const arrow = document.getElementById('optionsToggleArrow');
+    const btn = document.getElementById('optionsToggleBtn');
+    if (!drawer) return;
+    drawer.classList.toggle('open');
+    const isOpen = drawer.classList.contains('open');
+    if (arrow) arrow.textContent = isOpen ? '▲' : '▼';
+    if (btn && !isOpen) {
+      {% if not non_default_options %}
+      btn.classList.remove('active');
+      {% endif %}
+    }
+  }
+
+  function openTour() {
+    const modal = document.getElementById('tourModal');
+    if (modal) {
+      modal.classList.add('open');
+      showTourStep(1);
+    }
+  }
+
+  function openTourModal() {
+    openTour();
+  }
+
+  function closeTour() {
+    const modal = document.getElementById('tourModal');
+    if (modal) modal.classList.remove('open');
+  }
+
+  function handleTourBackdropClick(e) {
+    if (e.target.id === 'tourModal') {
+      closeTour();
+    }
+  }
+
+  function nextTourStep(stepNum) {
+    showTourStep(stepNum);
+  }
+
+  function showTourStep(num) {
+    for (let i = 1; i <= 5; i++) {
+      const el = document.getElementById('tourStep' + i);
+      if (el) el.classList.remove('active');
+    }
+    const target = document.getElementById('tourStep' + num);
+    if (target) target.classList.add('active');
+  }
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeTour();
+    }
+  });
+
+  {% if jump_to_player %}
   document.addEventListener('DOMContentLoaded', function() {
     const el = document.getElementById('player-{{ jump_to_player }}');
     if (el) {
@@ -494,6 +1195,19 @@
       }, 150);
     }
   });
+  {% endif %}
+
+  function jumpToLeaderboardPage(e) {
+    e.preventDefault();
+    const input = document.getElementById('leaderboard_page_input');
+    if (!input) return;
+    let targetPage = parseInt(input.value, 10);
+    const maxPage = {{ total_pages }};
+    if (isNaN(targetPage) || targetPage < 1) targetPage = 1;
+    if (targetPage > maxPage) targetPage = maxPage;
+    const url = new URL(window.location.href);
+    url.searchParams.set('page', targetPage);
+    window.location.href = url.toString();
+  }
 </script>
-{% endif %}
 {% endblock %}

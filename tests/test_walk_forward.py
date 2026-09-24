@@ -67,23 +67,21 @@ def test_walk_forward_synthetic_leak_free(tmp_path):
 
 
 def test_calibration_route_modes(tmp_path):
-    """Verify that the web portal renders both walk_forward and retrospective calibration modes."""
+    """Verify that the web portal renders both walk_forward and standard calibration modes."""
     app = create_app()
     client = app.test_client()
 
     # 1. Walk-Forward Mode
-    resp_wf = client.get('/analysis/calibration?eval_mode=walk_forward')
+    resp_wf = client.get('/analysis?eval_mode=walk_forward')
     assert resp_wf.status_code == 200
     html_wf = resp_wf.get_data(as_text=True)
-    assert 'Walk-Forward Predictive' in html_wf
-    assert 'monthlyBrierChart' in html_wf
-    assert 'wfCalibChart' in html_wf
-    assert 'Filter vs. Smoother' in html_wf
+    assert 'Walk-Forward (Out-of-Sample)' in html_wf
+    assert 'heroCalibrationChart' in html_wf
 
-    # 2. Retrospective Mode
-    resp_retro = client.get('/analysis/calibration?eval_mode=retrospective')
-    assert resp_retro.status_code == 200
-    html_retro = resp_retro.get_data(as_text=True)
-    assert 'Retrospective' in html_retro
-    assert 'deepCalibChart' in html_retro
-    assert '9-Engine Calibration &amp; Predictive Performance Summary' in html_retro
+    # 2. Standard (Match-Time) Mode
+    resp_std = client.get('/analysis?eval_mode=standard')
+    assert resp_std.status_code == 200
+    html_std = resp_std.get_data(as_text=True)
+    assert 'Standard (Match-Time)' in html_std
+    assert 'heroCalibrationChart' in html_std
+    assert 'Webmaster Model Assessment' in html_std
