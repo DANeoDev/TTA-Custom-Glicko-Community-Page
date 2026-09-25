@@ -42,7 +42,7 @@ def run_all(skip_ingestion=False, formats=None):
         print(f"\n--- Processing Format: {fmt_label} ---")
 
         for rm in reset_modes:
-            print(f"[{fmt_label}] Computing GlickoD* Gold Standard ({rm})...")
+            print(f"[{fmt_label}] Computing GlickoD Gold Standard ({rm})...")
             compute_glicko2_ratings(engine='glicko2_daneo', player_count=fmt, reset_mode=rm)
 
             print(f"[{fmt_label}] Computing Glicko-2 Standard ({rm})...")

@@ -10,7 +10,7 @@
     justify-content: space-between;
     gap: 0.75rem;
     flex-wrap: wrap;
-    margin-bottom: 1.5rem;
+    margin-bottom: 0.85rem;
     background: rgba(18, 12, 8, 0.85);
     padding: 0.5rem 0.75rem;
     border-radius: 6px;
@@ -82,42 +82,91 @@
     font-weight: 700;
     box-shadow: 0 1px 4px rgba(0,0,0,0.5);
   }
-  /* Advanced Options Drawer */
-  .options-drawer {
+  /* Pop-out Options Sidebar Layout (Card retains 100% width, no table resizing) */
+  .leaderboard-layout-container {
+    position: relative;
+    width: 100%;
+  }
+
+  .leaderboard-main-column {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .leaderboard-sidebar-column {
     display: none;
-    background: rgba(20, 13, 8, 0.95);
-    border: 1px solid rgba(229, 169, 60, 0.35);
-    border-radius: 8px;
-    padding: 1.25rem;
-    margin-bottom: 1.5rem;
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
-    animation: fadeIn 0.2s ease-out;
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 360px;
+    max-width: calc(100% - 1rem);
+    z-index: 100;
   }
-  .options-drawer.open {
+  .leaderboard-layout-container.options-open .leaderboard-sidebar-column {
     display: block;
+    animation: fadeInOptions 0.2s ease-out;
   }
-  .options-drawer-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.25rem;
-    margin-bottom: 1rem;
+
+  @keyframes fadeInOptions {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
   }
+
+  .leaderboard-options-panel {
+    background: rgba(20, 13, 9, 0.98);
+    border: 1.5px solid var(--accent-gold);
+    border-radius: 8px;
+    padding: 1.15rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 1px rgba(229, 169, 60, 0.4);
+    backdrop-filter: blur(8px);
+  }
+
+  .btn-options-close {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-muted);
+    font-size: 0.82rem;
+    font-family: var(--font-heading);
+    padding: 0.25rem 0.65rem;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+  .btn-options-close:hover {
+    background: rgba(239, 83, 80, 0.2);
+    border-color: #ef5350;
+    color: #ff8a80;
+  }
+
   .options-group-title {
     font-family: var(--font-heading);
     font-size: 0.8rem;
     color: var(--accent-gold);
     text-transform: uppercase;
     letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.45rem;
     display: flex;
     align-items: center;
     gap: 0.4rem;
   }
+
   .btn-options-toggle {
     background: rgba(28, 19, 13, 0.9);
     color: var(--text-main);
     border: 1px solid var(--border-subtle);
-    padding: 0.45rem 0.9rem;
+    padding: 0.4rem 0.85rem;
     border-radius: 4px;
     font-family: var(--font-heading);
     font-size: 0.85rem;
@@ -125,93 +174,46 @@
     cursor: pointer;
     display: inline-flex;
     align-items: center;
-    gap: 0.4rem;
+    gap: 0.45rem;
     transition: all 0.2s;
   }
-  .btn-options-toggle:hover, .btn-options-toggle.active {
+  .btn-options-toggle:hover, .btn-options-toggle.open {
     border-color: var(--accent-gold);
-    background: rgba(229, 169, 60, 0.15);
+    background: rgba(229, 169, 60, 0.18);
     color: var(--accent-gold);
   }
-  .btn-tour-trigger {
-    background: linear-gradient(135deg, rgba(229, 169, 60, 0.18), rgba(229, 169, 60, 0.08));
-    color: var(--accent-gold);
-    border: 1px solid rgba(229, 169, 60, 0.4);
-    padding: 0.45rem 0.85rem;
-    border-radius: 4px;
-    font-family: var(--font-heading);
-    font-size: 0.85rem;
-    font-weight: 700;
-    cursor: pointer;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.4rem;
-    transition: all 0.2s;
+  .btn-options-toggle.active {
+    border-color: var(--accent-gold);
   }
-  .btn-tour-trigger:hover {
+  .options-active-badge {
     background: var(--accent-gold);
     color: #120904;
-    box-shadow: 0 0 10px rgba(229, 169, 60, 0.4);
-  }
-  /* Tour Modal */
-  .tour-modal-backdrop {
-    display: none;
-    position: fixed;
-    top: 0; left: 0; width: 100vw; height: 100vh;
-    background: rgba(0, 0, 0, 0.75);
-    backdrop-filter: blur(5px);
-    z-index: 99999;
-    align-items: center;
-    justify-content: center;
-  }
-  .tour-modal-backdrop.open {
-    display: flex;
-  }
-  .tour-modal-card {
-    background: linear-gradient(145deg, #1c130d 0%, #2a1b12 100%);
-    border: 1px solid var(--accent-gold);
+    font-size: 0.72rem;
+    padding: 0.1rem 0.35rem;
     border-radius: 10px;
-    max-width: 620px;
-    width: 90%;
-    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.8), 0 0 20px rgba(229, 169, 60, 0.25);
-    padding: 2rem;
-    position: relative;
-  }
-  .tour-step {
-    display: none;
-  }
-  .tour-step.active {
-    display: block;
-  }
-  .tour-step-counter {
-    font-family: var(--font-stats);
-    font-size: 0.8rem;
-    color: var(--accent-gold);
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin-bottom: 0.5rem;
-  }
-  .tour-step-title {
-    font-size: 1.4rem;
     font-weight: 800;
-    color: #fff;
-    margin-bottom: 0.75rem;
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
   }
-  .tour-step-body {
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: var(--text-muted);
-    margin-bottom: 1.5rem;
-  }
-  .tour-controls {
-    display: flex;
-    justify-content: space-between;
+
+  .filter-pill {
+    display: inline-flex;
     align-items: center;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(229, 169, 60, 0.2);
+    gap: 0.35rem;
+    background: rgba(229, 169, 60, 0.12);
+    border: 1px solid rgba(229, 169, 60, 0.35);
+    color: var(--accent-gold);
+    padding: 0.2rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.78rem;
+    font-weight: 600;
+  }
+  .filter-pill a {
+    color: #ffde8a;
+    text-decoration: none;
+    font-weight: 700;
+    margin-left: 2px;
+  }
+  .filter-pill a:hover {
+    color: #ef5350;
   }
   .controls-bar {
     display: flex;
@@ -530,310 +532,189 @@
 {% endblock %}
 
 {% block content %}
-<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+{% set non_default_options = (active_model != 'glicko2_daneo') or (reset_mode != 'continuous') or (delta_window != 'none') or (status != 'active') or (title_filter and title_filter != 'ALL') or (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
 
-  <!-- Season / Historical Archive Navigation -->
-  <div class="year-bar">
-    <span class="year-bar-label">Season / Archive:</span>
-    <a href="{{ url_for('leaderboard.index', model=active_model, format=active_format) }}" 
-       class="year-pill {% if not selected_year %}active{% endif %}"
-       title="Current live ratings across all competitive tournament history">
-      Live / All-Time
-    </a>
-    {% for y in available_years %}
-      <a href="{{ url_for('leaderboard.yearly', year=y, model=active_model, format=active_format) }}" 
-         class="year-pill {% if selected_year == y %}active{% endif %}"
-         title="Historical standings at end of Season {{ y }}">
-        {{ y }}
-        {% if y == 2026 %}
-          <span class="year-pill-wc" style="background: #2e7d32; color: #fff;">Active</span>
-        {% elif y in (2023, 2024, 2025) %}
-          <span class="year-pill-wc">WC</span>
-        {% endif %}
-      </a>
-    {% endfor %}
-  </div>
+<div class="leaderboard-layout-container" id="leaderboardLayout">
+  <!-- MAIN LEADERBOARD COLUMN -->
+  <div class="leaderboard-main-column">
+    <div class="rating-card" style="padding: 1.15rem 1.4rem; margin-bottom: 1.5rem;">
 
-  {% set non_default_options = (active_model != 'glicko2_std') or (reset_mode != 'continuous') or (delta_window != 'none') or (status != 'active') or (title_filter and title_filter != 'ALL') or (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
-
-  <!-- Format Selector (2p / 3p / 4p / All) & Progressive Actions Bar -->
-  <div class="format-bar">
-    <div style="display: flex; gap: 0.5rem; flex-wrap: wrap; align-items: center;">
-      {% for f_id, f_name in formats.items() %}
-        <a href="{{ make_url({'format': f_id, 'page': 1}) }}"
-           class="format-btn {% if active_format == f_id %}active{% endif %}">
-          {{ f_name }}
-        </a>
-      {% endfor %}
-    </div>
-
-    <!-- Quick Action Controls: Options Toggle & Tour Button -->
-    <div style="display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap;">
-      <button type="button" class="btn-options-toggle {% if non_default_options %}active{% endif %}" onclick="toggleOptionsDrawer()" id="optionsToggleBtn" title="Toggle advanced rating engines, season reset modes, and delta filters">
-        <span>⚙️ Options</span>
-        {% if non_default_options %}
-          <span style="background: var(--accent-gold); color: #120904; font-size: 0.72rem; padding: 0.1rem 0.35rem; border-radius: 10px; font-weight: 800;">Active</span>
-        {% endif %}
-        <span id="optionsToggleArrow" style="font-size: 0.75rem;">▼</span>
-      </button>
-
-      <button type="button" class="btn-tour-trigger" onclick="openTour()" title="Interactive walkthrough explaining all rating models, reset options, and format rules">
-        <span>🎓 Guide & Tour</span>
-      </button>
-    </div>
-  </div>
-
-  <!-- Collapsible Advanced Options Drawer -->
-  <div id="optionsDrawer" class="options-drawer {% if non_default_options %}open{% endif %}">
-    <div class="options-drawer-grid">
-      <!-- 1. Rating Engine Selector (Moved from top navbar) -->
-      <div>
-        <div class="options-group-title">
-          <span>⚡ Rating Engine</span>
-        </div>
-        <div class="reset-btn-group" style="display: flex; flex-wrap: wrap; width: 100%;">
-          {% for m_id, m_name in models.items() %}
-            <a href="{{ make_url({'model': m_id, 'page': 1}) }}"
-               class="reset-btn {% if active_model == m_id %}active{% endif %}"
-               style="flex: 1; text-align: center;"
-                data-tooltip="{% if m_id == 'glicko2_daneo' %}👑 Gold Standard Glicko-2 by DANeo: φ^(N-2) multiplayer decomposition and 15-game emergent prior re-calibration.{% elif m_id == 'glicko2_std' %}Standard naive 1v1 pairwise baseline without multiplayer calibration.{% elif m_id == 'glicko2_mp' %}1/(N-1) scaling of 3P/4P matches.{% elif m_id == 'glicko2_adapt' %}Adaptive temperature scaling T(P,N).{% else %}Rémi Coulom Whole-History Rating{% endif %}">
-              {{ m_name }}
+      <!-- Streamlined Top Row: Format bar on left, Search in center, Options Toggle on right -->
+      <div class="format-bar">
+        <!-- 1. Format Selector (2p / 3p / 4p / All) -->
+        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
+          {% for f_id, f_name in formats.items() %}
+            <a href="{{ make_url({'format': f_id, 'page': 1}) }}"
+               class="format-btn {% if active_format == f_id %}active{% endif %}">
+              {{ f_name }}
             </a>
           {% endfor %}
         </div>
-      </div>
 
-      <!-- 2. Season Reset Mode Switcher -->
-      <div>
-        <div class="options-group-title">
-          <span>⚙️ Season Reset Mode</span>
-        </div>
-        <div class="reset-btn-group" style="display: flex; flex-wrap: wrap; width: 100%;">
-          {% for r_id, r_info in reset_modes.items() %}
-            <a href="{{ make_url({'reset_mode': r_id, 'page': 1}) }}"
-               class="reset-btn {% if reset_mode == r_id %}active{% endif %}"
-               style="flex: 1; text-align: center;"
-               data-tooltip="{{ r_info.desc }}">
-              {{ r_info.name }}
-            </a>
-          {% endfor %}
-        </div>
-      </div>
+        <!-- 2. Player Search Bar (Centered, submits on Enter or 🔍 click) -->
+        <form method="GET" action="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year) }}{% else %}{{ url_for('leaderboard.index') }}{% endif %}" style="display: flex; align-items: center; gap: 0.35rem; margin: 0.2rem 0;">
+          <input type="hidden" name="model" value="{{ active_model }}">
+          <input type="hidden" name="format" value="{{ active_format }}">
+          <input type="hidden" name="reset_mode" value="{{ reset_mode }}">
+          {% if selected_year %}<input type="hidden" name="stats_view" value="{{ stats_view }}">{% endif %}
+          {% if active_retro %}<input type="hidden" name="retro" value="1">{% endif %}
+          {% if title_filter and title_filter != 'ALL' %}<input type="hidden" name="title" value="{{ title_filter }}">{% endif %}
+          {% if status and status != 'active' %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+          {% if delta_window and delta_window != 'none' %}<input type="hidden" name="delta" value="{{ delta_window }}">{% endif %}
+          {% if min_opps %}<input type="hidden" name="min_opps" value="{{ min_opps }}">{% endif %}
 
-      <!-- 3. Rating Deltas Window -->
-      <div>
-        <div class="options-group-title">
-          <span>⏱️ Rating Deltas</span>
-        </div>
-        <select name="delta_direct" class="input-antique" style="width: 100%;" onchange="window.location.href = '{{ make_url({}) }}' + (window.location.href.includes('?') ? '&' : '?') + 'delta=' + this.value">
-          <option value="none" {% if delta_window == 'none' %}selected{% endif %}>Deltas: Off</option>
-          <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Webmaster Update</option>
-          <option value="month" {% if delta_window == 'month' %}selected{% endif %}>&Delta; Last Month (30d)</option>
-          <option value="quarter" {% if delta_window == 'quarter' %}selected{% endif %}>&Delta; Last Quarter (90d)</option>
-          <option value="year" {% if delta_window == 'year' %}selected{% endif %}>&Delta; Last Year (365d)</option>
-          <option value="baseline" {% if delta_window == 'baseline' %}selected{% endif %}>&Delta; Official Online Baseline</option>
-        </select>
-      </div>
-
-      <!-- 4. Prior Calibration Lever (Glicko Models) -->
-      {% if active_model not in ('whr', 'glicko2_daneo') %}
-      <div>
-        <div class="options-group-title">
-          <span>🎯 Prior Calibration Lever</span>
-        </div>
-        <div class="reset-btn-group" style="display: flex; flex-wrap: wrap; width: 100%;">
-          <a href="{{ make_url({'retro': '0', 'page': 1}) }}"
-             class="reset-btn {% if not active_retro %}active{% endif %}"
-             style="flex: 1; text-align: center;"
-             data-tooltip="Standard initial priors (1500 / 350 RD)">
-            Standard Prior (1500)
-          </a>
-          <a href="{{ make_url({'retro': '1', 'page': 1}) }}"
-             class="reset-btn {% if active_retro %}active{% endif %}"
-             style="flex: 1; text-align: center;"
-             data-tooltip="Two-pass 15-game emergent calibration with frozen initial window">
-            15-Game Retro Prior (★)
-          </a>
-        </div>
-      </div>
-      {% endif %}
-    </div>
-
-    <!-- Active Drawer Status Note -->
-    <div style="font-size: 0.82rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.06); padding-top: 0.75rem; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem;">
-      <div>
-        Active Engine: <strong style="color: var(--accent-gold);">{{ active_model_name }}</strong> &bull; 
-        Reset Mode: <strong style="color: #fff;">{{ reset_modes.get(reset_mode, {}).get('name', reset_mode) }}</strong>
-        {% if active_model == 'glicko2_daneo' %} &bull; Prior: <strong style="color: #c084fc;">15-Game Re-Calibrated (👑)</strong>{% elif active_retro and active_model != 'whr' %} &bull; Prior: <strong style="color: #4ade80;">15G Retro-Calibrated</strong>{% endif %} &bull; 
-        Format: <strong style="color: #fff;">{{ formats.get(active_format, 'All Formats') }}</strong>
-      </div>
-      <a href="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year, model='glicko2_std', reset_mode='continuous', retro='0', delta='none', status='active', min_opps=0) }}{% else %}{{ url_for('leaderboard.index', model='glicko2_std', reset_mode='continuous', retro='0', delta='none', status='active', min_opps=30) }}{% endif %}" class="btn-reset" style="padding: 0.25rem 0.6rem; font-size: 0.75rem;">
-        Reset to Default Glicko-2
-      </a>
-    </div>
-  </div>
-
-  {% if selected_year %}
-    <div class="archive-hero-banner">
-      <div>
-        <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
-          <span class="archive-badge">
-            {% if selected_year == 2026 %}Active Season 2026 Standings{% else %}Season {{ selected_year }} Final Archive{% endif %}
-          </span>
-          <span style="font-family: var(--font-stats); font-size: 0.88rem; color: var(--text-muted);">
-            Snapshot Date: <strong style="color: var(--accent-gold);">{{ year_info.snapshot_date }}</strong>
-          </span>
-        </div>
-        <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.5;">
-          Recorded Matches in {{ selected_year }}: <strong style="color: #ffde8a;">{{ "{:,}".format(year_info.total_matches) }}</strong>
-          &bull; Ranked Competitors: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
-          {% if selected_year > 2017 %}
-            &bull; <span style="color: var(--accent-gold);">Deltas vs {{ selected_year - 1 }} Year-End</span>
+          <div style="position: relative; display: flex; align-items: center;">
+            <input type="text" name="search" value="{{ search }}" 
+                   placeholder="Search player ..." 
+                   class="input-antique" style="width: 230px; padding: 0.4rem 2rem 0.4rem 0.65rem; font-size: 0.88rem;"
+                   title="Separate multiple names with commas.">
+            <button type="submit" style="position: absolute; right: 6px; background: transparent; border: none; color: var(--accent-gold); cursor: pointer; padding: 2px 4px; font-size: 0.9rem;" title="Search">
+              🔍
+            </button>
+          </div>
+          {% if search %}
+            <a href="{{ make_url({'search': '', 'page': 1}) }}" class="btn-reset" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Clear search">✕</a>
           {% endif %}
-        </p>
+        </form>
 
-        <!-- Seasonal vs Career Stats Switcher -->
-        <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
-          <span style="font-family: var(--font-heading); font-size: 0.8rem; color: var(--accent-gold); text-transform: uppercase;">📊 Match Stats Mode:</span>
-          <div class="reset-btn-group">
-            <a href="{{ make_url({'stats_view': 'season'}) }}" 
-               class="reset-btn {% if stats_view == 'season' %}active{% endif %}"
-               data-tooltip="Display wins, losses, and draws for Season {{ selected_year }} only. The Glicko-2 and WHR ratings are derived according to the selected reset mode.">
-              📅 Season {{ selected_year }} Only
-            </a>
-            <a href="{{ make_url({'stats_view': 'career'}) }}" 
-               class="reset-btn {% if stats_view == 'career' %}active{% endif %}"
-               data-tooltip="Display cumulative career wins, losses, and draws up through the end of Season {{ selected_year }}. The Glicko-2 and WHR ratings are derived according to the selected reset mode.">
-              📈 Career to Date
-            </a>
-          </div>
+        <!-- 3. Options Toggle Button (Top right, aligned with card) -->
+        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <button type="button" class="btn-options-toggle {% if non_default_options %}active{% endif %}" onclick="toggleOptionsSidebar()" id="optionsToggleBtn" title="Toggle advanced rating options, season archive, and filters">
+            <span>⚙️ Options</span>
+            {% if non_default_options %}
+              <span class="options-active-badge">Active</span>
+            {% endif %}
+            <span id="optionsToggleArrow" style="font-size: 0.75rem;">▶</span>
+          </button>
         </div>
       </div>
-      {% if year_info.world_champion %}
-        <div style="text-align: right; background: rgba(0,0,0,0.35); padding: 0.6rem 1rem; border-radius: 6px; border-left: 3px solid #ffd700;">
-          <div style="font-size: 0.76rem; font-family: var(--font-heading); color: var(--accent-gold); text-transform: uppercase; letter-spacing: 0.5px;">
-            🏆 {{ year_info.world_champion.title }}
-          </div>
-          <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; margin-top: 0.15rem;">
-            <a href="{{ url_for('player.profile', player_name=year_info.world_champion.player) }}" style="color: #ffd700; text-decoration: none;">
-              {{ year_info.world_champion.player }}
-            </a>
-          </div>
-        </div>
-      {% endif %}
-    </div>
-  {% endif %}
 
-  <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 1rem; margin-bottom: 1rem;">
-    {% set lb_hero = get_cms('leaderboard', 'hero_title', 'Competitive Leaderboard') %}
-    <div class="cms-card" data-page="leaderboard" data-block="hero_title">
-      <h2 class="cms-title" style="font-family: var(--font-heading); font-size: 1.8rem; color: var(--accent-gold); letter-spacing: 1px;">
-        {{ lb_hero.title }}
-      </h2>
-      <div class="cms-content">
-        {% if lb_hero.is_custom %}
-          {{ lb_hero.content }}
-        {% else %}
-          <p style="color: var(--text-muted); margin-top: 0.3rem; line-height: 1.5;">
-            Engine: <strong style="color: var(--text-main);">{{ active_model_name }}</strong>
-            <span class="badge" style="background: rgba(229, 169, 60, 0.18); color: var(--accent-gold); border: 1px solid var(--accent-gold); margin-left: 0.3rem;">
-              {{ formats.get(active_format, 'All Formats') }}
-            </span>
-            <span class="badge" style="background: rgba(255, 255, 255, 0.08); color: #e0d0c0; border: 1px solid rgba(255,255,255,0.15); margin-left: 0.3rem;">
-              {{ reset_modes.get(reset_mode, {}).get('name', reset_mode) }}
-            </span>
-            <span style="color: var(--text-muted); margin-left: 0.5rem; font-size: 0.88rem;">
-              {% if active_model == 'glicko2_std' %}
-                (Standard 1v1 naive baseline)
-              {% elif active_model == 'glicko2_mp' %}
-                (Multiplayer fractional weighting &mdash; variance-calibrated)
-              {% else %}
-                (Whole-History Rating retrospective MAP)
-              {% endif %}
-            </span>
-          </p>
-        {% endif %}
-      </div>
-    </div>
-    <div style="font-family: var(--font-stats); font-size: 0.9rem; color: var(--text-muted);">
-      Players: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
-      {% if status == 'active' %}
-        <span style="font-size: 0.8rem; color: #66bb6a; margin-left: 0.3rem;">(Active Only)</span>
-      {% elif status == 'inactive' %}
-        <span style="font-size: 0.8rem; color: #ef5350; margin-left: 0.3rem;">(Inactive Only)</span>
-      {% else %}
-        <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">(All Recorded)</span>
-      {% endif %}
-      {% if min_opps > 0 %}
-        <span style="font-size: 0.8rem; color: var(--accent-gold); margin-left: 0.3rem;">(&ge; {{ min_opps }} matches)</span>
-      {% endif %}
-    </div>
-  </div>
-
-  <div class="controls-bar">
-    <form method="GET" action="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year) }}{% else %}{{ url_for('leaderboard.index') }}{% endif %}" class="search-form">
-      <input type="hidden" name="model" value="{{ active_model }}">
-      <input type="hidden" name="format" value="{{ active_format }}">
-      <input type="hidden" name="reset_mode" value="{{ reset_mode }}">
       {% if selected_year %}
-        <input type="hidden" name="stats_view" value="{{ stats_view }}">
+        <div class="archive-hero-banner">
+          <div>
+            <div style="display: flex; align-items: center; gap: 0.6rem; margin-bottom: 0.35rem; flex-wrap: wrap;">
+              <span class="archive-badge">
+                {% if selected_year == 2026 %}Active Season 2026 Standings{% else %}Season {{ selected_year }} Final Archive{% endif %}
+              </span>
+              <span style="font-family: var(--font-stats); font-size: 0.88rem; color: var(--text-muted);">
+                Snapshot Date: <strong style="color: var(--accent-gold);">{{ year_info.snapshot_date }}</strong>
+              </span>
+            </div>
+            <p style="color: var(--text-muted); font-size: 0.9rem; margin: 0; line-height: 1.5;">
+              Recorded Matches in {{ selected_year }}: <strong style="color: #ffde8a;">{{ "{:,}".format(year_info.total_matches) }}</strong>
+              &bull; Ranked Competitors: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
+              {% if selected_year > 2017 %}
+                &bull; <span style="color: var(--accent-gold);">Deltas vs {{ selected_year - 1 }} Year-End</span>
+              {% endif %}
+            </p>
+
+            <!-- Seasonal vs Career Stats Switcher -->
+            <div style="display: flex; align-items: center; gap: 0.5rem; margin-top: 0.75rem; flex-wrap: wrap;">
+              <span style="font-family: var(--font-heading); font-size: 0.8rem; color: var(--accent-gold); text-transform: uppercase;">📊 Match Stats Mode:</span>
+              <div class="reset-btn-group">
+                <a href="{{ make_url({'stats_view': 'season'}) }}" 
+                   class="reset-btn {% if stats_view == 'season' %}active{% endif %}"
+                   data-tooltip="Display wins, losses, and draws for Season {{ selected_year }} only. Ratings are derived according to the selected engine and reset mode.">
+                  📅 Season {{ selected_year }} Only
+                </a>
+                <a href="{{ make_url({'stats_view': 'career'}) }}" 
+                   class="reset-btn {% if stats_view == 'career' %}active{% endif %}"
+                   data-tooltip="Display cumulative career wins, losses, and draws up through Season {{ selected_year }}. Ratings are derived according to the selected engine and reset mode.">
+                  📈 Career to Date
+                </a>
+              </div>
+            </div>
+          </div>
+          {% if year_info.world_champion %}
+            <div style="text-align: right; background: rgba(0,0,0,0.35); padding: 0.6rem 1rem; border-radius: 6px; border-left: 3px solid #ffd700;">
+              <div style="font-size: 0.76rem; font-family: var(--font-heading); color: var(--accent-gold); text-transform: uppercase; letter-spacing: 0.5px;">
+                🏆 {{ year_info.world_champion.title }}
+              </div>
+              <div style="font-family: var(--font-heading); font-size: 1.15rem; font-weight: 700; margin-top: 0.15rem;">
+                <a href="{{ url_for('player.profile', player_name=year_info.world_champion.player) }}" style="color: #ffd700; text-decoration: none;">
+                  {{ year_info.world_champion.player }}
+                </a>
+              </div>
+            </div>
+          {% endif %}
+        </div>
       {% endif %}
 
-      <!-- Search Input with multi-name explainer -->
-      <div style="display: flex; align-items: center; gap: 0.35rem;">
-        <input type="text" name="search" value="{{ search }}" 
-               placeholder="Search player or country (e.g. Pazout, Genghisip)..." 
-               class="input-antique" style="width: 250px;"
-               title="Search by player name or country. To filter and compare multiple players simultaneously, enter comma-separated names (e.g. Pazout, Weidenbaum).">
-        <span data-tooltip="Search by player or country code. To compare multiple specific players, separate names with commas (e.g. Weidenbaum, Genghisip, Pazout). When searching a single player, the full leaderboard page containing that player will load with direct scroll." 
-              style="color: var(--accent-gold); font-size: 0.95rem; cursor: help; padding: 0 4px;" class="tooltip-bottom">&#9432;</span>
+      <div style="display: flex; justify-content: space-between; align-items: baseline; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.45rem;">
+        {% set lb_hero = get_cms('leaderboard', 'hero_title', 'Competitive Leaderboard') %}
+        <div class="cms-card" data-page="leaderboard" data-block="hero_title">
+          <h2 class="cms-title" style="font-family: var(--font-heading); font-size: 1.35rem; color: var(--accent-gold); letter-spacing: 0.5px; margin: 0;">
+            {{ lb_hero.title }}
+          </h2>
+          <div class="cms-content">
+            {% if lb_hero.is_custom %}
+              {{ lb_hero.content }}
+            {% else %}
+              <p style="color: var(--text-muted); margin-top: 0.15rem; margin-bottom: 0; line-height: 1.35; font-size: 0.86rem;">
+                Engine: <strong style="color: var(--text-main);">{{ active_model_name }}</strong>
+                <span class="badge" style="background: rgba(229, 169, 60, 0.18); color: var(--accent-gold); border: 1px solid var(--accent-gold); margin-left: 0.3rem; font-size: 0.76rem; padding: 0.1rem 0.4rem;">
+                  {{ formats.get(active_format, 'All Formats') }}
+                </span>
+                <span class="badge" style="background: rgba(255, 255, 255, 0.08); color: #e0d0c0; border: 1px solid rgba(255,255,255,0.15); margin-left: 0.3rem; font-size: 0.76rem; padding: 0.1rem 0.4rem;">
+                  {{ reset_modes.get(reset_mode, {}).get('name', reset_mode) }}
+                </span>
+                <span style="color: var(--text-muted); margin-left: 0.4rem; font-size: 0.82rem;">
+                  {% if active_model == 'glicko2_std' %}
+                    (Standard 1v1 naive baseline)
+                  {% elif active_model == 'glicko2_mp' %}
+                    (Multiplayer fractional weighting &mdash; variance-calibrated)
+                  {% elif active_model == 'glicko2_adapt' %}
+                    (Adaptive temperature scaling)
+                  {% elif active_model == 'whr' %}
+                    (Whole-History Rating retrospective MAP)
+                  {% endif %}
+                </span>
+              </p>
+            {% endif %}
+          </div>
+        </div>
+        <div style="font-family: var(--font-stats); font-size: 0.88rem; color: var(--text-muted);">
+          Players: <strong style="color: var(--text-main);">{{ "{:,}".format(total_count) }}</strong>
+          {% if status == 'active' %}
+            <span style="font-size: 0.8rem; color: #66bb6a; margin-left: 0.3rem;">(Active Only)</span>
+          {% elif status == 'inactive' %}
+            <span style="font-size: 0.8rem; color: #ef5350; margin-left: 0.3rem;">(Inactive Only)</span>
+          {% else %}
+            <span style="font-size: 0.8rem; color: var(--text-muted); margin-left: 0.3rem;">(All Recorded)</span>
+          {% endif %}
+          {% if min_opps > 0 %}
+            <span style="font-size: 0.8rem; color: var(--accent-gold); margin-left: 0.3rem;">(&ge; {{ min_opps }} matches)</span>
+          {% endif %}
+        </div>
       </div>
-      
-      <!-- Title Filter -->
-      <select name="title" class="input-antique">
-        <option value="ALL">All Titles</option>
-        {% for t in available_titles %}
-          <option value="{{ t }}" {% if title_filter == t %}selected{% endif %}>
-            {% if t == 'GM' %}Grandmaster (GM){% elif t == 'M' %}Master (M){% elif t == 'P' %}Platinum (P){% elif t == 'G' %}Gold (G){% else %}{{ t }}{% endif %}
-          </option>
-        {% endfor %}
-      </select>
 
-      <!-- Inactive / Active Player Status Selector -->
-      <select name="status" class="input-antique" onchange="this.form.submit()">
-        <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only (Standard)</option>
-        <option value="all" {% if status == 'all' %}selected{% endif %}>Include Inactive (All)</option>
-        <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only (Retired)</option>
-      </select>
+      <!-- Quick Active Filters Bar & Sorting Order Indicator -->
+      <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.65rem; font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
+        <div style="display: flex; align-items: center; gap: 0.4rem; flex-wrap: wrap;">
+          {% if search %}
+            <span class="filter-pill">Search: "{{ search }}" <a href="{{ make_url({'search': '', 'page': 1}) }}">✕</a></span>
+          {% endif %}
+          {% if title_filter and title_filter != 'ALL' %}
+            <span class="filter-pill">Title: {{ title_filter }} <a href="{{ make_url({'title': 'ALL', 'page': 1}) }}">✕</a></span>
+          {% endif %}
+          {% if status and status != 'active' %}
+            <span class="filter-pill">Status: {{ status.title() }} <a href="{{ make_url({'status': 'active', 'page': 1}) }}">✕</a></span>
+          {% endif %}
+          {% if (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
+            <span class="filter-pill">Min Matches: &ge;{{ min_opps }} <a href="{{ make_url({'min_opps': (0 if selected_year else 30), 'page': 1}) }}">✕</a></span>
+          {% endif %}
+          {% if delta_window and delta_window != 'none' %}
+            <span class="filter-pill">&Delta;: {{ delta_window.replace('_', ' ').title() }} <a href="{{ make_url({'delta': 'none', 'page': 1}) }}">✕</a></span>
+          {% endif %}
+          {% if search or (title_filter and title_filter != 'ALL') or (status and status != 'active') or (delta_window and delta_window != 'none') or (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
+            <a href="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year, model=active_model, format=active_format) }}{% else %}{{ url_for('leaderboard.index', model=active_model, format=active_format) }}{% endif %}" class="btn-reset" style="padding: 0.2rem 0.5rem; font-size: 0.78rem;">Clear Filters</a>
+          {% endif %}
+        </div>
 
-      <!-- Minimum Matches Filter -->
-      <div style="display: flex; align-items: center; gap: 0.35rem;">
-        <label style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted); white-space: nowrap;">Min Matches:</label>
-        <input type="number" name="min_opps" value="{{ min_opps }}" min="0" max="1000" class="input-antique" style="width: 68px; padding: 0.45rem 0.5rem;" title="Minimum competitive tournament matches">
+        <div>
+          Sorted by: <strong>{{ sort_by.replace('_', ' ').title() }}</strong> ({{ order.upper() }})
+        </div>
       </div>
-
-      <!-- RB48 Deltas Timeframe Selector (Always displays deltas) -->
-      <div class="stats-delta-selector">
-        <select name="delta" class="input-antique" onchange="this.form.submit()">
-          <option value="none" {% if delta_window == 'none' %}selected{% endif %}>Deltas: Off</option>
-          <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Webmaster Update</option>
-          <option value="month" {% if delta_window == 'month' %}selected{% endif %}>&Delta; Last Month (30d)</option>
-          <option value="quarter" {% if delta_window == 'quarter' %}selected{% endif %}>&Delta; Last Quarter (90d)</option>
-          <option value="year" {% if delta_window == 'year' %}selected{% endif %}>&Delta; Last Year (365d)</option>
-          <option value="baseline" {% if delta_window == 'baseline' %}selected{% endif %}>&Delta; Official Baseline</option>
-        </select>
-      </div>
-
-      <button type="submit" class="btn-antique">Filter</button>
-      {% if search or (title_filter and title_filter != 'ALL') or status != 'active' or delta_window != 'none' or (not selected_year and min_opps != 30) or (selected_year and min_opps != 0) %}
-        <a href="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year, model=active_model, format=active_format) }}{% else %}{{ url_for('leaderboard.index', model=active_model, format=active_format) }}{% endif %}" class="btn-reset">Reset</a>
-      {% endif %}
-    </form>
-
-    <div style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
-      Sorted by: <strong>{{ sort_by.replace('_', ' ').title() }}</strong> ({{ order.upper() }})
-    </div>
-  </div>
 
   <div style="overflow-x: auto;">
     <table class="leaderboard-table">
@@ -1028,161 +909,253 @@
       {% endif %}
     </div>
   </div>
-</div>
+    </div> <!-- end .rating-card -->
+  </div> <!-- end .leaderboard-main-column -->
 
-<!-- Interactive Tour / Tutorial Walkthrough Modal -->
-<div id="tourModal" class="tour-modal-backdrop" onclick="handleTourBackdropClick(event)">
-  <div class="tour-modal-card">
-    <button type="button" onclick="closeTour()" style="position: absolute; top: 1rem; right: 1rem; background: transparent; border: none; color: var(--accent-gold); font-size: 1.4rem; cursor: pointer;">&times;</button>
-
-    <!-- Step 1: Rating Engines -->
-    <div id="tourStep1" class="tour-step active">
-      <div class="tour-step-counter">Guide: Step 1 of 5 &bull; Rating Engines</div>
-      <div class="tour-step-title">⚡ The Three Competitive Engines</div>
-      <div class="tour-step-body">
-        <p style="margin-bottom: 0.75rem;">Through the Ages features three distinct statistical algorithms to measure player skill:</p>
-        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-          <li style="margin-bottom: 0.4rem;"><strong>Glicko-2 Standard:</strong> Naive 1v1 pairwise decomposition without multiplayer downweighting (matches the legacy digital app baseline).</li>
-          <li style="margin-bottom: 0.4rem;"><strong>Glicko-2 MP-Weighted:</strong> Uses Coulom fractional weighting ($w = 1/(N-1)$) so a 4-player game generates 1 game worth of rating variance rather than 3, preventing overconfidence.</li>
-          <li><strong>Whole-History Rating (WHR):</strong> Rémi Coulom's retrospective Bayesian state-space model that optimizes career skill over time with daily Brownian motion drift ($w^2 \Delta t$).</li>
-        </ul>
+  <!-- RIGHT STICKY OPTIONS DRAWER COLUMN -->
+  <aside class="leaderboard-sidebar-column" id="leaderboardSidebar">
+    <div class="leaderboard-options-panel">
+      <!-- Sidebar Header -->
+      <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.5rem;">
+        <span style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 0.95rem; font-weight: 700; letter-spacing: 0.5px;">⚙️ Options &amp; Filters</span>
+        <button type="button" class="btn-options-close" onclick="toggleOptionsSidebar()" title="Close options panel">✕ Close</button>
       </div>
-      <div class="tour-controls">
-        <span style="color: var(--text-muted); font-size: 0.85rem;">Engine Selector moved into ⚙️ Options</span>
-        <button type="button" class="btn-antique" onclick="nextTourStep(2)">Next: Formats &raquo;</button>
+
+      <!-- 1. Season / Historical Archive Selector -->
+      <div>
+        <div class="options-group-title">
+          <span>📅 Season Archive</span>
+        </div>
+        <div style="display: flex; flex-wrap: wrap; gap: 0.3rem;">
+          <a href="{{ make_url({'page': 1}) if not selected_year else url_for('leaderboard.index', model=active_model, format=active_format) }}" 
+             class="year-pill {% if not selected_year %}active{% endif %}"
+             style="flex: 1 1 calc(50% - 0.3rem); text-align: center; padding: 0.35rem 0.5rem; font-size: 0.8rem;"
+             title="Current live ratings across all competitive tournament history">
+            Live / All-Time
+          </a>
+          {% for y in available_years %}
+            <a href="{{ url_for('leaderboard.yearly', year=y, model=active_model, format=active_format) }}" 
+               class="year-pill {% if selected_year == y %}active{% endif %}"
+               style="flex: 1 1 calc(25% - 0.3rem); text-align: center; padding: 0.35rem 0.4rem; font-size: 0.78rem;"
+               title="Historical standings at end of Season {{ y }}">
+              {{ y }}
+              {% if y == 2026 %}
+                <span class="year-pill-wc" style="background: #2e7d32; color: #fff; font-size: 0.65rem; padding: 1px 3px;">26</span>
+              {% elif y in (2023, 2024, 2025) %}
+                <span class="year-pill-wc" style="font-size: 0.65rem; padding: 1px 3px;">WC</span>
+              {% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 2. Rating Engine Selector -->
+      <div>
+        <div class="options-group-title">
+          <span>⚡ Rating Engine</span>
+        </div>
+        <div class="reset-btn-group" style="display: flex; flex-direction: column; width: 100%; gap: 3px;">
+          {% for m_id, m_name in models.items() %}
+            <a href="{{ make_url({'model': m_id, 'page': 1}) }}"
+               class="reset-btn {% if active_model == m_id %}active{% endif %}"
+               style="text-align: left; padding: 0.4rem 0.65rem; display: flex; justify-content: space-between; align-items: center;"
+               data-tooltip="{% if m_id == 'glicko2_daneo' %}👑 GlickoD: φ^(N-2) multiplayer decomposition and 15-game emergent prior re-calibration.{% elif m_id == 'glicko2_std' %}Standard naive 1v1 pairwise baseline without multiplayer calibration.{% elif m_id == 'glicko2_mp' %}1/(N-1) scaling of 3P/4P matches.{% elif m_id == 'glicko2_adapt' %}Adaptive temperature scaling T(P,N).{% else %}Rémi Coulom Whole-History Rating{% endif %}">
+              <span>{{ m_name }}</span>
+              {% if m_id == 'glicko2_daneo' %}<span style="font-size: 0.7rem; color: #ffd700; font-weight: 700; background: rgba(229, 169, 60, 0.15); padding: 1px 4px; border-radius: 3px;">DEFAULT</span>{% endif %}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 3. Season Reset Mode -->
+      <div>
+        <div class="options-group-title">
+          <span>⚙️ Season Reset Mode</span>
+        </div>
+        <div class="reset-btn-group" style="display: flex; width: 100%; gap: 2px;">
+          {% for r_id, r_info in reset_modes.items() %}
+            <a href="{{ make_url({'reset_mode': r_id, 'page': 1}) }}"
+               class="reset-btn {% if reset_mode == r_id %}active{% endif %}"
+               style="flex: 1; text-align: center; padding: 0.4rem 0.5rem; font-size: 0.8rem;"
+               data-tooltip="{{ r_info.desc }}">
+              {{ r_info.name }}
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- 4. Prior Calibration Lever (When Applicable) -->
+      {% if active_model not in ('whr', 'glicko2_daneo') %}
+      <div>
+        <div class="options-group-title">
+          <span>🎯 Prior Calibration Lever</span>
+        </div>
+        <div class="reset-btn-group" style="display: flex; width: 100%; gap: 2px;">
+          <a href="{{ make_url({'retro': '0', 'page': 1}) }}"
+             class="reset-btn {% if not active_retro %}active{% endif %}"
+             style="flex: 1; text-align: center; font-size: 0.75rem;">
+            Standard (1500)
+          </a>
+          <a href="{{ make_url({'retro': '1', 'page': 1}) }}"
+             class="reset-btn {% if active_retro %}active{% endif %}"
+             style="flex: 1; text-align: center; font-size: 0.75rem;">
+            15G Retro (★)
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- 5. Status, Titles, Deltas, Min Matches Filter Form -->
+      <form id="sidebarFilterForm" method="GET" action="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year) }}{% else %}{{ url_for('leaderboard.index') }}{% endif %}">
+        <input type="hidden" name="model" value="{{ active_model }}">
+        <input type="hidden" name="format" value="{{ active_format }}">
+        <input type="hidden" name="reset_mode" value="{{ reset_mode }}">
+        {% if selected_year %}<input type="hidden" name="stats_view" value="{{ stats_view }}">{% endif %}
+        {% if active_retro %}<input type="hidden" name="retro" value="1">{% endif %}
+        <input type="hidden" name="search" value="{{ search }}">
+        <input type="hidden" name="sort" value="{{ sort_by }}">
+        <input type="hidden" name="order" value="{{ order }}">
+        <input type="hidden" name="page" value="1">
+
+        <!-- Activity Status -->
+        <div style="margin-bottom: 0.85rem;">
+          <div class="options-group-title">
+            <span>👤 Activity Status</span>
+          </div>
+          <select name="status" class="input-antique" style="width: 100%;" onchange="this.form.submit()">
+            <option value="active" {% if status == 'active' %}selected{% endif %}>Active Only (Standard)</option>
+            <option value="all" {% if status == 'all' %}selected{% endif %}>Include Inactive (All)</option>
+            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive Only (Retired)</option>
+          </select>
+        </div>
+
+        <!-- Title Filter -->
+        <div style="margin-bottom: 0.85rem;">
+          <div class="options-group-title">
+            <span>🏅 Titles Filter</span>
+          </div>
+          <select name="title" class="input-antique" style="width: 100%;" onchange="this.form.submit()">
+            <option value="ALL">All Titles</option>
+            {% for t in available_titles %}
+              <option value="{{ t }}" {% if title_filter == t %}selected{% endif %}>
+                {% if t == 'GM' %}Grandmaster (GM){% elif t == 'M' %}Master (M){% elif t == 'P' %}Platinum (P){% elif t == 'G' %}Gold (G){% else %}{{ t }}{% endif %}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Rating Deltas -->
+        <div style="margin-bottom: 0.85rem;">
+          <div class="options-group-title">
+            <span>⏱️ Rating Deltas</span>
+          </div>
+          <select name="delta" class="input-antique" style="width: 100%;" onchange="this.form.submit()">
+            <option value="none" {% if delta_window == 'none' %}selected{% endif %}>Deltas: Off</option>
+            <option value="last_update" {% if delta_window == 'last_update' %}selected{% endif %}>&Delta; Last Webmaster Update</option>
+            <option value="month" {% if delta_window == 'month' %}selected{% endif %}>&Delta; Last Month (30d)</option>
+            <option value="quarter" {% if delta_window == 'quarter' %}selected{% endif %}>&Delta; Last Quarter (90d)</option>
+            <option value="year" {% if delta_window == 'year' %}selected{% endif %}>&Delta; Last Year (365d)</option>
+            <option value="baseline" {% if delta_window == 'baseline' %}selected{% endif %}>&Delta; Official Online Baseline</option>
+          </select>
+        </div>
+
+        <!-- Minimum Matches -->
+        <div style="margin-bottom: 0.85rem;">
+          <div class="options-group-title">
+            <span>⚔️ Minimum Matches</span>
+          </div>
+          <div style="display: flex; gap: 0.4rem; align-items: center;">
+            <input type="number" name="min_opps" value="{{ min_opps }}" min="0" max="1000" class="input-antique" style="flex: 1;" placeholder="Min matches" onchange="this.form.submit()">
+            <button type="submit" class="btn-antique" style="padding: 0.4rem 0.75rem; font-size: 0.8rem;">Apply</button>
+          </div>
+        </div>
+      </form>
+
+      <!-- Options Footer / Reset & Close -->
+      <div style="font-size: 0.8rem; color: var(--text-muted); border-top: 1px solid rgba(255,255,255,0.08); padding-top: 0.75rem; display: flex; flex-direction: column; gap: 0.5rem;">
+        <div>
+          Active: <strong style="color: var(--accent-gold);">{{ active_model_name }}</strong> &bull;
+          <strong style="color: #fff;">{{ reset_modes.get(reset_mode, {}).get('name', reset_mode) }}</strong>
+        </div>
+        <div style="display: flex; gap: 0.5rem; align-items: center;">
+          <a href="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year, model='glicko2_daneo', reset_mode='continuous', delta='none', status='active', min_opps=0) }}{% else %}{{ url_for('leaderboard.index', model='glicko2_daneo', reset_mode='continuous', delta='none', status='active', min_opps=30) }}{% endif %}" class="btn-reset" style="flex: 1; text-align: center; display: block; padding: 0.4rem; font-size: 0.78rem;">
+            Reset All
+          </a>
+          <button type="button" class="btn-options-close" onclick="toggleOptionsSidebar()" style="padding: 0.4rem 0.75rem;" title="Close options panel">
+            ✕ Close
+          </button>
+        </div>
       </div>
     </div>
-
-    <!-- Step 2: Formats & Player Counts -->
-    <div id="tourStep2" class="tour-step">
-      <div class="tour-step-counter">Guide: Step 2 of 5 &bull; Competitive Formats</div>
-      <div class="tour-step-title">👥 Player Counts & Circuits</div>
-      <div class="tour-step-body">
-        <p style="margin-bottom: 0.75rem;">TTA tournaments span different table sizes with wildly different tactical dynamics:</p>
-        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-          <li style="margin-bottom: 0.4rem;"><strong>4-Player:</strong> International Championship premier pyramid. Heavy diplomatic coalitions and split military focus.</li>
-          <li style="margin-bottom: 0.4rem;"><strong>3-Player:</strong> Intermezzo Championship. Balanced triangle warfare and high tactical density.</li>
-          <li style="margin-bottom: 0.4rem;"><strong>2-Player (Duel):</strong> Royal League. Zero-sum head-to-head tactical warfare.</li>
-          <li><strong>All Formats:</strong> Global combined ratings across every official match.</li>
-        </ul>
-      </div>
-      <div class="tour-controls">
-        <button type="button" class="btn-reset" onclick="nextTourStep(1)">&laquo; Back</button>
-        <button type="button" class="btn-antique" onclick="nextTourStep(3)">Next: Season Resets &raquo;</button>
-      </div>
-    </div>
-
-    <!-- Step 3: Season Reset Modes -->
-    <div id="tourStep3" class="tour-step">
-      <div class="tour-step-counter">Guide: Step 3 of 5 &bull; Season Resets</div>
-      <div class="tour-step-title">⚙️ Golden Ratio Season Resets</div>
-      <div class="tour-step-body">
-        <p style="margin-bottom: 0.75rem;">Reset modes prevent ratings from stagnating across multiple calendar years using exact powers of the Golden Ratio ($\phi \approx 1.618034$):</p>
-        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-          <li style="margin-bottom: 0.4rem;"><strong>Continuous (Career):</strong> Standard uninterrupted trajectory without annual boundary resets.</li>
-          <li style="margin-bottom: 0.4rem;"><strong>Soft Reset ($\phi$):</strong> $\mathrm{RD} \cdot \phi$ uncertainty expansion & tier shrinkage $\lambda = \phi^{-3} \approx 23.61\%$ toward divisional means.</li>
-          <li><strong>Amplified Reset ($\phi^2$):</strong> $\mathrm{RD} \cdot \phi^2$ uncertainty expansion & amplified tier shrinkage $\lambda = \phi^{-1} \approx 61.80\%$.</li>
-        </ul>
-      </div>
-      <div class="tour-controls">
-        <button type="button" class="btn-reset" onclick="nextTourStep(2)">&laquo; Back</button>
-        <button type="button" class="btn-antique" onclick="nextTourStep(4)">Next: Deltas & Conservative Rating &raquo;</button>
-      </div>
-    </div>
-
-    <!-- Step 4: Deltas & Conservative Ranking -->
-    <div id="tourStep4" class="tour-step">
-      <div class="tour-step-counter">Guide: Step 4 of 5 &bull; Deltas & Ratings</div>
-      <div class="tour-step-title">📈 Conservative Rating & Deltas</div>
-      <div class="tour-step-body">
-        <p style="margin-bottom: 0.75rem;">How leaderboard ranks and rating changes are computed:</p>
-        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-          <li style="margin-bottom: 0.4rem;"><strong>Conservative Rating ($C = \mu - 2\mathrm{RD}$):</strong> Ranks players by their 95% statistical lower bound. This ensures inactive players with high uncertainty don't block the summit.</li>
-          <li style="margin-bottom: 0.4rem;"><strong>Webmaster Deltas:</strong> View exact rating gains ($\Delta$) since the last tournament batch was committed to the platform.</li>
-          <li><strong>Seasonal Stats Switcher:</strong> In any historical season, toggle match records between that season only or career-to-date.</li>
-        </ul>
-      </div>
-      <div class="tour-controls">
-        <button type="button" class="btn-reset" onclick="nextTourStep(3)">&laquo; Back</button>
-        <button type="button" class="btn-antique" onclick="nextTourStep(5)">Next: Community & Circuits &raquo;</button>
-      </div>
-    </div>
-
-    <!-- Step 5: Community & Tournaments -->
-    <div id="tourStep5" class="tour-step">
-      <div class="tour-step-counter">Guide: Step 5 of 5 &bull; Circuits & Community</div>
-      <div class="tour-step-title">🏆 Tournaments & Community Leaderboards</div>
-      <div class="tour-step-body">
-        <p style="margin-bottom: 0.75rem;">Explore beyond ratings:</p>
-        <ul style="padding-left: 1.25rem; margin-bottom: 0.75rem;">
-          <li style="margin-bottom: 0.4rem;"><strong>Tournaments Hub:</strong> Rules, format pyramids, and official trophyboards for all 6 major competitive circuits.</li>
-          <li style="margin-bottom: 0.4rem;"><strong>Community Leaderboard:</strong> The official rolling ranking maintained by <strong>Wolvs</strong> with tournament placement points and multi-year archives.</li>
-          <li><strong>Player Profiles:</strong> Click any competitor to view head-to-head records with min-matches filter, career peak year, and comparison matrices!</li>
-        </ul>
-      </div>
-      <div class="tour-controls">
-        <button type="button" class="btn-reset" onclick="nextTourStep(4)">&laquo; Back</button>
-        <button type="button" class="btn-antique" onclick="closeTour()">Got It! Explore Leaderboard</button>
-      </div>
-    </div>
-  </div>
+  </aside>
 </div>
 
 <script>
-  function toggleOptionsDrawer() {
-    const drawer = document.getElementById('optionsDrawer');
+  function positionOptionsSidebar() {
+    const layout = document.getElementById('leaderboardLayout');
+    const sidebar = document.getElementById('leaderboardSidebar');
+    if (!layout || !sidebar || !layout.classList.contains('options-open')) return;
+
+    const cardRect = layout.getBoundingClientRect();
+    const viewportWidth = document.documentElement.clientWidth;
+    const freeSpaceRight = viewportWidth - cardRect.right;
+    const sidebarWidth = sidebar.offsetWidth || 350;
+
+    // Ideal center is the midpoint of the free space to the right of the card
+    const freeSpaceCenter = cardRect.right + (freeSpaceRight / 2);
+    let idealLeft = freeSpaceCenter - (sidebarWidth / 2);
+
+    // If screen is too small, allow it to overlap the leaderboard card,
+    // but ensure it stays within viewport with 16px right margin
+    const maxLeft = viewportWidth - sidebarWidth - 16;
+    if (idealLeft > maxLeft) {
+      idealLeft = maxLeft;
+    }
+    // Prevent pushing off the left edge of the viewport
+    if (idealLeft < 16) {
+      idealLeft = 16;
+    }
+
+    const relativeLeft = idealLeft - cardRect.left;
+    sidebar.style.left = `${relativeLeft}px`;
+    sidebar.style.right = 'auto';
+  }
+
+  function toggleOptionsSidebar() {
+    const layout = document.getElementById('leaderboardLayout');
     const arrow = document.getElementById('optionsToggleArrow');
     const btn = document.getElementById('optionsToggleBtn');
-    if (!drawer) return;
-    drawer.classList.toggle('open');
-    const isOpen = drawer.classList.contains('open');
-    if (arrow) arrow.textContent = isOpen ? '▲' : '▼';
-    if (btn && !isOpen) {
-      {% if not non_default_options %}
-      btn.classList.remove('active');
-      {% endif %}
+    if (!layout) return;
+
+    layout.classList.toggle('options-open');
+    const isOpen = layout.classList.contains('options-open');
+    if (arrow) arrow.textContent = isOpen ? '✕' : '▶';
+    if (btn) {
+      if (isOpen) {
+        btn.classList.add('open');
+      } else {
+        btn.classList.remove('open');
+      }
     }
-  }
-
-  function openTour() {
-    const modal = document.getElementById('tourModal');
-    if (modal) {
-      modal.classList.add('open');
-      showTourStep(1);
+    if (isOpen) {
+      positionOptionsSidebar();
     }
+    localStorage.setItem('tta_lb_options_open', isOpen ? 'true' : 'false');
   }
 
-  function openTourModal() {
-    openTour();
-  }
+  window.addEventListener('resize', positionOptionsSidebar);
 
-  function closeTour() {
-    const modal = document.getElementById('tourModal');
-    if (modal) modal.classList.remove('open');
-  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const savedState = localStorage.getItem('tta_lb_options_open');
+    const layout = document.getElementById('leaderboardLayout');
+    const arrow = document.getElementById('optionsToggleArrow');
+    const btn = document.getElementById('optionsToggleBtn');
 
-  function handleTourBackdropClick(e) {
-    if (e.target.id === 'tourModal') {
-      closeTour();
-    }
-  }
-
-  function nextTourStep(stepNum) {
-    showTourStep(stepNum);
-  }
-
-  function showTourStep(num) {
-    for (let i = 1; i <= 5; i++) {
-      const el = document.getElementById('tourStep' + i);
-      if (el) el.classList.remove('active');
-    }
-    const target = document.getElementById('tourStep' + num);
-    if (target) target.classList.add('active');
-  }
-
-  document.addEventListener('keydown', function(e) {
-    if (e.key === 'Escape') {
-      closeTour();
+    if (savedState === 'true' && layout) {
+      layout.classList.add('options-open');
+      if (arrow) arrow.textContent = '✕';
+      if (btn) btn.classList.add('open');
+      positionOptionsSidebar();
     }
   });
 

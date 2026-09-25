@@ -135,20 +135,20 @@ def test_faq_gold_standard_and_grozz_badge():
     assert resp_faq.status_code == 200
     faq_html = resp_faq.get_data(as_text=True)
 
-    # 1. Gold Standard tab name has NO crown emoji in button
-    assert 'Gold Standard (DANeo)</button>' in faq_html
-    assert '👑 Gold Standard (DANeo)</button>' not in faq_html
+    # 1. GlickoD tab name has NO crown emoji in button
+    assert 'GlickoD</button>' in faq_html
+    assert '👑 GlickoD</button>' not in faq_html
 
     # 2. faq-gold-standard section exists as its own top-level faq-section
     assert '<div id="faq-gold-standard" class="faq-section">' in faq_html
-    assert 'Gold Standard Glicko-2 by DANeo' in faq_html
+    assert 'GlickoD Engine' in faq_html
 
     # 3. Analysis page includes glicko2_daneo
     resp_analysis = client.get('/analysis')
     assert resp_analysis.status_code == 200
     analysis_html = resp_analysis.get_data(as_text=True)
     assert 'glicko2_daneo' in analysis_html
-    assert 'GlickoD*' in analysis_html
+    assert 'GlickoD' in analysis_html
 
     # 4. Check Grozz's GM badge in database
     from src.data.db import get_connection

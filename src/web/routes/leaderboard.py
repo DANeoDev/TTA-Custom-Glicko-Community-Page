@@ -5,7 +5,7 @@ from src.data.db import get_connection, ensure_yearly_stats
 leaderboard_bp = Blueprint('leaderboard', __name__)
 
 VALID_MODELS = {
-    'glicko2_daneo': 'Gold Standard (DANeo)',
+    'glicko2_daneo': 'GlickoD',
     'glicko2_std': 'Glicko-2 Standard',
     'glicko2_mp': 'Glicko-2 MP-Weighted',
     'glicko2_adapt': 'Glicko-2 Adaptive-T',
@@ -66,7 +66,7 @@ def render_leaderboard(year=None):
     model_param = request.args.get('model')
     if model_param in VALID_MODELS:
         session['active_model'] = model_param
-    active_model = session.get('active_model', 'glicko2_std')
+    active_model = session.get('active_model', 'glicko2_daneo')
 
     # 2. Season Reset Mode selection (continuous, softer)
     reset_param = request.args.get('reset_mode')

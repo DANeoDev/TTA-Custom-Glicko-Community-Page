@@ -21,7 +21,7 @@ from src.data.db import get_connection
 analysis_bp = Blueprint('analysis', __name__)
 
 VALID_MODELS = {
-    'glicko2_daneo': '👑 GlickoD* (Flagship)',
+    'glicko2_daneo': 'GlickoD',
     'glicko2_std': 'Glicko-2 Standard',
     'glicko2_mp': 'Glicko-2 MP-Weighted',
     'glicko2_adapt': 'Glicko-2 Adaptive-T',
@@ -126,28 +126,28 @@ def get_webmaster_notes(conn, key: str = 'analysis_overview') -> Dict[str, Any]:
 
 MODEL_METADATA = {
     'glicko2_daneo': {
-        'name': 'GlickoD* Flagship (Continuous)',
-        'short': '👑 GlickoD* (Career)',
+        'name': 'GlickoD (Continuous)',
+        'short': 'GlickoD (Career)',
         'family': 'glicko2_daneo',
-        'family_name': 'GlickoD* (Flagship)',
+        'family_name': 'GlickoD',
         'reset': 'continuous',
         'reset_name': 'Continuous',
         'retro': True,
         'color': '#8b5cf6',
         'bg': 'rgba(139, 92, 246, 0.25)',
-        'verdict': '👑 The Premier Crown — Golden ratio multiplayer information decomposition (φ^(N-2)), 15-game re-calibration, and bilateral composite variance.'
+        'verdict': '★ The Premier Flagship — Golden ratio multiplayer information decomposition (φ^(N-2)), 15-game re-calibration, and bilateral composite variance.'
     },
     'glicko2_daneo_softer': {
-        'name': 'GlickoD* Flagship (Season Reset)',
-        'short': '👑 GlickoD* (Season)',
+        'name': 'GlickoD (Season Reset)',
+        'short': 'GlickoD (Season)',
         'family': 'glicko2_daneo',
-        'family_name': 'GlickoD* (Flagship)',
+        'family_name': 'GlickoD',
         'reset': 'softer',
         'reset_name': 'Season Reset',
         'retro': True,
         'color': '#a855f7',
         'bg': 'rgba(168, 85, 247, 0.25)',
-        'verdict': '👑 Peak Statistical & Competitive Harmony — Golden Ratio decomposition with Season Reset (α ≈ 1.45, λ ≈ 0.12), 15-game re-calibration, and all-time record 0.24% ECE.'
+        'verdict': '★ Peak Statistical & Competitive Harmony — Golden Ratio decomposition with Season Reset (α ≈ 1.45, λ ≈ 0.12), 15-game re-calibration, and all-time record 0.24% ECE.'
     },
     'glicko2_adapt': {
         'name': 'Glicko-2 Adaptive-T (Continuous)',
@@ -594,8 +594,8 @@ def index():
         correlation_summary = _ANALYSIS_CACHE['correlations'].get(active_format)
         if correlation_summary is None:
             ALL_ENGINES = [
-                ('glicko2_daneo', 'GlickoD* (Gold Standard)', 'GlickoD* φ-MP Continuous (Flagship)'),
-                ('glicko2_daneo_softer', 'GlickoD* (Season Reset)', 'GlickoD* Dynamic Season Reset'),
+                ('glicko2_daneo', 'GlickoD', 'GlickoD φ-MP Continuous (Flagship)'),
+                ('glicko2_daneo_softer', 'GlickoD (Season Reset)', 'GlickoD Dynamic Season Reset'),
                 ('glicko2_std', 'G2 Std (Career)', 'Glicko-2 Standard Continuous'),
                 ('glicko2_std_softer', 'G2 Std (Season Reset)', 'Glicko-2 Standard Season Reset'),
                 ('glicko2_mp', 'G2 MP (Career)', 'Glicko-2 MP-Weighted Continuous'),

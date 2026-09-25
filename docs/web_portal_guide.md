@@ -6,7 +6,7 @@ The Through the Ages (TTA) Rating Portal provides an intuitive, antique-themed w
 
 ## 1. Global Model Switcher
 Located in the upper-right corner of the top navigation bar. Clicking any model immediately switches the active rating model across the entire session:
-- **GlickoD* (Gold Standard by DANeo)**: Flagship predictive model uniting Golden Ratio ($\phi^{N-2}$) multiplayer decomposition, dual-criterion prior recalibration, and decoupled season resets.
+- **GlickoD (Gold Standard by DANeo)**: Flagship predictive model uniting Golden Ratio ($\phi^{N-2}$) multiplayer decomposition, dual-criterion prior recalibration, and decoupled season resets.
 - **Glicko-2 Standard**: Official online leaderboard benchmark (naive 1v1 pairwise).
 - **Glicko-2 MP-Weighted**: Scientifically calibrated for 3p and 4p matches with fractional weighting ($w = 1/(N-1)$).
 - **Glicko-2 Adaptive-T**: Analytical research model evaluating thermal probability scaling.
@@ -40,7 +40,7 @@ Allows switching between rating continuity paradigms:
 - **Transparent Match History**: Every match in the Game History table displays its authentic rating delta ($\Delta R$, e.g. `+12.4`, `-8.1`) normally, providing immediate continuous feedback.
 - **Historical Trajectory Chart**:
   - Interactive Chart.js graph plotting the player's entire 2017--2026 career evolution.
-  - Displays GlickoD*, Glicko-2 Standard, MP-Weighted, and WHR.
+  - Displays GlickoD, Glicko-2 Standard, MP-Weighted, and WHR.
 - **Recent Matches Table**: Displays the player's tournament games with final placement badges, scores, participants, and replay links.
 - **Head-to-Head Records**: Table showing records against the player's top rivals.
 

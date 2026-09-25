@@ -207,7 +207,7 @@
   <!-- Category Nav Tabs -->
   <div class="faq-nav">
     <button class="faq-tab-btn active" data-tab="philosophy" onclick="switchFaqTab('philosophy', this)">Philosophy &amp; Purpose</button>
-    <button class="faq-tab-btn" data-tab="gold-standard" onclick="switchFaqTab('gold-standard', this)" style="border: 1px solid #c59b27; color: #ffd54f; background: rgba(229, 169, 60, 0.12);">Gold Standard (DANeo)</button>
+    <button class="faq-tab-btn" data-tab="gold-standard" onclick="switchFaqTab('gold-standard', this)" style="border: 1px solid #c59b27; color: #ffd54f; background: rgba(229, 169, 60, 0.12);">GlickoD</button>
     <button class="faq-tab-btn" data-tab="recalibration-15" onclick="switchFaqTab('recalibration-15', this)" style="border: 1px solid #b8860b; color: #ffde8a; background: rgba(229, 169, 60, 0.08);">🔬 15-Game Recalibration</button>
     <button class="faq-tab-btn" data-tab="glicko-std" onclick="switchFaqTab('glicko-std', this)">Glicko-2 Standard</button>
     <button class="faq-tab-btn" data-tab="glicko-mp" onclick="switchFaqTab('glicko-mp', this)">Glicko-2 MP-Weighted</button>
@@ -2178,7 +2178,7 @@ $$
         <div>
           <div style="font-weight: 700; color: #ffd54f; font-size: 0.95rem;">📐 Mathematical Derivation: Gaussian Tail Scaling &amp; Probability Bins</div>
           <div style="color: #cfbeab; font-size: 0.85rem; margin-top: 0.25rem;">
-            See the continuous Gaussian normal tail equation \(\tau(z) = 1.0 - \exp(-z^2 / (2\phi))\), dynamic release \(\alpha(z)\), regression \(\lambda(z)\), and the 10 empirical probability reliability bins in the dedicated GlickoD* calibration section.
+            See the continuous Gaussian normal tail equation \(\tau(z) = 1.0 - \exp(-z^2 / (2\phi))\), dynamic release \(\alpha(z)\), regression \(\lambda(z)\), and the 10 empirical probability reliability bins in the dedicated GlickoD calibration section.
           </div>
         </div>
         <button type="button" onclick="switchFaqTab('gold-standard')" class="faq-link-btn" style="padding: 0.5rem 1rem; background: rgba(229, 169, 60, 0.2); border: 1px solid #c59b27; color: #ffd54f; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
@@ -2261,7 +2261,7 @@ $$
         <div>
           <div style="font-weight: 700; color: #ffd54f; font-size: 0.95rem;">📐 Mathematical Derivation: Gaussian Tail Scaling &amp; Probability Bins</div>
           <div style="color: #cfbeab; font-size: 0.85rem; margin-top: 0.25rem;">
-            See the continuous Gaussian normal tail equation \(\tau(z) = 1.0 - \exp(-z^2 / (2\phi))\), dynamic release \(\alpha(z)\), regression \(\lambda(z)\), and the 10 empirical probability reliability bins in the dedicated GlickoD* calibration section.
+            See the continuous Gaussian normal tail equation \(\tau(z) = 1.0 - \exp(-z^2 / (2\phi))\), dynamic release \(\alpha(z)\), regression \(\lambda(z)\), and the 10 empirical probability reliability bins in the dedicated GlickoD calibration section.
           </div>
         </div>
         <button type="button" onclick="switchFaqTab('gold-standard')" class="faq-link-btn" style="padding: 0.5rem 1rem; background: rgba(229, 169, 60, 0.2); border: 1px solid #c59b27; color: #ffd54f; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
@@ -2553,9 +2553,9 @@ $$
   <div id="faq-gold-standard" class="faq-section">
     <!-- Card 1: The Full-Circle Journey -->
     <div class="faq-card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95), rgba(22, 14, 9, 0.98));">
-      <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: #ffd54f; margin-bottom: 0.5rem; font-weight: 700;">Gold Standard Glicko-2 by DANeo (GlickoD*)</div>
+      <div style="font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: #ffd54f; margin-bottom: 0.5rem; font-weight: 700;">GlickoD Engine</div>
       <h3 style="color: #ffd54f;">
-        <span>👑</span> The Full-Circle Journey: From Naive Glicko to WHR to GlickoD*
+        <span>👑</span> The Full-Circle Journey: From Naive Glicko to WHR to GlickoD
       </h3>
       <p>
         The journey to the definitive rating engine for <em>Through the Ages</em> was not a straight line, but an intellectual voyage of rigorous empirical discovery. Our starting observation was clear: standard Glicko-2 is reasonably good at predicting match outcomes, but exhibits a <strong>steady, compounding overconfidence in predictions</strong>: when the model predicts that a game should be won in $X\%$ of cases ($X \ge 90\%$), it was actually won in only $\approx 89\%$ of cases in tournament reality.
@@ -2574,18 +2574,18 @@ $$
           <strong>TTA Skill Expression Is Profound:</strong> When we restrict the analysis to well-calibrated elite players, top players genuinely win $\mathbf{\ge 95\%}$ and even $\mathbf{98\%}$ of matches against lower-tier competition (e.g. an established 2000 GM facing an average 1475 player). The 99% certainty does exist when rating disparity is real.
         </li>
         <li>
-          <strong>Retiring Temperature Scaling:</strong> Once the <strong>15-Game Recalibration Breakthrough</strong> eliminates newcomer noise at the root, the apparent overconfidence vanishes completely. Applying temperature scaling on top of calibrated data actually worsened predictions by artificially suppressing legitimate elite win probabilities (+2% to +3% underconfidence!). Consequently, <strong>temperature scaling was retired from GlickoD*</strong> ($T \equiv 1.0$), establishing near-perfect tail calibration (within $\pm 0.17\%$ of reality across 70–95% thresholds) and an all-time record ECE of <strong>0.24%</strong>.
+          <strong>Retiring Temperature Scaling:</strong> Once the <strong>15-Game Recalibration Breakthrough</strong> eliminates newcomer noise at the root, the apparent overconfidence vanishes completely. Applying temperature scaling on top of calibrated data actually worsened predictions by artificially suppressing legitimate elite win probabilities (+2% to +3% underconfidence!). Consequently, <strong>temperature scaling was retired from GlickoD</strong> ($T \equiv 1.0$), establishing near-perfect tail calibration (within $\pm 0.17\%$ of reality across 70–95% thresholds) and an all-time record ECE of <strong>0.24%</strong>.
         </li>
       </ul>
       <p>
-        Returning to sequential Glicko-2 with these empirical insights, GlickoD* is built upon <strong>three proven pillars</strong>:
+        Returning to sequential Glicko-2 with these empirical insights, GlickoD is built upon <strong>three proven pillars</strong>:
       </p>
       <ol class="faq-list" style="margin-left: 1.5rem; color: #f1e4d0; line-height: 1.75;">
         <li>
           <strong>The 15-Game Recalibration Breakthrough (The Primary Anchor):</strong> When new players enter the tournament pool with blank stats ($1500, \mathrm{RD}=350$), they inject severe statistical noise. Active tournament veterans average $\approx 1521$, while the overall pool mean is $\approx 1471$. Nominal "1521 vs. 1500" contests produce both a 50% underconfidence droop (from below-average newcomers) and extreme tail overconfidence (from above-average newcomers). Discovering emergent ratings at 15 games and recalculating history with newcomer ratings frozen during games 1..15 resolves both anomalies at the root.
         </li>
         <li>
-          <strong>Golden Ratio ($\phi$) Multiplayer Information Decomposition:</strong> Winning a 4-player game is neither 3 independent duels (naive Glicko) nor 1 duel (Coulom fractional scaling). GlickoD* deploys Golden Ratio information scaling $W(N) = \phi^{N-2}$ ($w_N = \frac{\phi^{N-2}}{N-1}$), giving $\approx 1.618$ effective match equivalents for 3-player and $\approx 2.618$ for 4-player games, perfectly capturing multilateral information without runaway certainty.
+          <strong>Golden Ratio ($\phi$) Multiplayer Information Decomposition:</strong> Winning a 4-player game is neither 3 independent duels (naive Glicko) nor 1 duel (Coulom fractional scaling). GlickoD deploys Golden Ratio information scaling $W(N) = \phi^{N-2}$ ($w_N = \frac{\phi^{N-2}}{N-1}$), giving $\approx 1.618$ effective match equivalents for 3-player and $\approx 2.618$ for 4-player games, perfectly capturing multilateral information without runaway certainty.
         </li>
         <li>
           <strong>Bilateral Composite Uncertainty ($c = \sqrt{\phi_A^2 + \phi_B^2}$):</strong> Evaluating full composite variance shrinkage $g(c)$ ensures probability forecasts accurately reflect the combined uncertainty of both players, preventing overconfidence whenever either competitor has elevated RD.
@@ -2752,10 +2752,10 @@ $$
     <!-- Card 4: The Temperature Scaling Journey & Empirical Verdict -->
     <div class="faq-card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95), rgba(22, 14, 9, 0.98));">
       <h3 style="color: #ffd54f;">
-        <span>🎯</span> The Temperature Scaling Journey: Why GlickoD* Retired Logit Compression
+        <span>🎯</span> The Temperature Scaling Journey: Why GlickoD Retired Logit Compression
       </h3>
       <p>
-        One of the most instructive chapters in the development of GlickoD* was the rise and subsequent retirement of <strong>Adaptive Temperature Scaling</strong> $T(P, N)$.
+        One of the most instructive chapters in the development of GlickoD was the rise and subsequent retirement of <strong>Adaptive Temperature Scaling</strong> $T(P, N)$.
       </p>
       <p>
         In naive Glicko-2, extreme probability forecasts ($>90\%$) appear to suffer from persistent overconfidence: when the model predicts $93\%$, actual tournament win rates hovered around $\approx 89\%$. We initially formulated the hypothesis that <em>Through the Ages</em> possessed an entropic ceiling on skill expression—that initial card rows, military tactics reveals, and multiplayer friction physically prevented a true 99% win probability from existing once players cross baseline competence. To bend predictions back toward the diagonal, we introduced thermal logit damping $T(P, N) = 1.0 + \alpha_N \cdot \delta^{\gamma_N}$.
@@ -2783,9 +2783,8 @@ $$
         Empirical Ablation: T-Enabled vs. T-Disabled (Across 388,493 Encounters)
       </h4>
       <p>
-        Comparing GlickoD* with temperature scaling enabled versus completely disabled ($T \equiv 1.0$) demonstrates that removing temperature scaling achieves superior calibration across every metric:
+        Comparing GlickoD with temperature scaling enabled versus completely disabled ($T \equiv 1.0$) demonstrates that removing temperature scaling achieves superior calibration across every metric:
       </p>
-
       <div style="overflow-x: auto; margin: 1rem 0;">
         <table class="ranked-table" style="background: rgba(14, 9, 6, 0.95); border: 1px solid rgba(229, 169, 60, 0.3);">
           <thead>
@@ -2850,7 +2849,7 @@ $$
         Temperature scaling was a well-intentioned bandage for a problem caused by uncalibrated cold-start priors. Once 15-Game Recalibration solved the newcomer problem at the root, temperature scaling became superfluous "numberwang" that actively degraded elite match predictions.
       </p>
       <p>
-        <strong>GlickoD* officially operates with $T \equiv 1.0$ across all formats.</strong> Its precision is anchored purely by Golden Ratio ($\phi$) multiplayer weighting, 15-game emergent prior recalibration, and bilateral composite variance.
+        <strong>GlickoD officially operates with $T \equiv 1.0$ across all formats.</strong> Its precision is anchored purely by Golden Ratio ($\phi$) multiplayer weighting, 15-game emergent prior recalibration, and bilateral composite variance.
       </p>
     </div>
 
@@ -2860,7 +2859,7 @@ $$
         <span>📊</span> Derivation of Calibration Bins: Normal Distribution Density &amp; Probability Reliability Bins
       </h3>
       <p>
-        Calibration in GlickoD* operates on two mathematical levels: <strong>Probability Prediction Bins</strong> (verifying that a $70\%$ forecast realizes as a $70\%$ win rate) and <strong>Competitive Tier Bins</strong> (reshaping seasonal resets to respect the natural Gaussian skill distribution).
+        Calibration in GlickoD operates on two mathematical levels: <strong>Probability Prediction Bins</strong> (verifying that a $70\%$ forecast realizes as a $70\%$ win rate) and <strong>Competitive Tier Bins</strong> (reshaping seasonal resets to respect the natural Gaussian skill distribution).
       </p>
 
       <h4 style="color: #ffd54f; font-family: var(--font-subheading); font-size: 1.1rem; margin: 1.25rem 0 0.5rem 0;">
@@ -2893,7 +2892,7 @@ $$
         </li>
       </ul>
       <p>
-        <strong>The Flaw in Standard Glicko:</strong> In naive Glicko-2, extreme bins (e.g. $B_{10} = [95\%, 100\%]$) suffer from apparent tail drooping: the model expects $\bar{P}_{10} \approx 97.5\%$, but in uncalibrated tournament reality, the favorite only won $\approx 88.5\%$ of the time (a massive $-9.0\%$ gap). As discovered through our ablation study, this was an artifact of uncalibrated newcomers entering at 1500 and facing Grandmasters. GlickoD* resolves this at the root through 15-game emergent prior recalibration and bilateral composite variance $g(c)$, aligning match forecasts directly with true player skill and reducing ECE from $3.8\%$ down to an unprecedented <strong>$0.24\%$</strong> without requiring any artificial temperature damping.
+        <strong>The Flaw in Standard Glicko:</strong> In naive Glicko-2, extreme bins (e.g. $B_{10} = [95\%, 100\%]$) suffer from apparent tail drooping: the model expects $\bar{P}_{10} \approx 97.5\%$, but in uncalibrated tournament reality, the favorite only won $\approx 88.5\%$ of the time (a massive $-9.0\%$ gap). As discovered through our ablation study, this was an artifact of uncalibrated newcomers entering at 1500 and facing Grandmasters. GlickoD resolves this at the root through 15-game emergent prior recalibration and bilateral composite variance $g(c)$, aligning match forecasts directly with true player skill and reducing ECE from $3.8\%$ down to an unprecedented <strong>$0.24\%$</strong> without requiring any artificial temperature damping.
       </p>
 
       <h4 style="color: #ffd54f; font-family: var(--font-subheading); font-size: 1.1rem; margin: 1.25rem 0 0.5rem 0;">
@@ -2910,7 +2909,7 @@ $$
         <li><strong>The Extreme Tails ($\mu \ge 1900$ or $\mu \le 1100$):</strong> At the extremes ($|z| \ge 2.5$), player density drops below $1\%$. Here, unearned historical inertia allows inactive veterans to "camp" at top ranks for years unless an active variance expansion releases ratings back into competition.</li>
       </ul>
       <p>
-        To solve this, GlickoD* establishes <strong>Gaussian Tail Scaling with Golden Ratio ($\phi$) Powers</strong>:
+        To solve this, GlickoD establishes <strong>Gaussian Tail Scaling with Golden Ratio ($\phi$) Powers</strong>:
       </p>
       <div class="faq-formula">
 
@@ -2946,7 +2945,7 @@ $$
         <span>🏆</span> Empirical Benchmark Scoreboard Across Formats
       </h3>
       <p>
-        The table below documents the final match-time calibration metrics for <strong>GlickoD*</strong> (<em>Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo</em>) across all season reset modes on the full historical dataset (388,493 pairwise encounters):
+        The table below documents the final match-time calibration metrics for <strong>GlickoD</strong> (<em>Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo</em>) across all season reset modes on the full historical dataset (388,493 pairwise encounters):
       </p>
       <div style="overflow-x: auto; margin: 1rem 0;">
         <table class="ranked-table" style="background: rgba(14, 9, 6, 0.95); border: 1px solid rgba(229, 169, 60, 0.35);">
@@ -2962,7 +2961,7 @@ $$
           </thead>
           <tbody>
             <tr style="background: rgba(229, 169, 60, 0.18);">
-              <td style="text-align: left; font-weight: 700; color: #ffd54f;">👑 GlickoD* (Continuous)</td>
+              <td style="text-align: left; font-weight: 700; color: #ffd54f;">👑 GlickoD (Continuous)</td>
               <td style="font-weight: 800; font-family: var(--font-stats); color: #ffde8a;">0.2081</td>
               <td style="font-weight: 800; font-family: var(--font-stats); color: #ffde8a;">0.6066</td>
               <td style="font-weight: 800; font-family: var(--font-stats); color: #ffde8a;">0.34%</td>
@@ -2970,7 +2969,7 @@ $$
               <td style="text-align: left; font-size: 0.84rem; color: #f7dfa5;"><strong>All-Time Forecast Leader</strong> &bull; Lowest career forecast error ($0.2081$) with sub-0.35% ECE.</td>
             </tr>
             <tr style="background: rgba(229, 169, 60, 0.10);">
-              <td style="text-align: left; font-weight: 700; color: #ffde8a;">👑 GlickoD* (Season Reset)</td>
+              <td style="text-align: left; font-weight: 700; color: #ffde8a;">👑 GlickoD (Season Reset)</td>
               <td style="font-weight: 800; font-family: var(--font-stats); color: #ffd54f;">0.2081</td>
               <td style="font-weight: 800; font-family: var(--font-stats); color: #ffd54f;">0.6065</td>
               <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.24%</td>
@@ -3042,7 +3041,7 @@ $$
         <li><strong>Flaw 2 (Updating the whole month normally):</strong> If the month is updated normally, matches 1 through 15 are counted <em>twice</em>: once to discover their 15-game starting anchor $R_{15}$, and a second time in that month's dynamic rating update, causing severe artificial rating inflation.</li>
       </ul>
       <p>
-        To achieve mathematical purity without discarding legitimate gameplay, GlickoD* executes an exact <strong>transition split at match 15</strong>:
+        To achieve mathematical purity without discarding legitimate gameplay, GlickoD executes an exact <strong>transition split at match 15</strong>:
       </p>
       <div class="faq-formula">
 
@@ -3094,7 +3093,7 @@ $$
         In our historical archive of over 3,500 competitors, exactly <strong>778 historical players</strong> completed between 1 and 14 matches before leaving competitive play. Under a strict, naive 15-game rule, these 778 accounts would <em>never</em> reach 15 games. Consequently, they would remain permanently anchored to the uninformative generic prior ($\mu = 1500, \mathrm{RD} = 350$) for eternity, continuing to inject demographic bleed into every opponent they ever faced.
       </p>
       <p>
-        To solve this, GlickoD* implements an empirical <strong>Dual-Criterion Recalibration Architecture</strong>:
+        To solve this, GlickoD implements an empirical <strong>Dual-Criterion Recalibration Architecture</strong>:
       </p>
       <ul class="faq-list">
         <li>

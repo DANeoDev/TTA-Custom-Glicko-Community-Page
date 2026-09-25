@@ -60,7 +60,7 @@ def test_player_matrix_with_glicko2_daneo(client):
         sess['active_model'] = 'glicko2_daneo'
     resp = client.get('/player/a440/matrix')
     assert resp.status_code == 200
-    assert b'GlickoD*' in resp.data
+    assert b'GlickoD' in resp.data
     assert b'Peak Career Season' in resp.data
 
 

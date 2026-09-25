@@ -19,7 +19,7 @@ ADAPTIVE_T_PARAMS: Dict[int, Tuple[float, float]] = {
     4: (0.29, 0.75),  # 4-Player (simplex-constrained tournament dynamics)
 }
 
-# DANeo Gold Standard (GlickoD*) Parameters:
+# GlickoD Parameters:
 # Empirical findings proved that 15-game emergent prior calibration (RPC) + bilateral composite variance
 # eliminates tail overconfidence naturally without temperature scaling distortion (T = 1.0 everywhere):
 DANEO_ADAPTIVE_T_PARAMS: Dict[int, Tuple[float, float]] = {

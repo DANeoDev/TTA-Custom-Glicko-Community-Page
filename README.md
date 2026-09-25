@@ -9,7 +9,7 @@ A high-performance rating engine and web interface for competitive **Through the
 ## 1. Key Features
 
 - **Multi-Model Rating Architecture**:
-  1. **GlickoD\* (`glicko2_daneo`)**: The empirical gold standard model combining Golden Ratio ($\phi$) multiplayer information decomposition with 15-game emergent prior recalibration, achieving superior predictive Brier scores and ECE calibration across multiplayer lobbies.
+  1. **GlickoD (`glicko2_daneo`)**: The empirical gold standard model combining Golden Ratio ($\phi$) multiplayer information decomposition with 15-game emergent prior recalibration, achieving superior predictive Brier scores and ECE calibration across multiplayer lobbies.
   2. **Glicko-2 Standard (`glicko2_std`)**: Preserves 1:1 parity with the official online leaderboard baseline.
   3. **Glicko-2 MP-Weighted (`glicko2_mp`)**: Variance-calibrated for 3-player and 4-player games ($w = \frac{1}{N-1}$), preventing artificial variance shrinkage and premature overconfidence.
   4. **Glicko-2 Adaptive-T (`glicko2_adapt`)**: Score-margin-calibrated expectations for high-accuracy predictions.

@@ -111,7 +111,7 @@ def test_leaderboard_and_faq_daneo_routes():
         # Leaderboard with glicko2_daneo
         res_lb = client.get('/?model=glicko2_daneo')
         assert res_lb.status_code == 200
-        assert b'Gold Standard (DANeo)' in res_lb.data
+        assert b'GlickoD' in res_lb.data
 
         # FAQ with gold-standard
         res_faq = client.get('/faq')

@@ -360,7 +360,7 @@
         <div class="opt-section-title">&#127941; Rating Engine Family</div>
         <div class="opt-btn-grid" style="grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));">
           <button type="button" id="btn_family_all" class="opt-toggle-btn active" onclick="toggleEngineFamily('all', this)">All Engines</button>
-          <button type="button" id="btn_family_glicko2_daneo" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_daneo', this)" style="border-left: 3px solid #8b5cf6;">👑 GlickoD*</button>
+          <button type="button" id="btn_family_glicko2_daneo" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_daneo', this)" style="border-left: 3px solid #8b5cf6;">👑 GlickoD</button>
           <button type="button" id="btn_family_glicko2_mp" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_mp', this)" style="border-left: 3px solid #ef5350;">G2 MP</button>
           <button type="button" id="btn_family_glicko2_adapt" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_adapt', this)" style="border-left: 3px solid #22c55e;">G2 Adapt</button>
           <button type="button" id="btn_family_glicko2_std" class="opt-toggle-btn active" onclick="toggleEngineFamily('glicko2_std', this)" style="border-left: 3px solid #ffca28;">G2 Std</button>
@@ -451,8 +451,8 @@
     </div>
     <!-- Model Mean Indicators -->
     <div id="density_means_bar" style="display: flex; gap: 0.5rem; flex-wrap: wrap; font-family: var(--font-stats); font-size: 0.8rem;">
-      <span style="color: #ffd700; background: rgba(229, 169, 60, 0.15); border: 1px solid rgba(229, 169, 60, 0.4); padding: 2px 7px; border-radius: 4px;" title="GlickoD* (All Players: {{ hist_data.means.daneo if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.daneo if hist_data.active_means else 1500.0 }})">
-        👑 GlickoD*: <strong>{{ hist_data.means.daneo if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.daneo if hist_data.active_means else 1500.0 }})</span>
+      <span style="color: #ffd700; background: rgba(229, 169, 60, 0.15); border: 1px solid rgba(229, 169, 60, 0.4); padding: 2px 7px; border-radius: 4px;" title="GlickoD (All Players: {{ hist_data.means.daneo if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.daneo if hist_data.active_means else 1500.0 }})">
+        👑 GlickoD: <strong>{{ hist_data.means.daneo if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.daneo if hist_data.active_means else 1500.0 }})</span>
       </span>
       <span style="color: #86efac; background: rgba(34, 197, 94, 0.15); border: 1px solid rgba(34, 197, 94, 0.4); padding: 2px 7px; border-radius: 4px;" title="G2 Adapt (All Players: {{ hist_data.means.adapt if hist_data.means else 1500.0 }} | Active Players >10 games: {{ hist_data.active_means.adapt if hist_data.active_means else 1500.0 }})">
         G2 Adapt: <strong>{{ hist_data.means.adapt if hist_data.means else 1500.0 }}</strong> <span style="opacity: 0.75; font-size: 0.76rem;">(Active: {{ hist_data.active_means.adapt if hist_data.active_means else 1500.0 }})</span>
@@ -872,7 +872,7 @@
         labels: histData.labels,
         datasets: [
           {
-            label: '👑 GlickoD* (Gold Standard)',
+            label: '👑 GlickoD',
             data: histData.daneo || [],
             backgroundColor: 'rgba(229, 169, 60, 0.7)',
             borderColor: '#e5a93c',
@@ -967,7 +967,7 @@
               footer: function(items) {
                 const means = histData.means || {};
                 const active = histData.active_means || {};
-                return `\nExact Means (All Players):\n  GlickoD*: ${means.daneo || 1500} | Adapt: ${means.adapt || 1500} | MP: ${means.mp || 1500} | Std: ${means.std || 1500} | WHR: ${means.whr || 1500}\n\nActive Player Means (>10 games in last yr):\n  GlickoD*: ${active.daneo || 1500} | Adapt: ${active.adapt || 1500} | MP: ${active.mp || 1500} | Std: ${active.std || 1500} | WHR: ${active.whr || 1500}`;
+                return `\nExact Means (All Players):\n  GlickoD: ${means.daneo || 1500} | Adapt: ${means.adapt || 1500} | MP: ${means.mp || 1500} | Std: ${means.std || 1500} | WHR: ${means.whr || 1500}\n\nActive Player Means (>10 games in last yr):\n  GlickoD: ${active.daneo || 1500} | Adapt: ${active.adapt || 1500} | MP: ${active.mp || 1500} | Std: ${active.std || 1500} | WHR: ${active.whr || 1500}`;
               }
             }
           }

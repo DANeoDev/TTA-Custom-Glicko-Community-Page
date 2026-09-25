@@ -259,10 +259,10 @@ Glicko-2 MP-Weighted:
 
 ---
 
-## 5. Gold Standard Glicko-2 by DANeo (GlickoD*) & Dual-Criterion Recalibration
+## 5. Gold Standard Glicko-2 by DANeo (GlickoD) & Dual-Criterion Recalibration
 
-### 5.1 Architecture of GlickoD*
-**GlickoD*** represents the premier predictive flagship model for *Through the Ages*, uniting three mathematically grounded principles:
+### 5.1 Architecture of GlickoD
+**GlickoD** represents the premier predictive flagship model for *Through the Ages*, uniting three mathematically grounded principles:
 1. **Golden Ratio ($\phi$) Multiplayer Information Decomposition**: Replaces naive duplication and uniform penalization with self-similar information scaling.
 2. **Dual-Criterion Emergent Prior Recalibration**: Eliminates newcomer demographic bleed at the root by discovering true latent skill across active and inactive accounts.
 3. **Decoupled Season Reset Dynamics**: Balances career achievement with seasonal form via decoupled variance expansion and dynamic $\phi$-tier regression.
@@ -303,7 +303,7 @@ The nominal mean of the overall player pool is $\mu_{\mathrm{pool}} \approx 1471
 - This creates the 50% underconfidence droop and tail overconfidence.
 
 #### Dual-Criterion Recalibration Rules
-To resolve this without discarding historical matches, GlickoD* operates a two-pass architecture:
+To resolve this without discarding historical matches, GlickoD operates a two-pass architecture:
 - **Criterion 1 (Standard Active Threshold)**: When a player reaches 15 career games, their emergent rating $R_{15}$ is discovered in Pass 1. In Pass 2, matches 1..15 are calculated with the player anchored at $R_{15}$, giving opponents fair, non-cyclical updates.
 - **Criterion 2 (Inactive Accounts at $K$ Games)**: Exactly 778 historical players completed between 1 and 14 matches before permanently retiring. Under Criterion 2, any player with $K < 15$ games who is inactive for $> 1$ year (365 days) is recalibrated at their individual career maximum $K \in [1, 14]$.
 
@@ -323,7 +323,7 @@ Standard Glicko exhibited consistent overconfidence in high probability bins: ga
 A targeted audit of games played by top-3% elite competitors ($\ge 1850$ rating) disproved the entropy hypothesis:
 1. **Skill Expression Is Profound**: In matches between established elite players and lower-tier opponents, top players genuinely win $\ge 95\%$ and up to $98\%$ of games. The 99% certainty does exist when rating disparity is authentic.
 2. **Root Cause Identified**: The apparent overconfidence was caused by uncalibrated newcomers (future masters playing their first 5 games) competing against veterans under uninformative 1500 priors.
-3. **Retirement of Temperature Scaling**: Once the 15-Game Recalibration Breakthrough resolved newcomer noise at the root, overconfidence vanished entirely. Adding temperature scaling on top of calibrated priors caused artificial underconfidence (+2% to +3% error). Consequently, **temperature scaling was retired from GlickoD*** ($T \equiv 1.0$).
+3. **Retirement of Temperature Scaling**: Once the 15-Game Recalibration Breakthrough resolved newcomer noise at the root, overconfidence vanished entirely. Adding temperature scaling on top of calibrated priors caused artificial underconfidence (+2% to +3% error). Consequently, **temperature scaling was retired from GlickoD** ($T \equiv 1.0$).
 
 ---
 

@@ -308,11 +308,11 @@
 
 <!-- 5 Models Rating Summary Cards -->
 <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-  <!-- GlickoD* (Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo) -->
+  <!-- GlickoD (Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo) -->
   {% set daneo = ratings.get('glicko2_daneo', {}) %}
   <div class="model-card {% if active_model == 'glicko2_daneo' %}active-card{% endif %}" style="border: 1.5px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95) 0%, rgba(22, 14, 9, 0.98) 100%); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(229, 169, 60, 0.2);">
     <h3 style="color: #ffd54f;">
-      <span>👑 GlickoD*</span>
+      <span>👑 GlickoD</span>
       <span class="badge badge-rank" style="background: #332211; color: #ffd54f; border: 1.5px solid #b8860b; font-weight: 700;">#{{ daneo.get('rank', '-') }}</span>
     </h3>
     <div class="rating-number" style="color: #ffde8a; font-weight: 800;">
@@ -921,7 +921,7 @@
 
     if (mode === 'conservative') {
       playerChart.data.datasets[0].data = rawData.glicko2_daneo_c || rawData.glicko2_daneo;
-      playerChart.data.datasets[0].label = '👑 GlickoD* (Conservative)';
+      playerChart.data.datasets[0].label = '👑 GlickoD (Conservative)';
       playerChart.data.datasets[1].data = rawData.glicko2_std_c || rawData.glicko2_std;
       playerChart.data.datasets[1].label = 'Glicko-2 Std (Conservative)';
       playerChart.data.datasets[2].data = rawData.glicko2_mp_c || rawData.glicko2_mp;
@@ -932,7 +932,7 @@
       playerChart.data.datasets[4].label = 'WHR (Conservative)';
     } else {
       playerChart.data.datasets[0].data = rawData.glicko2_daneo;
-      playerChart.data.datasets[0].label = '👑 GlickoD* (E)';
+      playerChart.data.datasets[0].label = '👑 GlickoD (E)';
       playerChart.data.datasets[1].data = rawData.glicko2_std;
       playerChart.data.datasets[1].label = 'Glicko-2 Standard (E)';
       playerChart.data.datasets[2].data = rawData.glicko2_mp;
@@ -954,7 +954,7 @@
         labels: rawData.labels,
         datasets: [
           {
-            label: '👑 GlickoD* (E)',
+            label: '👑 GlickoD (E)',
             data: rawData.glicko2_daneo,
             borderColor: '#c084fc',
             backgroundColor: 'rgba(168, 85, 247, 0.15)',

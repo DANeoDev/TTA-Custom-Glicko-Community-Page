@@ -21,7 +21,7 @@ def profile(player_name):
     model_param = request.args.get('model')
     if model_param in VALID_MODELS:
         session['active_model'] = model_param
-    active_model = session.get('active_model', 'glicko2_std')
+    active_model = session.get('active_model', 'glicko2_daneo')
 
     # Handle format switch
     format_param = request.args.get('format')
@@ -313,7 +313,7 @@ def profile(player_name):
                     placement = rank_idx
                     break
 
-            # Compute authentic rating delta using active engine / GlickoD*
+            # Compute authentic rating delta using active engine / GlickoD
             p_cnt = m['player_count']
             if p_cnt >= 2 and len(participants) >= 2:
                 p_info = ratings_cache.get(player_name, (1500.0, 350.0))

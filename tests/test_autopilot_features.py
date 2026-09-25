@@ -737,15 +737,14 @@ def test_model_analysis_reset_modes_and_cross_reset_matrix(client):
 
 
 def test_leaderboard_progressive_drawer_and_tour(client):
-    """Verify progressive disclosure options drawer and interactive 5-step tour modal."""
+    """Verify progressive disclosure options sidebar and toggle aligned to leaderboard card."""
     rv = client.get('/ratings')
     assert rv.status_code == 200
     html = rv.get_data(as_text=True)
-    assert 'optionsDrawer' in html
-    assert 'toggleOptionsDrawer' in html
-    assert 'tourModal' in html
-    assert 'openTourModal' in html
-    assert 'Guide' in html and 'Tour' in html
+    assert 'leaderboardSidebar' in html
+    assert 'toggleOptionsSidebar' in html
+    assert 'leaderboard-layout-container' in html
+    assert 'optionsToggleBtn' in html
 
 
 def test_tournaments_accuracy_and_records_card(client):
