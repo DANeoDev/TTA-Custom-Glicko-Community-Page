@@ -13,7 +13,10 @@ import re
 import json
 import sqlite3
 import functools
-import pandas as pd
+try:
+    import pandas as pd
+except ImportError:
+    pd = None
 from collections import defaultdict
 from typing import Dict, List, Tuple, Optional, Any
 from pathlib import Path
@@ -156,7 +159,7 @@ def derive_intermezzo_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[Dic
     season_podiums = {}
     player_trophies = defaultdict(lambda: {'gold': 0, 'silver': 0, 'bronze': 0, 'points': 0.0})
 
-    if hof_path.exists():
+    if pd is not None and hof_path.exists():
         xl = pd.ExcelFile(hof_path)
         if 'Intermezzo Championship' in xl.sheet_names:
             df = xl.parse('Intermezzo Championship')
@@ -199,7 +202,7 @@ def derive_international_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[
     season_podiums = {}
     player_trophies = defaultdict(lambda: {'gold': 0, 'silver': 0, 'bronze': 0, 'points': 0.0})
 
-    if hof_path.exists():
+    if pd is not None and hof_path.exists():
         xl = pd.ExcelFile(hof_path)
         if 'International Championship' in xl.sheet_names:
             df = xl.parse('International Championship')

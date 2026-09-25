@@ -52,10 +52,6 @@ from src.data.merger import (
     get_active_delta_config,
     delete_update_snapshot
 )
-from src.data.parse_tournaments import ingest_community_leaderboard
-from src.data.consistency import check_tournament_consistency
-from src.data.completeness import evaluate_season_completeness
-from run_pipeline import run_all
 
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 DEFAULT_COMMUNITY_SHEET_URL = "https://docs.google.com/spreadsheets/d/125moezP_WQwGL9Bxx3ev11bPtyIU6JUpXnF-_uIBV50/edit?gid=1110531447#gid=1110531447"
@@ -417,6 +413,7 @@ def trigger_scrape():
         }
 
         # Evaluate season completeness
+        from src.data.completeness import evaluate_season_completeness
         completeness = evaluate_season_completeness(parsed["games"], parsed["title"], active_season)
 
         return render_template(
@@ -567,6 +564,7 @@ def commit_matches():
 @admin_required
 def consistency():
     selected_tournament = request.args.get('tournament') or request.form.get('tournament') or 'Royal League'
+    from src.data.consistency import check_tournament_consistency
     report = check_tournament_consistency(selected_tournament)
     all_tourneys = scan_tournament_sources()
     return render_template(
@@ -599,6 +597,7 @@ def recompute_ratings():
     # Asynchronously run the ratings pipeline so HTTP connection doesn't time out
     def worker():
         try:
+            from run_pipeline import run_all
             run_all(skip_ingestion=False)
         except Exception as e:
             print(f"[RECOMPUTE ERROR] {e}")
@@ -663,6 +662,7 @@ def sync_community_leaderboard():
         # Ingest into SQLite database
         conn = get_connection()
         canonical_map = get_canonical_player_map(conn)
+        from src.data.parse_tournaments import ingest_community_leaderboard
         ingest_community_leaderboard(conn, canonical_map)
 
         cur = conn.execute("SELECT COUNT(*), (SELECT player_name FROM community_leaderboard_entries WHERE edition = '2026' ORDER BY rank LIMIT 1) FROM community_leaderboard_entries WHERE edition = '2026'")
