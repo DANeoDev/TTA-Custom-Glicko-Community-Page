@@ -39,3 +39,7 @@ Thumbs.db
 .idea/
 .vscode/
 *.swp
+
+# Local Operational Guides
+DB_UPDATE_README.md
+DB_UPDATE*.md
