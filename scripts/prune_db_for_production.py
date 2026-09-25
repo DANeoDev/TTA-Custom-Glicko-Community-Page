@@ -63,8 +63,9 @@ def prune():
 
     conn.commit()
 
-    # 5. Optimize and Vacuum
-    print("Executing PRAGMA optimize and VACUUM...")
+    # 5. Optimize and Vacuum with DELETE journal mode (NFS-compatible for PythonAnywhere)
+    print("Executing PRAGMA journal_mode = DELETE, optimize and VACUUM...")
+    cursor.execute("PRAGMA journal_mode = DELETE;")
     cursor.execute("PRAGMA optimize;")
     conn.commit()
     cursor.execute("VACUUM;")

@@ -223,8 +223,11 @@ def get_connection(db_path=None):
     conn = sqlite3.connect(str(path), timeout=60.0)
     conn.row_factory = sqlite3.Row
     conn.execute('PRAGMA foreign_keys = ON;')
-    conn.execute('PRAGMA journal_mode = WAL;')
     conn.execute('PRAGMA busy_timeout = 60000;')
+    # Do NOT force WAL mode on PythonAnywhere / NFS filesystems
+    is_pa = bool(os.environ.get('PYTHONANYWHERE_DOMAIN') or os.environ.get('PYTHONANYWHERE_SITE'))
+    if is_pa:
+        conn.execute('PRAGMA journal_mode = DELETE;')
     return conn
 
 def init_db(db_path=None):

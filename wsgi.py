@@ -1,4 +1,4 @@
-﻿"""Production WSGI entry point for Through the Ages (TTA-Glicko2-WHR).
+"""Production WSGI entry point for Through the Ages (TTA-Glicko2-WHR).
 
 Configured for deployment on PythonAnywhere, Gunicorn, uWSGI, or any WSGI server.
 Exposes `application` as the WSGI callable.
@@ -17,9 +17,7 @@ from src.data.db import init_db, get_connection
 
 try:
     init_db()
-    # Pre-warm WAL pragma and timeout
     with get_connection() as conn:
-        conn.execute("PRAGMA journal_mode = WAL;")
         conn.execute("PRAGMA busy_timeout = 60000;")
 except Exception as e:
     print(f"[WSGI Init Warning] DB initialization notice: {e}")
