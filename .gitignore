@@ -16,6 +16,8 @@ data/tta_ratings.db
 *.sqlite3
 *.db-journal
 *.db-wal
+data/*.zip
+*.zip
 
 # Data pipeline caches, backups and staging
 data/cache/

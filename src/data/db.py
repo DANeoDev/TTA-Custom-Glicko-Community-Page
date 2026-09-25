@@ -96,7 +96,7 @@ CREATE TABLE IF NOT EXISTS rating_history (
     c_rating REAL NOT NULL
 );
 
-CREATE INDEX IF NOT EXISTS idx_rh_player ON rating_history(model_type, player_count, player_name, period_date);
+-- Covering index for high-performance player history queries
 CREATE INDEX IF NOT EXISTS idx_rh_player_fast ON rating_history(player_name, player_count, period_date, rating);
 
 CREATE TABLE IF NOT EXISTS official_baseline (
