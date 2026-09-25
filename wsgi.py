@@ -13,10 +13,11 @@ if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
 # Ensure database directory exists and database indexes/pragmas are initialized
-from src.data.db import init_db, get_connection
+from src.data.db import init_db, get_connection, DEFAULT_DB_PATH
 
 try:
-    init_db()
+    if not Path(DEFAULT_DB_PATH).exists():
+        init_db()
     with get_connection() as conn:
         conn.execute("PRAGMA busy_timeout = 60000;")
 except Exception as e:
