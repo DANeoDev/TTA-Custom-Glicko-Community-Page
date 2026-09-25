@@ -34,7 +34,11 @@ from src.scrapers.sources import (
     delete_tournament_source,
     infer_tournament_folder_from_title
 )
-from src.scrapers.cge import CGEClient, clean_target_path
+try:
+    from src.scrapers.cge import CGEClient, clean_target_path
+except ImportError:
+    CGEClient = None
+    def clean_target_path(x): return x
 from src.data.merger import (
     preview_scraped_matches,
     commit_new_matches,
