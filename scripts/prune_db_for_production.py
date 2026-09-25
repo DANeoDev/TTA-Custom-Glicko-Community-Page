@@ -43,14 +43,14 @@ def prune():
         cursor.execute("DELETE FROM walk_forward_calibration WHERE model_type LIKE ?;", (pat,))
         cursor.execute("DELETE FROM rating_history WHERE model_type LIKE ?;", (pat,))
 
-    # 3. Retain only the 10 chart-plotted models in rating_history
-    # Chart.js displays: glicko2_std, glicko2_mp, glicko2_adapt, whr, glicko2_daneo (+ softer variants)
+    # 3. Retain the 5 primary base chart models in rating_history
+    # (Full trajectories for glicko2_std, glicko2_mp, glicko2_adapt, whr, glicko2_daneo)
     chart_models = (
-        'glicko2_std', 'glicko2_std_softer',
-        'glicko2_mp', 'glicko2_mp_softer',
-        'glicko2_adapt', 'glicko2_adapt_softer',
-        'whr', 'whr_softer',
-        'glicko2_daneo', 'glicko2_daneo_softer'
+        'glicko2_std',
+        'glicko2_mp',
+        'glicko2_adapt',
+        'whr',
+        'glicko2_daneo'
     )
     placeholders = ','.join(['?'] * len(chart_models))
     cursor.execute(f"DELETE FROM rating_history WHERE model_type NOT IN ({placeholders});", chart_models)

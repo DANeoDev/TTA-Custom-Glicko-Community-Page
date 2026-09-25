@@ -103,6 +103,15 @@ def profile(player_name):
             [player_name, active_format] + target_keys
         ).fetchall()
 
+        if not hist_rows and active_reset_mode != 'continuous':
+            base_keys = ['glicko2_std', 'glicko2_mp', 'glicko2_adapt', 'whr', 'glicko2_daneo']
+            base_ph = ', '.join(['?'] * len(base_keys))
+            hist_rows = conn.execute(
+                f'SELECT model_type, period_date, rating, rd, c_rating '
+                f'FROM rating_history WHERE player_name = ? AND player_count = ? AND model_type IN ({base_ph}) ORDER BY period_date ASC',
+                [player_name, active_format] + base_keys
+            ).fetchall()
+
         # Build unified chart data (both Expected E=Rating and Conservative C=Rating - 2*RD)
         dates_set = set()
         model_series = {'glicko2_std': {}, 'glicko2_mp': {}, 'glicko2_adapt': {}, 'whr': {}, 'glicko2_daneo': {}}
