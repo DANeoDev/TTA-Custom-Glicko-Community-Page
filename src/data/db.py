@@ -1,4 +1,4 @@
-"""Database connectivity and schema initialization for TTA-Glicko2-WHR."""
+import os
 import sqlite3
 from pathlib import Path
 

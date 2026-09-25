@@ -43,17 +43,23 @@ def prune():
         cursor.execute("DELETE FROM walk_forward_calibration WHERE model_type LIKE ?;", (pat,))
         cursor.execute("DELETE FROM rating_history WHERE model_type LIKE ?;", (pat,))
 
-    # 3. Retain the 5 primary base chart models in rating_history
-    # (Full trajectories for glicko2_std, glicko2_mp, glicko2_adapt, whr, glicko2_daneo)
-    chart_models = (
-        'glicko2_std',
-        'glicko2_mp',
-        'glicko2_adapt',
-        'whr',
-        'glicko2_daneo'
-    )
+    # 3. Retain the 3 flagship chart models in rating_history
+    # (Full trajectories for glicko2_daneo, glicko2_std, whr)
+    chart_models = ('glicko2_daneo', 'glicko2_std', 'whr')
     placeholders = ','.join(['?'] * len(chart_models))
     cursor.execute(f"DELETE FROM rating_history WHERE model_type NOT IN ({placeholders});", chart_models)
+
+    # Sample WHR to 1 point per month to prevent 300k row daily interpolation bloat
+    cursor.execute("""
+        DELETE FROM rating_history 
+        WHERE model_type = 'whr' 
+          AND id NOT IN (
+              SELECT MIN(id) 
+              FROM rating_history 
+              WHERE model_type = 'whr' 
+              GROUP BY player_name, player_count, substr(period_date, 1, 7)
+          )
+    """)
 
     # 4. Drop redundant or offline-only indexes
     print("Dropping redundant indexes...")
