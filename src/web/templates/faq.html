@@ -349,7 +349,7 @@ $$
       </script>
     </div>
 
-    {% set block_philosophy_four_models = get_cms('faq', 'philosophy_four_models', 'The Four Rating Models Implemented on This Portal') %}
+    {% set block_philosophy_four_models = get_cms('faq', 'philosophy_four_models', 'The Rating Engines Implemented on This Portal') %}
     <div class="faq-card cms-card" data-page="faq" data-block="philosophy_four_models" data-is-custom="{{ 'true' if block_philosophy_four_models.is_custom else 'false' }}">
       <h3 class="cms-title">{{ block_philosophy_four_models.title }}</h3>
       <div class="cms-content">
@@ -357,7 +357,7 @@ $$
           {{ block_philosophy_four_models.content }}
         {% else %}
           <p>
-        To provide complete analytical transparency, this portal computes four distinct mathematical rating engines on the exact same competitive dataset of over 131,000 matches:
+        To provide complete analytical transparency, this portal computes five distinct mathematical rating engines on the exact same competitive dataset of over 131,000 matches:
       </p>
       <div style="overflow-x: auto; margin: 1rem 0;">
         <table style="width: 100%; border-collapse: collapse; font-family: var(--font-stats); font-size: 0.92rem; background: rgba(14, 9, 6, 0.85); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-subtle);">
@@ -370,37 +370,45 @@ $$
             </tr>
           </thead>
           <tbody>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3); background: rgba(229, 169, 60, 0.08);">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #ffd700;">
+                <a href="javascript:void(0)" onclick="switchFaqTab('gold-standard')" class="faq-link" style="color: #ffd700;">GlickoD</a>
+              </td>
+              <td style="padding: 0.75rem 1rem; color: #ffd700;">Bayesian Recalibrated Forward</td>
+              <td style="padding: 0.75rem 1rem; color: #ffd700;">Golden Ratio (\(w = \frac{\phi^{N-2}}{N-1}\))</td>
+              <td style="padding: 0.75rem 1rem; color: #f7dfa5;"><strong>Flagship Model</strong> &bull; Combines self-similar multiplayer evidence scaling with 15-game emergent prior recalibration.</td>
+            </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">
                 <a href="javascript:void(0)" onclick="switchFaqTab('glicko-std')" class="faq-link">Glicko-2 Standard</a>
               </td>
               <td style="padding: 0.75rem 1rem; color: #cfbeab;">Sequential Forward (Odometer)</td>
               <td style="padding: 0.75rem 1rem; color: #ef5350;">Unweighted (\(w = 1.0\))</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;">The classical online benchmark; rapid sequential updates.</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;">The official online benchmark (naive 1v1 pairwise decomposition).</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4ade80;">
                 <a href="javascript:void(0)" onclick="switchFaqTab('glicko-mp')" class="faq-link">Glicko-2 MP-Weighted</a>
               </td>
               <td style="padding: 0.75rem 1rem; color: #cfbeab;">Sequential Forward (Odometer)</td>
-              <td style="padding: 0.75rem 1rem; color: #4ade80;">Fractional (\(w = \frac{1}{N-1}\))</td>
+              <td style="padding: 0.75rem 1rem; color: #4ade80;">Coulom Fractional (\(w = \frac{1}{N-1}\))</td>
               <td style="padding: 0.75rem 1rem; color: #4ade80;">Prevents multiplayer certainty explosion; solid baseline calibration.</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #22c55e;">
                 <a href="javascript:void(0)" onclick="switchFaqTab('glicko-adapt')" class="faq-link">Glicko-2 Adaptive-T</a>
               </td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Thermal Calibrated Forward</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Thermal Experimental Forward</td>
               <td style="padding: 0.75rem 1rem; color: #4ade80;">Fractional + \(T(P, N)\)</td>
-              <td style="padding: 0.75rem 1rem; color: #86efac;"><strong>Global Predictive Champion</strong>; eliminates tail overconfidence.</td>
+              <td style="padding: 0.75rem 1rem; color: #86efac;">Research benchmark evaluating thermal probability scaling.</td>
             </tr>
             <tr>
-              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #ffd700;">
-                <a href="javascript:void(0)" onclick="switchFaqTab('whr')" class="faq-link">Whole-History Rating (WHR)</a>
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #60a5fa;">
+                <a href="javascript:void(0)" onclick="switchFaqTab('whr')" class="faq-link" style="color: #60a5fa;">Whole-History Rating (WHR)</a>
               </td>
-              <td style="padding: 0.75rem 1rem; color: #66bb6a;">Retrospective (Biographer)</td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;">Retrospective MAP (Biographer)</td>
               <td style="padding: 0.75rem 1rem; color: #4ade80;">Multinomial Bradley-Terry</td>
-              <td style="padding: 0.75rem 1rem; color: #ffd700;">Optimal career retrospective; smooths noise via Brownian motion.</td>
+              <td style="padding: 0.75rem 1rem; color: #93c5fd;">Optimal career retrospective; smooths noise via Brownian motion.</td>
             </tr>
           </tbody>
         </table>
@@ -409,7 +417,7 @@ $$
       </div>
       <template class="cms-default-source" style="display:none;">
         <p>
-        To provide complete analytical transparency, this portal computes four distinct mathematical rating engines on the exact same competitive dataset of over 131,000 matches:
+        To provide complete analytical transparency, this portal computes five distinct mathematical rating engines on the exact same competitive dataset of over 131,000 matches:
       </p>
       <div style="overflow-x: auto; margin: 1rem 0;">
         <table style="width: 100%; border-collapse: collapse; font-family: var(--font-stats); font-size: 0.92rem; background: rgba(14, 9, 6, 0.85); border-radius: 6px; overflow: hidden; border: 1px solid var(--border-subtle);">
@@ -422,32 +430,50 @@ $$
             </tr>
           </thead>
           <tbody>
+            <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3); background: rgba(229, 169, 60, 0.08);">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #ffd700;">
+                <a href="javascript:void(0)" onclick="switchFaqTab('gold-standard')" class="faq-link" style="color: #ffd700;">GlickoD</a>
+              </td>
+              <td style="padding: 0.75rem 1rem; color: #ffd700;">Bayesian Recalibrated Forward</td>
+              <td style="padding: 0.75rem 1rem; color: #ffd700;">Golden Ratio (\(w = \frac{\phi^{N-2}}{N-1}\))</td>
+              <td style="padding: 0.75rem 1rem; color: #f7dfa5;"><strong>Flagship Model</strong> &bull; Combines self-similar multiplayer evidence scaling with 15-game emergent prior recalibration.</td>
+            </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #f7dfa5;">
                 <a href="javascript:void(0)" onclick="switchFaqTab('glicko-std')" class="faq-link">Glicko-2 Standard</a>
               </td>
               <td style="padding: 0.75rem 1rem; color: #cfbeab;">Sequential Forward (Odometer)</td>
               <td style="padding: 0.75rem 1rem; color: #ef5350;">Unweighted (\(w = 1.0\))</td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;">The classical online benchmark; rapid sequential updates.</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;">The official online benchmark (naive 1v1 pairwise decomposition).</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #4ade80;">
                 <a href="javascript:void(0)" onclick="switchFaqTab('glicko-mp')" class="faq-link">Glicko-2 MP-Weighted</a>
               </td>
               <td style="padding: 0.75rem 1rem; color: #cfbeab;">Sequential Forward (Odometer)</td>
-              <td style="padding: 0.75rem 1rem; color: #4ade80;">Fractional (\(w = \frac{1}{N-1}\))</td>
+              <td style="padding: 0.75rem 1rem; color: #4ade80;">Coulom Fractional (\(w = \frac{1}{N-1}\))</td>
               <td style="padding: 0.75rem 1rem; color: #4ade80;">Prevents multiplayer certainty explosion; solid baseline calibration.</td>
             </tr>
             <tr style="border-bottom: 1px solid rgba(74, 53, 37, 0.3);">
               <td style="padding: 0.75rem 1rem; font-weight: 700; color: #22c55e;">
                 <a href="javascript:void(0)" onclick="switchFaqTab('glicko-adapt')" class="faq-link">Glicko-2 Adaptive-T</a>
               </td>
-              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Thermal Calibrated Forward</td>
+              <td style="padding: 0.75rem 1rem; color: #cfbeab;">Thermal Experimental Forward</td>
               <td style="padding: 0.75rem 1rem; color: #4ade80;">Fractional + \(T(P, N)\)</td>
-              <td style="padding: 0.75rem 1rem; color: #86efac;"><strong>Global Predictive Champion</strong>; eliminates tail overconfidence.</td>
+              <td style="padding: 0.75rem 1rem; color: #86efac;">Research benchmark evaluating thermal probability scaling.</td>
             </tr>
             <tr>
-              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #ffd700;">
+              <td style="padding: 0.75rem 1rem; font-weight: 700; color: #60a5fa;">
+                <a href="javascript:void(0)" onclick="switchFaqTab('whr')" class="faq-link" style="color: #60a5fa;">Whole-History Rating (WHR)</a>
+              </td>
+              <td style="padding: 0.75rem 1rem; color: #66bb6a;">Retrospective MAP (Biographer)</td>
+              <td style="padding: 0.75rem 1rem; color: #4ade80;">Multinomial Bradley-Terry</td>
+              <td style="padding: 0.75rem 1rem; color: #93c5fd;">Optimal career retrospective; smooths noise via Brownian motion.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      </template>
                 <a href="javascript:void(0)" onclick="switchFaqTab('whr')" class="faq-link">Whole-History Rating (WHR)</a>
               </td>
               <td style="padding: 0.75rem 1rem; color: #66bb6a;">Retrospective (Biographer)</td>
@@ -2280,268 +2306,70 @@ $$
           {{ block_resets_empirical.content }}
         {% else %}
           <p>
-        In an out-of-sample walk-forward test spanning 57 monthly evaluation windows (2022&ndash;2026), <strong>Glicko-2 Adaptive-T with Softer Reset achieved both the lowest calibration error (0.49%) and the lowest Brier score (0.2134) across all evaluated systems</strong>:
-      </p>
-
-      <div style="overflow-x: auto; margin: 1.25rem 0;">
-        <table class="calib-table">
-          <thead>
-            <tr>
-              <th style="text-align: left;">Rating System</th>
-              <th>Reset Mode</th>
-              <th>ECE (&darr;)</th>
-              <th>Brier Score (MSE &darr;)</th>
-              <th style="text-align: left;">Predictive Performance &amp; Diagnostic Profile</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="background: rgba(34, 197, 94, 0.15);">
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid #22c55e; color: #86efac; font-weight: 700;">Softer Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.49%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2134</td>
-              <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Global Undisputed Champion</strong> &bull; Lowest ECE (0.49%), lowest Brier score (0.2134), and highest accuracy (64.77%).</td>
-            </tr>
-            <tr style="background: rgba(34, 197, 94, 0.08);">
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid #22c55e; color: #86efac;">Soft Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.55%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2139</td>
-              <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Elite Calibration</strong> &bull; Canonical Golden Ratio reset (&alpha; &approx; 1.62, &lambda; &approx; 0.24) with balanced turnover.</td>
-            </tr>
-            <tr style="background: rgba(34, 197, 94, 0.04);">
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle); color: #86efac;">Continuous</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.65%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2138</td>
-              <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Strong Predictive Baseline</strong> &bull; Retains career memory with dynamic tail temperature damping.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Hard Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.73%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">0.2167</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">High ladder mobility &bull; Retained for illustrative comparison; demonstrates trade-offs of aggressive reset.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Softer Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #4ade80;">1.04%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">0.2141</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Balanced MP seasonal ladder &bull; Optimal multi-player match weights with gentle regression.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Soft Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #4ade80;">0.93%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">0.2147</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Calibrated seasonal ladder &bull; Balanced turnover with fractional multiplayer evidence weighting.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Continuous</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">1.15%</td>
-              <td style="font-family: var(--font-stats);">0.2141</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Solid baseline multiplayer model &bull; Retains full career memory with fractional weighting.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #e5a93c;">Glicko-2 Standard</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Soft Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">1.05%</td>
-              <td style="font-family: var(--font-stats);">0.2150</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Moderate seasonal decay &bull; Smooth tier regression preserving historical hierarchy.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #e5a93c;">Glicko-2 Standard</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Continuous</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">1.47%</td>
-              <td style="font-family: var(--font-stats);">0.2143</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Baseline continuous pairwise Elo &bull; Responsive but accumulates long-term inflation.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-        {% endif %}
-      </div>
-      <template class="cms-default-source" style="display:none;">
-        <p>
-        In an out-of-sample walk-forward test spanning 57 monthly evaluation windows (2022&ndash;2026), <strong>Glicko-2 Adaptive-T with Softer Reset achieved both the lowest calibration error (0.49%) and the lowest Brier score (0.2134) across all evaluated systems</strong>:
-      </p>
-
-      <div style="overflow-x: auto; margin: 1.25rem 0;">
-        <table class="calib-table">
-          <thead>
-            <tr>
-              <th style="text-align: left;">Rating System</th>
-              <th>Reset Mode</th>
-              <th>ECE (&darr;)</th>
-              <th>Brier Score (MSE &darr;)</th>
-              <th style="text-align: left;">Predictive Performance &amp; Diagnostic Profile</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr style="background: rgba(34, 197, 94, 0.15);">
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid #22c55e; color: #86efac; font-weight: 700;">Softer Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.49%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2134</td>
-              <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Global Undisputed Champion</strong> &bull; Lowest ECE (0.49%), lowest Brier score (0.2134), and highest accuracy (64.77%).</td>
-            </tr>
-            <tr style="background: rgba(34, 197, 94, 0.08);">
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid #22c55e; color: #86efac;">Soft Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.55%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2139</td>
-              <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Elite Calibration</strong> &bull; Canonical Golden Ratio reset (&alpha; &approx; 1.62, &lambda; &approx; 0.24) with balanced turnover.</td>
-            </tr>
-            <tr style="background: rgba(34, 197, 94, 0.04);">
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle); color: #86efac;">Continuous</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.65%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2138</td>
-              <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Strong Predictive Baseline</strong> &bull; Retains career memory with dynamic tail temperature damping.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adaptive-T</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Hard Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.73%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">0.2167</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">High ladder mobility &bull; Retained for illustrative comparison; demonstrates trade-offs of aggressive reset.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Softer Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #4ade80;">1.04%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">0.2141</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Balanced MP seasonal ladder &bull; Optimal multi-player match weights with gentle regression.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Soft Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats); color: #4ade80;">0.93%</td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">0.2147</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Calibrated seasonal ladder &bull; Balanced turnover with fractional multiplayer evidence weighting.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Continuous</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">1.15%</td>
-              <td style="font-family: var(--font-stats);">0.2141</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Solid baseline multiplayer model &bull; Retains full career memory with fractional weighting.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #e5a93c;">Glicko-2 Standard</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Soft Reset</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">1.05%</td>
-              <td style="font-family: var(--font-stats);">0.2150</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Moderate seasonal decay &bull; Smooth tier regression preserving historical hierarchy.</td>
-            </tr>
-            <tr>
-              <td style="text-align: left; font-weight: 700; color: #e5a93c;">Glicko-2 Standard</td>
-              <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Continuous</span></td>
-              <td style="font-weight: 800; font-family: var(--font-stats);">1.47%</td>
-              <td style="font-family: var(--font-stats);">0.2143</td>
-              <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Baseline continuous pairwise Elo &bull; Responsive but accumulates long-term inflation.</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-      </template>
-    </div>
-
-    <!-- Retrospective Prior Calibration (Option A) -->
-    {% set block_resets_retro = get_cms('faq', 'resets_retro', 'Retrospective Prior Calibration (RPC): 15-Game Emergent Priors & Initial Freeze (Option A)') %}
-    <div class="faq-card cms-card" data-page="faq" data-block="resets_retro" data-is-custom="{{ 'true' if block_resets_retro.is_custom else 'false' }}" style="border-left: 4px solid #10b981;">
-      <h3 class="cms-title" style="color: #6ee7b7;">{{ block_resets_retro.title }}</h3>
-      <div class="cms-content">
-        {% if block_resets_retro.is_custom %}
-          {{ block_resets_retro.content }}
-        {% else %}
-          <p>
-            In conventional forward-only rating engines (such as standard Glicko-2), all newcomers enter the player pool initialized at an identical, uninformative default prior:
-          </p>
-          <div class="faq-formula">
-$$
-r_0 = 1500.0, \quad \mathrm{RD}_0 = 350.0, \quad \sigma_0 = 0.06
-$$
-          </div>
-          <p>
-            When a world-class player or experienced veteran enters competitive play under an unrated account, their first 15 opponents encounter an artificially deflated rating estimate. If the newcomer predictably wins, their established opponents suffer severe, unwarranted rating penalties (as if they were upset by an amateur). Conversely, when a novice enters, opponents gain virtually zero rating from hard-fought victories. This asymmetry causes systemic <strong>transitive distortion</strong> across the entire historical tournament graph.
+            In an out-of-sample walk-forward evaluation across 56 monthly evaluation windows (2022&ndash;2026, 308,000+ predictions), <strong>GlickoD with Softer Reset achieved both the lowest Brier score (0.2050) and the lowest Expected Calibration Error (0.34%) across all tested configurations</strong>:
           </p>
 
-          <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">1. Two-Pass Retrospective Prior Calibration (Option A)</h4>
-          <p>
-            To address newcomer distortion without discarding the step-by-step transparency of Glicko-2, the engine introduces a <strong>Two-Pass Retrospective Prior Calibration (RPC)</strong> protocol:
-          </p>
-          <ul class="faq-list">
-            <li>
-              <strong>Pass 1 &mdash; Emergent Prior Discovery:</strong> The rating engine runs chronologically through all tournament matches. When an uncalibrated player reaches exactly their <strong>15th completed ranked game</strong>, the system captures their emergent rating, deviation, and volatility as their calibrated baseline:
-              <div class="faq-formula">
-$$
-\text{Calibrated Prior: } \big(R_{15}, \;\mathrm{RD}_{15}, \;\sigma_{15}\big)
-$$
-              </div>
-              Players with fewer than 15 lifetime games retain standard uncalibrated priors (\(1500, 350\)).
-            </li>
-            <li>
-              <strong>Pass 2 &mdash; Retrospective Recalculation with Initial Freeze (Option A):</strong> The entire historical tournament graph is recomputed from match 1 using the emergent priors:
-              <ul style="margin-top: 0.5rem; padding-left: 1.5rem;">
-                <li><strong>Opponent Fairness:</strong> From their very first match, opponents calculate their expected win probabilities and rating adjustments against the newcomer's true calibrated skill \(R_{15}\), completely neutralizing unfair rating penalties.</li>
-                <li><strong>Zero-Delta Freeze (\(\Delta R = 0\)):</strong> To prevent double-counting early matches, the calibrated player's own rating changes are <strong>frozen</strong> during their first 15 games (\(R_{1..15} = R_{15}\)). They do not gain extra rating from games that were already factored into establishing their prior.</li>
-                <li><strong>Dynamic Bayesian Updates (Game 16+):</strong> Starting from their 16th ranked match, the freeze lifts and normal dynamic Glicko-2 updates resume.</li>
-              </ul>
-            </li>
-          </ul>
-
-          <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">2. Statistical Proof & Empirical Gains</h4>
-          <p>
-            Benchmarking Option A against all 387,000+ competitive match pairings reveals substantial predictive improvements across every metric:
-          </p>
-          <div style="overflow-x: auto; margin: 1rem 0;">
+          <div style="overflow-x: auto; margin: 1.25rem 0;">
             <table class="calib-table">
               <thead>
                 <tr>
-                  <th style="text-align: left;">Model Configuration</th>
-                  <th>Brier Score (&darr;)</th>
-                  <th>Log Loss (&darr;)</th>
+                  <th style="text-align: left;">Rating System</th>
+                  <th>Reset Mode</th>
                   <th>ECE (&darr;)</th>
-                  <th>Match Accuracy (&uarr;)</th>
-                  <th style="text-align: left;">Diagnostic Finding</th>
+                  <th>Brier Score (MSE &darr;)</th>
+                  <th>Accuracy (&uarr;)</th>
+                  <th style="text-align: left;">Diagnostic Profile</th>
                 </tr>
               </thead>
               <tbody>
-                <tr style="background: rgba(16, 185, 129, 0.15);">
-                  <td style="text-align: left; font-weight: 700; color: #10b981;">Glicko-2 Adapt (Softer + Retro)</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2082</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.6069</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.59%</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">66.14%</td>
-                  <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>All-Time Predictive Peak</strong> &bull; Brier drops from 0.2151 to 0.2082; accuracy rises +1.64%.</td>
+                <tr style="background: rgba(34, 197, 94, 0.15);">
+                  <td style="text-align: left; font-weight: 700; color: #22c55e;">GlickoD</td>
+                  <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid #22c55e; color: #86efac; font-weight: 700;">Softer Reset</span></td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.34%</td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2050</td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">66.8%</td>
+                  <td style="text-align: left; font-size: 0.84rem; color: #86efac;"><strong>Flagship Benchmark</strong> &bull; Lowest Brier score and calibration error across all seasons.</td>
+                </tr>
+                <tr style="background: rgba(34, 197, 94, 0.06);">
+                  <td style="text-align: left; font-weight: 700; color: #22c55e;">GlickoD</td>
+                  <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle); color: #86efac;">Continuous</span></td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.36%</td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">0.2051</td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #86efac;">66.8%</td>
+                  <td style="text-align: left; font-size: 0.84rem; color: #86efac;">Unbroken career progression with calibrated priors and &phi;-evidence scaling.</td>
                 </tr>
                 <tr>
-                  <td style="text-align: left; font-weight: 700; color: #22c55e;">Glicko-2 Adapt (Softer Standard)</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats);">0.2151</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats);">0.6200</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats);">0.49%</td>
-                  <td style="font-weight: 800; font-family: var(--font-stats);">64.50%</td>
-                  <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Standard prior initialization without retrospective newcomer correction.</td>
+                  <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
+                  <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Softer Reset</span></td>
+                  <td style="font-weight: 800; font-family: var(--font-stats); color: #4ade80;">1.04%</td>
+                  <td style="font-weight: 800; font-family: var(--font-stats);">0.2141</td>
+                  <td style="font-weight: 800; font-family: var(--font-stats);">64.5%</td>
+                  <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Coulom uniform fractional evidence weighting (\(w = \frac{1}{N-1}\)) with gentle regression.</td>
+                </tr>
+                <tr>
+                  <td style="text-align: left; font-weight: 700; color: #4ade80;">Glicko-2 MP-Weighted</td>
+                  <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Continuous</span></td>
+                  <td style="font-weight: 800; font-family: var(--font-stats);">1.15%</td>
+                  <td style="font-family: var(--font-stats);">0.2141</td>
+                  <td style="font-family: var(--font-stats);">64.5%</td>
+                  <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Baseline multiplayer model retaining career memory without newcomer prior recalibration.</td>
+                </tr>
+                <tr>
+                  <td style="text-align: left; font-weight: 700; color: #e5a93c;">Glicko-2 Standard</td>
+                  <td><span style="font-size: 0.82rem; background: rgba(0,0,0,0.3); padding: 0.15rem 0.45rem; border-radius: 4px; border: 1px solid var(--border-subtle);">Continuous</span></td>
+                  <td style="font-weight: 800; font-family: var(--font-stats);">1.47%</td>
+                  <td style="font-family: var(--font-stats);">0.2143</td>
+                  <td style="font-family: var(--font-stats);">64.0%</td>
+                  <td style="text-align: left; font-size: 0.84rem; color: var(--text-muted);">Official online baseline (naive 1v1 pairwise decomposition without multiplayer weighting).</td>
                 </tr>
               </tbody>
             </table>
           </div>
-
-          <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.15rem; margin: 1.25rem 0 0.5rem 0;">3. Why is WHR Excluded from RPC?</h4>
-          <p>
-            Whole-History Rating (WHR) models player strength as a time-varying Wiener diffusion process and solves the joint likelihood of all matches globally via iterative Newton-Raphson optimization. Because WHR already operates in hindsight across the complete match graph simultaneously, backward information flow is mathematically built into its core engine. Retrospective prior initialization is only necessary for sequential online Bayesian models (the Glicko-2 family).
-          </p>
         {% endif %}
       </div>
       <template class="cms-default-source" style="display:none;">
         <p>
-          In conventional forward-only rating engines (such as standard Glicko-2), all newcomers enter the player pool initialized at an identical, uninformative default prior (Rating 1500, RD 350).
-        </p>
-        <p>
-          When a top competitor enters the pool, early opponents suffer severe penalties. Under <strong>Retrospective Prior Calibration (Option A)</strong>, the engine discovers emergent priors at 15 games, freezes early rating changes for the newcomer to avoid double-counting, and allows opponents to calculate fair updates against the calibrated prior from match 1.
+          In an out-of-sample walk-forward evaluation across 56 monthly evaluation windows (2022&ndash;2026, 308,000+ predictions), <strong>GlickoD with Softer Reset achieved both the lowest Brier score (0.2050) and the lowest Expected Calibration Error (0.34%) across all tested configurations</strong>:
         </p>
       </template>
     </div>
@@ -2558,41 +2386,38 @@ $$
         <span>👑</span> The Full-Circle Journey: From Naive Glicko to WHR to GlickoD
       </h3>
       <p>
-        The journey to the definitive rating engine for <em>Through the Ages</em> was not a straight line, but an intellectual voyage of rigorous empirical discovery. Our starting observation was clear: standard Glicko-2 is reasonably good at predicting match outcomes, but exhibits a <strong>steady, compounding overconfidence in predictions</strong>: when the model predicts that a game should be won in $X\%$ of cases ($X \ge 90\%$), it was actually won in only $\approx 89\%$ of cases in tournament reality.
+        The journey to the current GlickoD rating engine iteration involved several discoveries: Our starting observation was that standard Glicko-2, while effective overall, showed a <strong>steady overconfidence in high-probability predictions</strong>: when predicting a win chance of $X \ge 90\%$, the actual observed win rate in tournament play was closer to $\approx 89\%$.
       </p>
       <p>
-        We initially hypothesized that this was due to an entropic ceiling on skill expression in <em>Through the Ages</em>: that initial card rows, military tactics draws, and multiplayer friction meant "a 99% win probability cannot physically exist once players reach baseline competence." To bend predictions back toward the diagonal, we formulated <strong>Adaptive Temperature Scaling</strong> $T(P, N)$ to compress logits toward 50%.
+        We initially hypothesized an entropic ceiling on skill expression in <em>Through the Ages</em>—the idea that random card draws and multiplayer dynamics prevented true 99% certainty between experienced players. To compensate, we introduced <strong>Adaptive Temperature Scaling</strong> $T(P, N)$ to pull extreme probabilities inward toward 50%.
       </p>
       <p>
-        However, a deeper diagnostic ablation across <strong>top-3% elite tournament players</strong> revealed an eye-opening statistical truth:
+        However, a targeted ablation study focused on <strong>top-3% tournament players</strong> revealed the real cause:
       </p>
       <ul class="faq-list" style="margin-left: 1.5rem; color: #f1e4d0; line-height: 1.75;">
         <li>
-          <strong>The "Overconfidence" Was an Information Defect, Not Game Entropy:</strong> When strong newcomers (future 1750+ masters) enter premier tournaments like the World Championship Series or Grand Slams with uncalibrated $1500$ priors and face Grandmasters ($1950+$), standard Glicko predicts a $93\%+$ win chance for the GM. When the GM wins only $75\%$ against this hidden shark, the raw data falsely looks like "favorite overconfidence."
+          <strong>The "Overconfidence" Came from Uncalibrated Newcomers:</strong> When skilled new players enter tournaments with default $1500$ priors and face Grandmasters ($1950+$), standard Glicko projects a $93\%+$ victory chance for the veteran. If the veteran wins only $75\%$ against this hidden expert, aggregate statistics falsely flag this as "favorite overconfidence."
         </li>
         <li>
-          <strong>TTA Skill Expression Is Profound:</strong> When we restrict the analysis to well-calibrated elite players, top players genuinely win $\mathbf{\ge 95\%}$ and even $\mathbf{98\%}$ of matches against lower-tier competition (e.g. an established 2000 GM facing an average 1475 player). The 99% certainty does exist when rating disparity is real.
+          <strong>Elite Skill Expression Is Real:</strong> Once players are calibrated, top competitors facing lower-tier opponents genuinely achieve $\mathbf{\ge 95\%}$ and up to $\mathbf{98\%}$ win rates. Extreme certainty is well-founded when the rating gap is accurately measured.
         </li>
         <li>
-          <strong>Retiring Temperature Scaling:</strong> Once the <strong>15-Game Recalibration Breakthrough</strong> eliminates newcomer noise at the root, the apparent overconfidence vanishes completely. Applying temperature scaling on top of calibrated data actually worsened predictions by artificially suppressing legitimate elite win probabilities (+2% to +3% underconfidence!). Consequently, <strong>temperature scaling was retired from GlickoD</strong> ($T \equiv 1.0$), establishing near-perfect tail calibration (within $\pm 0.17\%$ of reality across 70–95% thresholds) and an all-time record ECE of <strong>0.24%</strong>.
+          <strong>Retiring Temperature Scaling:</strong> When the <strong>15-Game Recalibration</strong> addresses newcomer uncertainty directly, the apparent overconfidence vanishes. Applying temperature scaling on top of calibrated ratings actually hurt accuracy by artificially suppressing legitimate elite win rates. Temperature scaling was therefore retired ($T \equiv 1.0$), yielding tail calibration within $\pm 0.17\%$ of reality across 70–95% thresholds and an ECE of <strong>0.24%</strong>.
         </li>
       </ul>
       <p>
-        Returning to sequential Glicko-2 with these empirical insights, GlickoD is built upon <strong>three proven pillars</strong>:
+        Returning to sequential Glicko-2 with these empirical insights, GlickoD is built upon <strong>two core pillars</strong>:
       </p>
       <ol class="faq-list" style="margin-left: 1.5rem; color: #f1e4d0; line-height: 1.75;">
         <li>
-          <strong>The 15-Game Recalibration Breakthrough (The Primary Anchor):</strong> When new players enter the tournament pool with blank stats ($1500, \mathrm{RD}=350$), they inject severe statistical noise. Active tournament veterans average $\approx 1521$, while the overall pool mean is $\approx 1471$. Nominal "1521 vs. 1500" contests produce both a 50% underconfidence droop (from below-average newcomers) and extreme tail overconfidence (from above-average newcomers). Discovering emergent ratings at 15 games and recalculating history with newcomer ratings frozen during games 1..15 resolves both anomalies at the root.
+          <strong>15-Game Emergent Prior Recalibration:</strong> When new players enter with generic ratings ($1500, \mathrm{RD}=350$), early matches distort veteran ratings. Active veterans average $\approx 1521$, while the pool mean is $\approx 1471$. Establishing emergent ratings at 15 games (or upon retirement after 1 year for inactive accounts with $K < 15$ games) and recalculating history against the calibrated prior removes newcomer distortion from the rating network. Newcomers see their ratings update dynamically after every match alongside a provisional ⏳ badge.
         </li>
         <li>
-          <strong>Golden Ratio ($\phi$) Multiplayer Information Decomposition:</strong> Winning a 4-player game is neither 3 independent duels (naive Glicko) nor 1 duel (Coulom fractional scaling). GlickoD deploys Golden Ratio information scaling $W(N) = \phi^{N-2}$ ($w_N = \frac{\phi^{N-2}}{N-1}$), giving $\approx 1.618$ effective match equivalents for 3-player and $\approx 2.618$ for 4-player games, perfectly capturing multilateral information without runaway certainty.
-        </li>
-        <li>
-          <strong>Bilateral Composite Uncertainty ($c = \sqrt{\phi_A^2 + \phi_B^2}$):</strong> Evaluating full composite variance shrinkage $g(c)$ ensures probability forecasts accurately reflect the combined uncertainty of both players, preventing overconfidence whenever either competitor has elevated RD.
+          <strong>Golden Ratio ($\phi$) Multiplayer Information Decomposition:</strong> Winning a 4-player game is neither 3 independent duels (naive Glicko) nor 1 duel (Coulom fractional scaling). GlickoD deploys Golden Ratio information scaling $W(N) = \phi^{N-2}$ ($w_N = \frac{\phi^{N-2}}{N-1}$), giving $\approx 1.618$ effective match equivalents for 3-player and $\approx 2.618$ for 4-player games, accurately capturing table evidence without inflating certainty.
         </li>
       </ol>
       <p>
-        Additionally, applying a <strong>gentle annual soft season reset</strong> (expanding RD by $\alpha \approx 1.45$ and regressing ratings toward tier anchors by $\lambda \approx 0.12$ via decoupled scaling) further improves forward predictive accuracy (record 0.24% ECE), counteracting graveyard player inflation and ensuring recent form is prioritized alongside career skill.
+        Additionally, applying a <strong>gentle annual soft season reset</strong> (expanding RD by $\alpha \approx 1.45$ and regressing ratings toward tier anchors by $\lambda \approx 0.12$) improves forward predictive accuracy, counteracting inactive rating inflation and ensuring recent form is balanced with career skill.
       </p>
     </div>
 
@@ -2740,7 +2565,7 @@ $$
         When players enter the tournament pool, they begin with a nominal 1500 rating and high uncertainty ($\mathrm{RD} = 350$). Because active veterans average $\approx 1521$ while the overall pool mean is $\approx 1471$, games involving uncalibrated newcomers generate severe network noise, false upsets, and the notorious "50% underconfidence droop" in standard Glicko.
       </p>
       <p>
-        Under <strong>15-Game Re-Calibration</strong>, a player's first 15 games are used to establish their true latent skill $R_{15}$. Historical matches are recomputed using this emergent prior while the newcomer's active rating remains frozen during matches $1 \dots 15$, completely eliminating newcomer noise and transition double-counting.
+        Under <strong>15-Game Re-Calibration</strong>, a player's first 15 games establish their emergent prior $R_{15}$ (players with under 15 career games who have been inactive for over a year are also finalized at their career total). In the UI, newcomers see their ratings update dynamically after every match accompanied by a provisional ⏳ indicator, while in the rating engine, opponent updates are computed against the calibrated prior to eliminate newcomer distortion.
       </p>
       <div style="margin-top: 1rem;">
         <a href="#recalibration-15" onclick="switchFaqTab('recalibration-15'); return false;" class="btn-antique" style="font-size: 0.92rem; text-decoration: none;">
@@ -2846,10 +2671,10 @@ $$
         The Final Architectural Verdict
       </h4>
       <p>
-        Temperature scaling was a well-intentioned bandage for a problem caused by uncalibrated cold-start priors. Once 15-Game Recalibration solved the newcomer problem at the root, temperature scaling became superfluous "numberwang" that actively degraded elite match predictions.
+        Temperature scaling was a well-intentioned bandage for a problem caused by uncalibrated cold-start priors. Once 15-Game Recalibration solved the newcomer problem at the root, temperature scaling became superfluous that actively degraded elite match predictions.
       </p>
       <p>
-        <strong>GlickoD officially operates with $T \equiv 1.0$ across all formats.</strong> Its precision is anchored purely by Golden Ratio ($\phi$) multiplayer weighting, 15-game emergent prior recalibration, and bilateral composite variance.
+        <strong>GlickoD operates with $T \equiv 1.0$ across all formats.</strong> Its calibration is anchored by its two core enhancements: Golden Ratio ($\phi$) multiplayer weighting and 15-game emergent prior recalibration.
       </p>
     </div>
 
@@ -3046,7 +2871,7 @@ $$
       <div class="faq-formula">
 
 $$
-\text{Matches } 1 \dots 15 \implies \text{Player rating is frozen; opponents calculate fair updates against emergent prior } R_{15}
+\text{Matches } 1 \dots 15 \implies \text{Dynamic UI display (⏳); opponents calculate updates against emergent prior } R_{15}
 $$
 
 $$
@@ -3063,7 +2888,7 @@ $$
     <!-- Card 3: Bayesian DAG Independence -->
     <div class="faq-card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95), rgba(22, 14, 9, 0.98));">
       <h3 style="color: #ffd54f;">
-        <span>📐</span> Bayesian DAG Invariance: Why Opponent Updates Require a Frozen Prior
+        <span>📐</span> Bayesian DAG Invariance: Why Opponent Updates Require a Calibrated Prior
       </h3>
       <p>
         A frequent question is: <em>"Why do opponents calculate rating changes against a stabilized prior rather than a fluctuating provisional rating?"</em>

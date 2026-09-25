@@ -329,13 +329,22 @@
     align-items: center;
     gap: 0.3rem;
   }
+  .leaderboard-table tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  .leaderboard-table tbody tr:nth-child(odd) {
+    background: rgba(16, 10, 6, 0.65);
+  }
+  .leaderboard-table tbody tr:nth-child(even) {
+    background: rgba(28, 18, 12, 0.40);
+  }
   .leaderboard-table td {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+    border-bottom: 1px solid rgba(74, 53, 37, 0.35);
     font-size: 0.92rem;
   }
-  .leaderboard-table tr:hover td {
-    background: rgba(229, 169, 60, 0.06);
+  .leaderboard-table tbody tr:hover td {
+    background: rgba(229, 169, 60, 0.12) !important;
   }
   .player-link {
     color: var(--text-main);
