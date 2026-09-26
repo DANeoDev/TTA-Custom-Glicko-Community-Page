@@ -1972,7 +1972,7 @@ $$
   <!-- ========================================================================= -->
 
 <div id="faq-titles" class="faq-section">
-    {% set block_titles_divisions = get_cms('faq', 'titles_divisions', 'Titles & Badges: Official Tournament Divisions (WC, GM, M, P, G, S, B, W)') %}
+    {% set block_titles_divisions = get_cms('faq', 'titles_divisions', 'Titles & Badges: Official Tournament Divisions (WC, SGM, GM, M, P, G, S, B, W)') %}
     <div class="faq-card cms-card" data-page="faq" data-block="titles_divisions" data-is-custom="{{ 'true' if block_titles_divisions.is_custom else 'false' }}">
       <h3 class="cms-title"  style="margin: 0;">{{ block_titles_divisions.title }}</h3>
       <div class="cms-content">
@@ -1985,6 +1985,7 @@ $$
         </p>
         <ul class="faq-list">
           <li><span class="badge badge-wc" style="display: inline-flex; align-items: center; gap: 3px;"><span style="font-size: 0.85rem;">👑</span> WC</span> <strong>World Champion:</strong> Awarded exclusively to the reigning Through the Ages World Champion (currently held by <strong>a440</strong>, Champion of World Championship 2025). Styled in royal Dark Red-Gold with a Crown crest.</li>
+          <li><span class="badge badge-sgm" style="display: inline-flex; align-items: center; gap: 3px;"><span style="font-size: 0.85rem;">👑</span> GM</span> <strong>Super GM:</strong> Conferred upon competitors who have <strong>won</strong> the premier / highest division of a major accredited tournament (<strong>International Championship Grandmaster/Diamond</strong>, <strong>Intermezzo Championship Grandmaster</strong>, or <strong>Royal League Emperor</strong>) within the active 12-month window. Styled in a brilliant gold-bronze royal crest with crown.</li>
           <li><span class="badge badge-gm">GM</span> <strong>Grandmaster:</strong> Awarded to competitors who have participated in the <strong>highest / premier division</strong> of a major league (Grandmaster / Diamond in International, Grandmaster in Intermezzo, or Emperor Division in Royal League).</li>
           <li><span class="badge badge-m">M</span> <strong>Master:</strong> Awarded for reaching the <strong>2nd highest division</strong> (Master in International and Intermezzo, or King Division in Royal League).</li>
           <li><span class="badge badge-p">P</span> <strong>Platinum:</strong> Awarded for reaching the <strong>3rd highest division</strong> (Platinum in International and Intermezzo, or Prince Division in Royal League).</li>
@@ -2009,6 +2010,7 @@ $$
         </p>
         <ul class="faq-list">
           <li><span class="badge badge-wc" style="display: inline-flex; align-items: center; gap: 3px;"><span style="font-size: 0.85rem;">👑</span> WC</span> <strong>World Champion:</strong> Awarded exclusively to the reigning Through the Ages World Champion (currently held by <strong>a440</strong>, Champion of World Championship 2025). Styled in royal Dark Red-Gold with a Crown crest.</li>
+          <li><span class="badge badge-sgm" style="display: inline-flex; align-items: center; gap: 3px;"><span style="font-size: 0.85rem;">👑</span> GM</span> <strong>Super GM:</strong> Conferred upon competitors who have <strong>won</strong> the premier / highest division of a major accredited tournament (<strong>International Championship Grandmaster/Diamond</strong>, <strong>Intermezzo Championship Grandmaster</strong>, or <strong>Royal League Emperor</strong>) within the active 12-month window. Styled in a brilliant gold-bronze royal crest with crown.</li>
           <li><span class="badge badge-gm">GM</span> <strong>Grandmaster:</strong> Awarded to competitors who have participated in the <strong>highest / premier division</strong> of a major league (Grandmaster / Diamond in International, Grandmaster in Intermezzo, or Emperor Division in Royal League).</li>
           <li><span class="badge badge-m">M</span> <strong>Master:</strong> Awarded for reaching the <strong>2nd highest division</strong> (Master in International and Intermezzo, or King Division in Royal League).</li>
           <li><span class="badge badge-p">P</span> <strong>Platinum:</strong> Awarded for reaching the <strong>3rd highest division</strong> (Platinum in International and Intermezzo, or Prince Division in Royal League).</li>
@@ -2027,7 +2029,7 @@ $$
       </template>
     </div>
 
-    {% set block_titles_peak_rank = get_cms('faq', 'titles_peak_rank', 'How is the Peak Rank calculated?') %}
+    {% set block_titles_peak_rank = get_cms('faq', 'titles_peak_rank', 'How is the Peak Rank and Peak Title Badge calculated?') %}
     <div class="faq-card cms-card" data-page="faq" data-block="titles_peak_rank" data-is-custom="{{ 'true' if block_titles_peak_rank.is_custom else 'false' }}">
       <h3 class="cms-title">{{ block_titles_peak_rank.title }}</h3>
       <div class="cms-content">
@@ -2035,14 +2037,26 @@ $$
           {{ block_titles_peak_rank.content }}
         {% else %}
           <p>
-        Alongside a player's all-time <strong>Peak Rating</strong>, the portal calculates their historical <strong>Peak Rank</strong>. Rather than displaying their current rank, the engine queries the historical snapshot on the exact date their peak rating was recorded, evaluating their true leaderboard rank relative to all competitors active on that day.
-      </p>
+            Alongside a player's all-time <strong>Peak Rating</strong>, the portal calculates their historical <strong>Peak Rank</strong> and verifies their <strong>Peak Career Title</strong>. Rather than displaying their current rank, the engine queries the historical snapshot on the exact date their peak rating was recorded, evaluating their true leaderboard rank relative to all competitors active on that day.
+          </p>
+          <p>
+            <strong>Peak Title Badge on Player Profiles:</strong> A player's peak tournament rank and year of achievement are prominently displayed as a dedicated styled badge on their profile dossier (e.g. <span class="badge badge-sgm" style="font-size: 0.75rem; padding: 0.15rem 0.45rem;">👑 GM</span> <em>(2026)</em> or <span class="badge badge-p" style="font-size: 0.75rem; padding: 0.15rem 0.45rem;">Platinum</span> <em>(2023)</em>). This peak badge replaces legacy textual indicators and is featured in both the profile header and the <strong>🌟 Peak Career Season</strong> benchmark card.
+          </p>
+          <p>
+            <strong>Leaderboard Integrity:</strong> The public leaderboard displays strictly <strong>active</strong> tournament badges under the 1-Year Tournament Recency Rule. Historical peak badges remain exclusive to player profile dossiers to preserve a strictly contemporary, inflation-free competitive leaderboard.
+          </p>
         {% endif %}
       </div>
       <template class="cms-default-source" style="display:none;">
         <p>
-        Alongside a player's all-time <strong>Peak Rating</strong>, the portal calculates their historical <strong>Peak Rank</strong>. Rather than displaying their current rank, the engine queries the historical snapshot on the exact date their peak rating was recorded, evaluating their true leaderboard rank relative to all competitors active on that day.
-      </p>
+          Alongside a player's all-time <strong>Peak Rating</strong>, the portal calculates their historical <strong>Peak Rank</strong> and verifies their <strong>Peak Career Title</strong>. Rather than displaying their current rank, the engine queries the historical snapshot on the exact date their peak rating was recorded, evaluating their true leaderboard rank relative to all competitors active on that day.
+        </p>
+        <p>
+          <strong>Peak Title Badge on Player Profiles:</strong> A player's peak tournament rank and year of achievement are prominently displayed as a dedicated styled badge on their profile dossier (e.g. <span class="badge badge-sgm" style="font-size: 0.75rem; padding: 0.15rem 0.45rem;">👑 GM</span> <em>(2026)</em> or <span class="badge badge-p" style="font-size: 0.75rem; padding: 0.15rem 0.45rem;">Platinum</span> <em>(2023)</em>). This peak badge replaces legacy textual indicators and is featured in both the profile header and the <strong>🌟 Peak Career Season</strong> benchmark card.
+        </p>
+        <p>
+          <strong>Leaderboard Integrity:</strong> The public leaderboard displays strictly <strong>active</strong> tournament badges under the 1-Year Tournament Recency Rule. Historical peak badges remain exclusive to player profile dossiers to preserve a strictly contemporary, inflation-free competitive leaderboard.
+        </p>
       </template>
     </div>
 

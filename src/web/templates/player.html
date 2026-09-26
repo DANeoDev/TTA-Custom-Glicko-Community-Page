@@ -297,10 +297,20 @@
           <div>
             <div style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.05rem; font-weight: 700;">
               Peak Career Season: {{ career_peak_year.year }}
-              {% if career_peak_year.has_wc %}
+              {% if career_peak_year.has_wc or career_peak_year.title == 'WC' %}
                 <span class="badge badge-wc" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">World Champion</span>
+              {% elif career_peak_year.title == 'SGM' %}
+                <span class="badge badge-sgm" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">👑 GM</span>
               {% elif career_peak_year.title %}
-                <span class="badge badge-{{ career_peak_year.title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">{{ career_peak_year.title_name }}</span>
+                <span class="badge badge-{{ career_peak_year.title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">{{ career_peak_year.title_name or get_title_name(career_peak_year.title) }}</span>
+              {% elif player.peak_title %}
+                {% if player.peak_title == 'WC' %}
+                  <span class="badge badge-wc" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">World Champion</span>
+                {% elif player.peak_title == 'SGM' %}
+                  <span class="badge badge-sgm" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">👑 GM</span>
+                {% else %}
+                  <span class="badge badge-{{ player.peak_title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">{{ get_title_name(player.peak_title) }}</span>
+                {% endif %}
               {% endif %}
             </div>
             <div style="font-family: var(--font-stats); font-size: 0.85rem; color: #f3e5c8;">

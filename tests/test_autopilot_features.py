@@ -917,4 +917,31 @@ def test_player_modes_subpage_and_engine_switcher(client):
     assert 'btnModeReset' in prof_html
 
 
+def test_faq_super_gm_and_peak_career_season_badges(client):
+    """Verify Super GM on FAQ page, 1-year recency rule, and consistent Peak Career Season badges on player profiles."""
+    # 1. FAQ Tab 11 verification
+    rv_faq = client.get('/faq')
+    assert rv_faq.status_code == 200
+    faq_html = rv_faq.get_data(as_text=True)
+    assert 'Super GM' in faq_html
+    assert 'badge-sgm' in faq_html
+    assert '1-Year Tournament Recency Rule' in faq_html
+    assert 'How is the Peak Rank and Peak Title Badge calculated?' in faq_html
 
+    # 2. Player Profile Peak Career Season Card verification across formats and tiers
+    test_players = {
+        'Weidenbaum': ('2023', 'badge-wc'),
+        'Martin_Pecheur': ('2024', 'badge-wc'),
+        'a440': ('2025', 'badge-wc'),
+        'DANeo': ('2025', 'badge-sgm'),
+        'LeonC': ('2019', 'badge-sgm'),
+        'ArthursDad': ('2026', 'badge-b'),
+        'Olesch': ('2023', 'badge-p')
+    }
+    for p_name, (expected_yr, expected_badge) in test_players.items():
+        rv_p = client.get(f'/player/{p_name}')
+        assert rv_p.status_code == 200, f"Failed to load profile for {p_name}"
+        p_html = rv_p.get_data(as_text=True)
+        assert 'Peak Career Season:' in p_html, f"Missing Peak Career Season card for {p_name}"
+        assert expected_yr in p_html, f"Expected year {expected_yr} in {p_name}'s profile"
+        assert expected_badge in p_html, f"Expected badge class {expected_badge} in {p_name}'s profile"

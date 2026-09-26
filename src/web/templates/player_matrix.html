@@ -244,10 +244,20 @@
     </div>
     <div style="font-size: 1.5rem; font-weight: 800; color: #fff; margin: 0.2rem 0;">
       Peak Career Season: <span style="color: var(--accent-gold);">{{ best_year.year }}</span>
-      {% if best_year.is_wc %}
+      {% if best_year.is_wc or best_year.title == 'WC' %}
         <span class="badge-wc" style="font-size: 0.75rem; margin-left: 0.5rem;">💎 World Champion</span>
+      {% elif best_year.title == 'SGM' %}
+        <span class="badge badge-sgm" style="font-size: 0.75rem; margin-left: 0.5rem;">👑 GM</span>
       {% elif best_year.title %}
-        <span class="badge badge-{{ best_year.title.lower() }}" style="font-size: 0.75rem; margin-left: 0.5rem;">{{ best_year.title_name }}</span>
+        <span class="badge badge-{{ best_year.title.lower() }}" style="font-size: 0.75rem; margin-left: 0.5rem;">{{ best_year.title_name or get_title_name(best_year.title) }}</span>
+      {% elif player.peak_title %}
+        {% if player.peak_title == 'WC' %}
+          <span class="badge-wc" style="font-size: 0.75rem; margin-left: 0.5rem;">💎 World Champion</span>
+        {% elif player.peak_title == 'SGM' %}
+          <span class="badge badge-sgm" style="font-size: 0.75rem; margin-left: 0.5rem;">👑 GM</span>
+        {% else %}
+          <span class="badge badge-{{ player.peak_title.lower() }}" style="font-size: 0.75rem; margin-left: 0.5rem;">{{ get_title_name(player.peak_title) }}</span>
+        {% endif %}
       {% endif %}
     </div>
     <div style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5;">
@@ -462,10 +472,12 @@
               {% if yr.is_wc %}<span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.3rem;">WC</span>{% endif %}
             </td>
             <td>
-              {% if yr.is_wc %}
+              {% if yr.is_wc or yr.title == 'WC' %}
                 <span class="badge badge-wc" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">World Champion</span>
+              {% elif yr.title == 'SGM' %}
+                <span class="badge badge-sgm" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">👑 GM</span>
               {% elif yr.title %}
-                <span class="badge badge-{{ yr.title.lower() }}" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">{{ yr.title_name }}</span>
+                <span class="badge badge-{{ yr.title.lower() }}" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">{{ yr.title_name or get_title_name(yr.title) }}</span>
               {% else %}
                 <span style="color: #665544; font-size: 0.8rem;">-</span>
               {% endif %}

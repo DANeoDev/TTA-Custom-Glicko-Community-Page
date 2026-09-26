@@ -8,12 +8,18 @@ from src.web.routes.leaderboard import VALID_MODELS, VALID_FORMATS, VALID_RESET_
 from src.models.glicko2.engine import Rating, update_rating
 from src.models.glicko2.adaptive_t import update_rating_adaptive, ADAPTIVE_T_PARAMS
 from src.models.glicko2.calculator import GOLDEN_MP_WEIGHTS
-from src.data.badges import classify_division_tier, TIER_TITLE_MAP, TIER_NAMES, TITLE_ORDER, HISTORICAL_WC_INFO
+from src.data.badges import classify_division_tier, TIER_TITLE_MAP, TIER_NAMES, TITLE_ORDER, HISTORICAL_WC_INFO, TITLE_FULL_NAMES
 
 player_bp = Blueprint('player', __name__)
 
-def get_player_yearly_tiers(conn, player_name: str) -> Dict[int, int]:
-    """Retrieves the highest tournament division tier played by a player in each calendar year."""
+TIER_BONUS = {'WC': 150, 'SGM': 100, 'GM': 60, 'M': 40, 'P': 25, 'G': 15, 'S': 5, 'B': 0, 'W': -5}
+
+def get_player_yearly_titles(conn, player_name: str) -> Dict[int, Dict[str, Any]]:
+    """Retrieves the highest tournament division title and display info held by a player in each calendar year."""
+    yearly = {}
+    tier_map = {1: 'GM', 2: 'M', 3: 'P', 4: 'G', 5: 'S', 6: 'B', 7: 'W'}
+
+    # 1. Matches table
     tourney_rows = conn.execute("""
         SELECT tournament, date
         FROM matches
@@ -21,23 +27,65 @@ def get_player_yearly_tiers(conn, player_name: str) -> Dict[int, int]:
           AND tournament IS NOT NULL
     """, (player_name, player_name, player_name, player_name)).fetchall()
 
-    yearly_tiers = {}
     for tr in tourney_rows:
         d = tr['date']
-        if d and len(d) >= 4:
-            try:
-                yr_int = int(d[:4])
-                t = classify_division_tier(tr['tournament'])
-                if t is not None:
-                    yearly_tiers[yr_int] = min(yearly_tiers.get(yr_int, 99), t)
-            except (ValueError, TypeError):
-                pass
+        if d and len(d) >= 4 and d[:4].isdigit():
+            yr = int(d[:4])
+            t = classify_division_tier(tr['tournament'])
+            if t is not None:
+                code = tier_map.get(t, 'W')
+                if yr not in yearly or TITLE_ORDER.get(code, 99) < TITLE_ORDER.get(yearly[yr]['title'], 99):
+                    yearly[yr] = {'title': code, 'title_name': TITLE_FULL_NAMES.get(code, code), 'tier': t}
 
+    # 2. Tournament_records table
+    rec_rows = conn.execute("""
+        SELECT tournament_name, division, finish_date, placement, medal
+        FROM tournament_records
+        WHERE player_name = ? AND is_career_total = 0
+    """, (player_name,)).fetchall()
+
+    for r in rec_rows:
+        fd = r['finish_date']
+        if fd and len(fd) >= 4 and fd[:4].isdigit():
+            yr = int(fd[:4])
+            t_name = r['tournament_name'] or ''
+            div = r['division'] or ''
+            plac = str(r['placement'] or '')
+            med = (r['medal'] or '').lower()
+            is_win = plac.startswith('1 /') or plac == '1' or med == 'gold'
+
+            if t_name in ('International Championship', 'Intermezzo Championship', 'Royal League') and div in ('Grandmaster', 'Diamond', 'Emperor') and is_win:
+                yearly[yr] = {'title': 'SGM', 'title_name': 'Super GM', 'tier': 1}
+            elif yr not in yearly:
+                t = classify_division_tier(f"{t_name} {div}")
+                if t is not None:
+                    code = tier_map.get(t, 'W')
+                    yearly[yr] = {'title': code, 'title_name': TITLE_FULL_NAMES.get(code, code), 'tier': t}
+
+    # 3. Known World Champions
     for p_wc, (wc_yr, wc_title) in HISTORICAL_WC_INFO.items():
         if p_wc.lower() == player_name.lower():
-            yearly_tiers[wc_yr] = 0
+            yearly[wc_yr] = {'title': 'WC', 'title_name': 'World Champion', 'tier': 0}
 
-    return yearly_tiers
+    # 4. Check players table peak_title and peak_year
+    p_row = conn.execute('SELECT peak_title, peak_year FROM players WHERE name = ? COLLATE NOCASE', (player_name,)).fetchone()
+    if p_row and p_row['peak_title'] and p_row['peak_year']:
+        pk_yr = p_row['peak_year']
+        pk_code = p_row['peak_title']
+        if pk_yr not in yearly or TITLE_ORDER.get(pk_code, 99) < TITLE_ORDER.get(yearly[pk_yr]['title'], 99):
+            t_val = 0 if pk_code == 'WC' else (1 if pk_code == 'SGM' else next((k for k, v in tier_map.items() if v == pk_code), 7))
+            yearly[pk_yr] = {
+                'title': pk_code,
+                'title_name': TITLE_FULL_NAMES.get(pk_code, pk_code),
+                'tier': t_val
+            }
+
+    return yearly
+
+def get_player_yearly_tiers(conn, player_name: str) -> Dict[int, int]:
+    """Retrieves the highest tournament division tier played by a player in each calendar year (0=WC, 1=GM/SGM, etc.)."""
+    y_titles = get_player_yearly_titles(conn, player_name)
+    return {yr: info.get('tier', 7) for yr, info in y_titles.items()}
 
 KNOWN_PLAYER_ALIASES = {
     'tinaren': 'tianren4561367',
@@ -238,6 +286,16 @@ def profile(player_name):
             (player_name, active_format)
         ).fetchall()
 
+        # If format has no matches (e.g. 4P for 2P/3P specialists), fall back to overall player_count = 0
+        if not yearly_stats_rows and active_format != 0:
+            yearly_stats_rows = conn.execute(
+                'SELECT year, opponents_count, wins, losses, draws, win_rate '
+                'FROM yearly_player_stats '
+                'WHERE player_name = ? AND player_count = 0 AND opponents_count > 0 '
+                'ORDER BY year ASC',
+                (player_name,)
+            ).fetchall()
+
         career_years = []
         career_peak_year = None
         best_score = -999999.0
@@ -247,7 +305,7 @@ def profile(player_name):
             'SELECT substr(period_date, 1, 4) as yr, MAX(rating) as max_r '
             'FROM rating_history WHERE player_name = ? AND player_count = ? '
             'GROUP BY yr',
-            (player_name, active_format)
+            (player_name, active_format if active_format in (2, 3, 4) else 0)
         ).fetchall()
         for pr in peak_rows:
             try:
@@ -255,7 +313,8 @@ def profile(player_name):
             except (ValueError, TypeError):
                 pass
 
-        yearly_tiers = get_player_yearly_tiers(conn, player_name)
+        yearly_titles = get_player_yearly_titles(conn, player_name)
+        p_peak_yr = player.get('peak_year')
 
         for yr_row in yearly_stats_rows:
             y_val = yr_row['year']
@@ -265,18 +324,15 @@ def profile(player_name):
             wr = yr_row['win_rate']
             opps = yr_row['opponents_count']
 
-            score = (w * 1.5) + (wr * 2.0) + ((peak_r - 1500) * 0.4 if peak_r else 0)
+            t_info = yearly_titles.get(y_val, {})
+            y_title = t_info.get('title')
+            y_title_name = t_info.get('title_name')
 
-            wc_bonus = 0
-            if (y_val == 2025 and player_name == 'a440') or \
-               (y_val == 2024 and player_name == 'Martin_Pecheur') or \
-               (y_val == 2023 and player_name == 'Weidenbaum'):
-                wc_bonus = 150
-                score += wc_bonus
+            bonus = TIER_BONUS.get(y_title, 0)
+            if p_peak_yr and y_val == p_peak_yr:
+                bonus += 30
 
-            y_tier = yearly_tiers.get(y_val)
-            y_title = 'WC' if y_tier == 0 else (TIER_TITLE_MAP.get(y_tier) if y_tier is not None else None)
-            y_title_name = 'World Champion' if y_tier == 0 else (TIER_NAMES.get(y_tier) if y_tier is not None else None)
+            score = (w * 1.5) + (wr * 2.0) + ((peak_r - 1500) * 0.4 if peak_r else 0) + bonus
 
             y_entry = {
                 'year': y_val,
@@ -287,7 +343,7 @@ def profile(player_name):
                 'win_rate': wr,
                 'peak_rating': peak_r,
                 'score': round(score, 1),
-                'has_wc': wc_bonus > 0,
+                'has_wc': y_title == 'WC',
                 'title': y_title,
                 'title_name': y_title_name
             }
@@ -296,6 +352,13 @@ def profile(player_name):
             if score > best_score:
                 best_score = score
                 career_peak_year = y_entry
+
+        # Fallback if title is missing on career_peak_year but player has a peak_title
+        if career_peak_year and not career_peak_year.get('title') and player.get('peak_title'):
+            career_peak_year['title'] = player['peak_title']
+            career_peak_year['title_name'] = TITLE_FULL_NAMES.get(player['peak_title'], player['peak_title'])
+            if player['peak_title'] == 'WC':
+                career_peak_year['has_wc'] = True
 
         # Match History Pagination & Querying
         try:
@@ -849,38 +912,45 @@ def player_matrix(player_name):
             (player_name, active_format)
         ).fetchall()
 
+        if not yearly_rows and active_format != 0:
+            yearly_rows = conn.execute(
+                'SELECT year, opponents_count, wins, losses, draws, win_rate, career_opps, career_wins, career_losses, career_draws, career_win_rate '
+                'FROM yearly_player_stats WHERE player_name = ? AND player_count = 0 AND opponents_count > 0 ORDER BY year ASC',
+                (player_name,)
+            ).fetchall()
+
         career_history_table = []
         best_year = None
         best_year_score = -999999.0
 
-        yearly_tiers = get_player_yearly_tiers(conn, player_name)
+        yearly_titles = get_player_yearly_titles(conn, player_name)
+        p_peak_yr = player.get('peak_year')
 
         for yr_row in yearly_rows:
             y = yr_row['year']
             pk_row = conn.execute(
                 'SELECT MAX(rating) as pk FROM rating_history WHERE player_name = ? AND player_count = ? AND period_date LIKE ?',
-                (player_name, active_format, f"{y}%")
+                (player_name, active_format if active_format in (2, 3, 4) else 0, f"{y}%")
             ).fetchone()
             peak_r = round(pk_row['pk'], 1) if pk_row and pk_row['pk'] else None
 
             snap_row = conn.execute(
                 'SELECT rating, rd, c_rating FROM rating_history WHERE model_type = "glicko2_std" AND player_count = ? AND period_date LIKE ? AND player_name = ? ORDER BY period_date DESC LIMIT 1',
-                (active_format, f"{y}%", player_name)
+                (active_format if active_format in (2, 3, 4) else 0, f"{y}%", player_name)
             ).fetchone()
 
             w = yr_row['wins']
             wr = yr_row['win_rate']
-            score = (w * 1.5) + (wr * 2.0) + ((peak_r - 1500) * 0.4 if peak_r else 0)
-            is_wc = False
-            if (y == 2025 and player_name == 'a440') or \
-               (y == 2024 and player_name == 'Martin_Pecheur') or \
-               (y == 2023 and player_name == 'Weidenbaum'):
-                score += 150
-                is_wc = True
 
-            y_tier = yearly_tiers.get(y)
-            y_title = 'WC' if y_tier == 0 else (TIER_TITLE_MAP.get(y_tier) if y_tier is not None else None)
-            y_title_name = 'World Champion' if y_tier == 0 else (TIER_NAMES.get(y_tier) if y_tier is not None else None)
+            t_info = yearly_titles.get(y, {})
+            y_title = t_info.get('title')
+            y_title_name = t_info.get('title_name')
+
+            bonus = TIER_BONUS.get(y_title, 0)
+            if p_peak_yr and y == p_peak_yr:
+                bonus += 30
+
+            score = (w * 1.5) + (wr * 2.0) + ((peak_r - 1500) * 0.4 if peak_r else 0) + bonus
 
             entry = {
                 'year': y,
@@ -897,7 +967,7 @@ def player_matrix(player_name):
                 'peak_rating': peak_r,
                 'year_end_rating': round(snap_row['rating'], 1) if snap_row else None,
                 'score': round(score, 1),
-                'is_wc': is_wc,
+                'is_wc': y_title == 'WC',
                 'title': y_title,
                 'title_name': y_title_name
             }
@@ -906,6 +976,13 @@ def player_matrix(player_name):
             if score > best_year_score:
                 best_year_score = score
                 best_year = entry
+
+        # Fallback if title is missing on best_year but player has peak_title
+        if best_year and not best_year.get('title') and player.get('peak_title'):
+            best_year['title'] = player['peak_title']
+            best_year['title_name'] = TITLE_FULL_NAMES.get(player['peak_title'], player['peak_title'])
+            if player['peak_title'] == 'WC':
+                best_year['is_wc'] = True
 
         # History Chart comparing Continuous vs Soft vs Amplified for all models
         all_hist_rows = conn.execute(

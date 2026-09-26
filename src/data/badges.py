@@ -43,6 +43,18 @@ TIER_NAMES = {
 
 TITLE_ORDER = {'WC': 0, 'SGM': 1, 'GM': 2, 'M': 3, 'P': 4, 'G': 5, 'S': 6, 'B': 7, 'W': 8}
 
+TITLE_FULL_NAMES = {
+    'WC': 'World Champion',
+    'SGM': 'Super GM',
+    'GM': 'Grandmaster',
+    'M': 'Master',
+    'P': 'Platinum',
+    'G': 'Gold',
+    'S': 'Silver',
+    'B': 'Bronze',
+    'W': 'Wood'
+}
+
 # Reigning World Champion holding active 'WC' title
 REIGNING_WC_PLAYERS = {'a440'}
 
