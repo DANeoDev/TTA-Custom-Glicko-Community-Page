@@ -7,7 +7,7 @@ Provides comprehensive coverage of official TTA tournaments:
 - Fact-based Success Stories & Highlights for Master+ (M+) Profiles
 - All-Time Highest Scoring Division Records with complete Opponent details
 """
-from flask import Blueprint, render_template, abort, redirect, url_for
+from flask import Blueprint, render_template, abort, redirect, url_for, request
 from src.data.db import get_connection
 from src.data.hall_of_fame import (
     derive_hall_of_fame_data,
@@ -236,7 +236,8 @@ TOURNAMENT_SERIES = {
 @hall_of_fame_bp.route('')
 def index():
     """Hall of Fame overview hub page."""
-    hof_data = derive_hall_of_fame_data()
+    force = request.args.get('refresh') == '1'
+    hof_data = derive_hall_of_fame_data(force_refresh=force)
     return render_template(
         'tournaments/hub.html',
         series_list=list(TOURNAMENT_SERIES.values()),

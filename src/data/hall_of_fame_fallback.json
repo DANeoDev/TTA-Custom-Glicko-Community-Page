@@ -1,0 +1,564 @@
+{
+  "intermezzo": [
+    {
+      "player": "Weidenbaum",
+      "gold": 8,
+      "silver": 3,
+      "bronze": 4,
+      "total": 15,
+      "points": 314.0,
+      "title": "WC"
+    },
+    {
+      "player": "Martin_Pecheur",
+      "gold": 3,
+      "silver": 3,
+      "bronze": 2,
+      "total": 8,
+      "points": 172.0,
+      "title": "WC"
+    },
+    {
+      "player": "silent_x111",
+      "gold": 3,
+      "silver": 1,
+      "bronze": 1,
+      "total": 5,
+      "points": 112.0,
+      "title": "GM"
+    },
+    {
+      "player": "pv4",
+      "gold": 3,
+      "silver": 0,
+      "bronze": 1,
+      "total": 4,
+      "points": 113.5,
+      "title": "GM"
+    },
+    {
+      "player": "totsilence",
+      "gold": 2,
+      "silver": 2,
+      "bronze": 2,
+      "total": 6,
+      "points": 100.0,
+      "title": "GM"
+    },
+    {
+      "player": "wolvs",
+      "gold": 2,
+      "silver": 2,
+      "bronze": 1,
+      "total": 5,
+      "points": 111.0,
+      "title": "GM"
+    },
+    {
+      "player": "DrRerNate",
+      "gold": 2,
+      "silver": 1,
+      "bronze": 1,
+      "total": 4,
+      "points": 79.0,
+      "title": "GM"
+    },
+    {
+      "player": "AaronGreen",
+      "gold": 2,
+      "silver": 0,
+      "bronze": 0,
+      "total": 2,
+      "points": 82.0,
+      "title": "GM"
+    },
+    {
+      "player": "pajada",
+      "gold": 1,
+      "silver": 3,
+      "bronze": 2,
+      "total": 6,
+      "points": 141.5,
+      "title": "GM"
+    },
+    {
+      "player": "DJParson",
+      "gold": 1,
+      "silver": 1,
+      "bronze": 1,
+      "total": 3,
+      "points": 74.0,
+      "title": "GM"
+    },
+    {
+      "player": "Palino",
+      "gold": 1,
+      "silver": 1,
+      "bronze": 1,
+      "total": 3,
+      "points": 54.0,
+      "title": "GM"
+    },
+    {
+      "player": "Veivi",
+      "gold": 1,
+      "silver": 1,
+      "bronze": 1,
+      "total": 3,
+      "points": 44.0,
+      "title": "GM"
+    },
+    {
+      "player": "DireNTropy",
+      "gold": 1,
+      "silver": 1,
+      "bronze": 0,
+      "total": 2,
+      "points": 52.0,
+      "title": "GM"
+    },
+    {
+      "player": "sqwndw",
+      "gold": 1,
+      "silver": 0,
+      "bronze": 0,
+      "total": 1,
+      "points": 30.0,
+      "title": "GM"
+    },
+    {
+      "player": "Grozz",
+      "gold": 0,
+      "silver": 2,
+      "bronze": 2,
+      "total": 4,
+      "points": 69.0,
+      "title": "M"
+    },
+    {
+      "player": "Eske",
+      "gold": 0,
+      "silver": 2,
+      "bronze": 1,
+      "total": 3,
+      "points": 45.5,
+      "title": "M"
+    },
+    {
+      "player": "Eepogi",
+      "gold": 0,
+      "silver": 2,
+      "bronze": 0,
+      "total": 2,
+      "points": 46.0,
+      "title": "M"
+    },
+    {
+      "player": "Wawrzyniec",
+      "gold": 0,
+      "silver": 2,
+      "bronze": 0,
+      "total": 2,
+      "points": 34.5,
+      "title": "M"
+    },
+    {
+      "player": "Tamirys",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 2,
+      "total": 3,
+      "points": 50.5,
+      "title": "M"
+    },
+    {
+      "player": "kuchjir",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 1,
+      "total": 2,
+      "points": 42.0,
+      "title": "M"
+    },
+    {
+      "player": "PhiTrigger",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 1,
+      "total": 2,
+      "points": 39.0,
+      "title": "M"
+    },
+    {
+      "player": "Dots",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 0,
+      "total": 1,
+      "points": 35.0,
+      "title": "M"
+    },
+    {
+      "player": "qhung49",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 2,
+      "total": 2,
+      "points": 37.0,
+      "title": "M"
+    },
+    {
+      "player": "Footloop",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 2,
+      "total": 2,
+      "points": 34.0,
+      "title": "M"
+    },
+    {
+      "player": "DANeo",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 28.0,
+      "title": "M"
+    },
+    {
+      "player": "Gandin",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 21.0,
+      "title": "M"
+    },
+    {
+      "player": "Hierostrafio",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 18.0,
+      "title": "M"
+    }
+  ],
+  "international": [
+    {
+      "player": "Weidenbaum",
+      "gold": 6,
+      "silver": 2,
+      "bronze": 1,
+      "total": 9,
+      "points": 282.0,
+      "title": "WC"
+    },
+    {
+      "player": "Genghisip",
+      "gold": 4,
+      "silver": 2,
+      "bronze": 5,
+      "total": 11,
+      "points": 299.0,
+      "title": "GM"
+    },
+    {
+      "player": "LeonC",
+      "gold": 4,
+      "silver": 0,
+      "bronze": 1,
+      "total": 5,
+      "points": 143.0,
+      "title": "GM"
+    },
+    {
+      "player": "frotes",
+      "gold": 3,
+      "silver": 1,
+      "bronze": 0,
+      "total": 4,
+      "points": 132.0,
+      "title": "GM"
+    },
+    {
+      "player": "silent_x111",
+      "gold": 2,
+      "silver": 1,
+      "bronze": 4,
+      "total": 7,
+      "points": 195.0,
+      "title": "GM"
+    },
+    {
+      "player": "whsvin",
+      "gold": 2,
+      "silver": 1,
+      "bronze": 0,
+      "total": 3,
+      "points": 130.0,
+      "title": "GM"
+    },
+    {
+      "player": "Grozz",
+      "gold": 2,
+      "silver": 1,
+      "bronze": 0,
+      "total": 3,
+      "points": 74.0,
+      "title": "GM"
+    },
+    {
+      "player": "Airren",
+      "gold": 1,
+      "silver": 4,
+      "bronze": 0,
+      "total": 5,
+      "points": 126.0,
+      "title": "GM"
+    },
+    {
+      "player": "Wawrzyniec",
+      "gold": 1,
+      "silver": 3,
+      "bronze": 0,
+      "total": 4,
+      "points": 129.0,
+      "title": "GM"
+    },
+    {
+      "player": "Pascalotopia",
+      "gold": 1,
+      "silver": 1,
+      "bronze": 0,
+      "total": 2,
+      "points": 97.0,
+      "title": "GM"
+    },
+    {
+      "player": "Majondor",
+      "gold": 1,
+      "silver": 1,
+      "bronze": 0,
+      "total": 2,
+      "points": 85.0,
+      "title": "GM"
+    },
+    {
+      "player": "pajada",
+      "gold": 1,
+      "silver": 0,
+      "bronze": 3,
+      "total": 4,
+      "points": 178.5,
+      "title": "GM"
+    },
+    {
+      "player": "pv4",
+      "gold": 1,
+      "silver": 0,
+      "bronze": 1,
+      "total": 2,
+      "points": 115.0,
+      "title": "GM"
+    },
+    {
+      "player": "Toper",
+      "gold": 1,
+      "silver": 0,
+      "bronze": 1,
+      "total": 2,
+      "points": 45.0,
+      "title": "GM"
+    },
+    {
+      "player": "DANeo",
+      "gold": 1,
+      "silver": 0,
+      "bronze": 0,
+      "total": 1,
+      "points": 48.0,
+      "title": "GM"
+    },
+    {
+      "player": "a440",
+      "gold": 1,
+      "silver": 0,
+      "bronze": 0,
+      "total": 1,
+      "points": 33.0,
+      "title": "WC"
+    },
+    {
+      "player": "AaronGreen",
+      "gold": 0,
+      "silver": 4,
+      "bronze": 0,
+      "total": 4,
+      "points": 129.0,
+      "title": "M"
+    },
+    {
+      "player": "funestus",
+      "gold": 0,
+      "silver": 3,
+      "bronze": 0,
+      "total": 3,
+      "points": 130.0,
+      "title": "M"
+    },
+    {
+      "player": "Eepogi",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 1,
+      "total": 2,
+      "points": 85.0,
+      "title": "M"
+    },
+    {
+      "player": "Lambda",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 1,
+      "total": 2,
+      "points": 78.0,
+      "title": "M"
+    },
+    {
+      "player": "mwi",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 1,
+      "total": 2,
+      "points": 68.0,
+      "title": "M"
+    },
+    {
+      "player": "invalidName",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 1,
+      "total": 2,
+      "points": 49.0,
+      "title": "M"
+    },
+    {
+      "player": "Tamirys",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 0,
+      "total": 1,
+      "points": 78.0,
+      "title": "M"
+    },
+    {
+      "player": "DrRerNate",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 0,
+      "total": 1,
+      "points": 70.0,
+      "title": "M"
+    },
+    {
+      "player": "Binki",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 0,
+      "total": 1,
+      "points": 55.0,
+      "title": "M"
+    },
+    {
+      "player": "TryAndStopUs",
+      "gold": 0,
+      "silver": 1,
+      "bronze": 0,
+      "total": 1,
+      "points": 26.5,
+      "title": "M"
+    },
+    {
+      "player": "Martin_Pecheur",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 2,
+      "total": 2,
+      "points": 106.0,
+      "title": "WC"
+    },
+    {
+      "player": "Dirkules",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 2,
+      "total": 2,
+      "points": 50.0,
+      "title": "M"
+    },
+    {
+      "player": "Fizi",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 2,
+      "total": 2,
+      "points": 46.0,
+      "title": "M"
+    },
+    {
+      "player": "Footloop",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 55.0,
+      "title": "M"
+    },
+    {
+      "player": "Sandwhale",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 35.0,
+      "title": "M"
+    },
+    {
+      "player": "dannyboy14",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 32.0,
+      "title": "M"
+    },
+    {
+      "player": "totsilence",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 31.0,
+      "title": "M"
+    },
+    {
+      "player": "hihihiji",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 28.0,
+      "title": "M"
+    },
+    {
+      "player": "qhung49",
+      "gold": 0,
+      "silver": 0,
+      "bronze": 1,
+      "total": 1,
+      "points": 23.0,
+      "title": "M"
+    }
+  ]
+}

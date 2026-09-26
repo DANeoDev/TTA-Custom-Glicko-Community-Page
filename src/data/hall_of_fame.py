@@ -181,7 +181,23 @@ def derive_intermezzo_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[Dic
     except Exception:
         pass
 
-    # 2. Fallback to Hall of Fame.xlsx if database had no entries
+    # 2. Secondary: fallback to hall_of_fame_fallback.json bundled in repo
+    if not player_trophies:
+        fb_path = Path(__file__).resolve().parent / "hall_of_fame_fallback.json"
+        if fb_path.exists():
+            try:
+                with open(fb_path, 'r', encoding='utf-8') as f:
+                    fb_data = json.load(f).get('intermezzo', [])
+                for item in fb_data:
+                    p = item['player']
+                    player_trophies[p]['gold'] += item.get('gold', 0)
+                    player_trophies[p]['silver'] += item.get('silver', 0)
+                    player_trophies[p]['bronze'] += item.get('bronze', 0)
+                    player_trophies[p]['points'] += item.get('points', 0.0)
+            except Exception:
+                pass
+
+    # 3. Tertiary: Fallback to Hall of Fame.xlsx if database and JSON were unavailable
     if not player_trophies:
         hof_path = Path("data/tournaments/Hall of Fame.xlsx")
         if pd is not None and hof_path.exists():
@@ -252,7 +268,23 @@ def derive_international_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[
     except Exception:
         pass
 
-    # 2. Fallback to Hall of Fame.xlsx if database had no entries
+    # 2. Secondary: fallback to hall_of_fame_fallback.json bundled in repo
+    if not player_trophies:
+        fb_path = Path(__file__).resolve().parent / "hall_of_fame_fallback.json"
+        if fb_path.exists():
+            try:
+                with open(fb_path, 'r', encoding='utf-8') as f:
+                    fb_data = json.load(f).get('international', [])
+                for item in fb_data:
+                    p = item['player']
+                    player_trophies[p]['gold'] += item.get('gold', 0)
+                    player_trophies[p]['silver'] += item.get('silver', 0)
+                    player_trophies[p]['bronze'] += item.get('bronze', 0)
+                    player_trophies[p]['points'] += item.get('points', 0.0)
+            except Exception:
+                pass
+
+    # 3. Tertiary: Fallback to Hall of Fame.xlsx if database and JSON were unavailable
     if not player_trophies:
         hof_path = Path("data/tournaments/Hall of Fame.xlsx")
         if pd is not None and hof_path.exists():
@@ -706,49 +738,83 @@ def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool 
 
     conn = get_connection(db_path)
     try:
-        # 1. Sync achievements if table is unpopulated or refresh is requested
-        ach_count = conn.execute("SELECT COUNT(*) FROM player_achievements").fetchone()[0]
-        if ach_count == 0 or force_refresh:
-            sync_tournament_achievements(conn)
-
-        # 2. Derive Major Circuits Trophyboards
+        # 1. Derive Major Circuits Trophyboards (SQLite primary -> fallback JSON -> Excel)
         rl_podiums, rl_board = derive_royal_league_podiums(conn)
         im_podiums, im_board = derive_intermezzo_podiums(conn)
         ic_podiums, ic_board = derive_international_podiums(conn)
         wc_board = derive_world_championship_trophyboard(conn)
 
-        # 3. Derive Grand Slams & Ladders Trophyboards
+        # 2. Derive Grand Slams & Ladders Trophyboards
         gs_board = derive_grand_slams_trophyboard(conn)
         ladder_board = derive_ladders_trophyboard(conn)
 
-        # 4. Filter All-Time Major Legends strictly to the core 4 tournaments
-        achievements_rows = conn.execute("""
-            SELECT player_name, total_titles, world_titles, international_titles, intermezzo_titles,
-                   royal_league_titles, other_titles, gold_medals, silver_medals, bronze_medals, top_achievements_json
-            FROM player_achievements
-            WHERE total_titles > 0 OR (gold_medals + silver_medals + bronze_medals) >= 2
-        """).fetchall()
+        # 3. Synchronize player_achievements table if empty, underpopulated, or forced
+        ach_count = conn.execute("SELECT COUNT(*) FROM player_achievements").fetchone()[0]
+        max_titles = conn.execute("SELECT MAX(total_titles) FROM player_achievements").fetchone()[0] or 0
+        if ach_count < 30 or max_titles < 10 or force_refresh:
+            sync_tournament_achievements(conn)
+
+        # 4. Construct All-Time Major Legends directly from the 4 verified trophyboards
+        legends = defaultdict(lambda: {
+            'world_titles': 0, 'intl_titles': 0, 'inter_titles': 0,
+            'rl_titles': 0, 'gold': 0, 'silver': 0, 'bronze': 0,
+            'top_achievements': []
+        })
+
+        for x in wc_board:
+            p = x['player']
+            legends[p]['world_titles'] += x.get('gold', 0)
+            legends[p]['gold'] += x.get('gold', 0)
+            legends[p]['silver'] += x.get('silver', 0)
+            legends[p]['bronze'] += x.get('bronze', 0)
+            if x.get('gold', 0) > 0:
+                legends[p]['top_achievements'].append(x.get('year', 'World Champion'))
+
+        for x in ic_board:
+            p = x['player']
+            legends[p]['intl_titles'] += x.get('gold', 0)
+            legends[p]['gold'] += x.get('gold', 0)
+            legends[p]['silver'] += x.get('silver', 0)
+            legends[p]['bronze'] += x.get('bronze', 0)
+            if x.get('gold', 0) > 0:
+                legends[p]['top_achievements'].append(f"{x['gold']}x International Champion")
+
+        for x in im_board:
+            p = x['player']
+            legends[p]['inter_titles'] += x.get('gold', 0)
+            legends[p]['gold'] += x.get('gold', 0)
+            legends[p]['silver'] += x.get('silver', 0)
+            legends[p]['bronze'] += x.get('bronze', 0)
+            if x.get('gold', 0) > 0:
+                legends[p]['top_achievements'].append(f"{x['gold']}x Intermezzo Champion")
+
+        for x in rl_board:
+            p = x['player']
+            legends[p]['rl_titles'] += x.get('gold', 0)
+            legends[p]['gold'] += x.get('gold', 0)
+            legends[p]['silver'] += x.get('silver', 0)
+            legends[p]['bronze'] += x.get('bronze', 0)
+            if x.get('gold', 0) > 0:
+                legends[p]['top_achievements'].append(f"{x['gold']}x Royal League Emperor Champion")
 
         all_time_major_legends = []
-        for r in achievements_rows:
-            top_ach = json.loads(r['top_achievements_json']) if r['top_achievements_json'] else []
-            major_titles = r['world_titles'] + r['international_titles'] + r['intermezzo_titles'] + r['royal_league_titles']
-            gold = r['gold_medals']
-            silver = r['silver_medals']
-            bronze = r['bronze_medals']
-            all_time_major_legends.append({
-                'player': r['player_name'],
-                'total_titles': major_titles,
-                'world_titles': r['world_titles'],
-                'intl_titles': r['international_titles'],
-                'inter_titles': r['intermezzo_titles'],
-                'rl_titles': r['royal_league_titles'],
-                'gold': gold,
-                'silver': silver,
-                'bronze': bronze,
-                'total_medals': gold + silver + bronze,
-                'top_achievements': top_ach[:3]
-            })
+        for p, st in legends.items():
+            tot_titles = st['world_titles'] + st['intl_titles'] + st['inter_titles'] + st['rl_titles']
+            tot_medals = st['gold'] + st['silver'] + st['bronze']
+            if tot_titles > 0 or tot_medals >= 2:
+                all_time_major_legends.append({
+                    'player': p,
+                    'total_titles': tot_titles,
+                    'world_titles': st['world_titles'],
+                    'intl_titles': st['intl_titles'],
+                    'inter_titles': st['inter_titles'],
+                    'rl_titles': st['rl_titles'],
+                    'gold': st['gold'],
+                    'silver': st['silver'],
+                    'bronze': st['bronze'],
+                    'total_medals': tot_medals,
+                    'top_achievements': st['top_achievements'][:3]
+                })
 
         all_time_major_legends.sort(
             key=lambda x: (x['total_titles'], x['world_titles'], x['gold'], x['silver'], x['bronze'], x['total_medals']),

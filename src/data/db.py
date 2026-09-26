@@ -215,6 +215,34 @@ CREATE TABLE IF NOT EXISTS cms_content_blocks (
     updated_at TEXT,
     PRIMARY KEY (page_id, block_key)
 );
+
+CREATE TABLE IF NOT EXISTS player_achievements (
+    player_name TEXT PRIMARY KEY,
+    total_titles INTEGER DEFAULT 0,
+    world_titles INTEGER DEFAULT 0,
+    international_titles INTEGER DEFAULT 0,
+    intermezzo_titles INTEGER DEFAULT 0,
+    royal_league_titles INTEGER DEFAULT 0,
+    other_titles INTEGER DEFAULT 0,
+    gold_medals INTEGER DEFAULT 0,
+    silver_medals INTEGER DEFAULT 0,
+    bronze_medals INTEGER DEFAULT 0,
+    summary_text TEXT,
+    top_achievements_json TEXT
+);
+
+CREATE TABLE IF NOT EXISTS tournament_records (
+    record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    player_name TEXT NOT NULL,
+    tournament_name TEXT NOT NULL,
+    season TEXT,
+    division TEXT,
+    placement TEXT,
+    points TEXT,
+    finish_date TEXT
+);
+CREATE INDEX IF NOT EXISTS idx_tr_player ON tournament_records(player_name);
+CREATE INDEX IF NOT EXISTS idx_tr_tourney ON tournament_records(tournament_name);
 """
 
 def get_connection(db_path=None):
