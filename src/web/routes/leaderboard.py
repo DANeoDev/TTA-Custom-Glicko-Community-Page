@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from flask import Blueprint, render_template, request, session, url_for, abort
 from src.data.db import get_connection, ensure_yearly_stats
+from src.data.badges import TITLE_ORDER
 
 leaderboard_bp = Blueprint('leaderboard', __name__)
 
@@ -239,7 +240,7 @@ def render_leaderboard(year=None):
 
             pool_sql = (
                 'SELECT ROW_NUMBER() OVER (ORDER BY rh.c_rating DESC) as rank, '
-                '0 as rank_delta, rh.player_name, p.country_code, p.title, p.title_count, p.badge_reason, '
+                '0 as rank_delta, rh.player_name, p.country_code, p.title, p.title_count, p.badge_reason, p.peak_title, p.peak_year, '
                 'rh.rating, rh.rd, 0.0 as sigma, rh.c_rating, '
                 f'{opp_col} as opponents_count, '
                 f'{wins_col} as wins, {losses_col} as losses, '
@@ -274,7 +275,7 @@ def render_leaderboard(year=None):
             where_sql = ' AND '.join(where_clauses)
 
             pool_sql = (
-                'SELECT pr.rank, pr.rank_delta, pr.player_name, p.country_code, p.title, p.title_count, p.badge_reason, '
+                'SELECT pr.rank, pr.rank_delta, pr.player_name, p.country_code, p.title, p.title_count, p.badge_reason, p.peak_title, p.peak_year, '
                 'pr.rating, pr.rd, pr.sigma, pr.c_rating, pr.opponents_count, pr.wins, pr.losses, pr.draws, '
                 'pr.win_rate, pr.last_played, '
                 'ROW_NUMBER() OVER (ORDER BY pr.c_rating DESC) as display_rank '
@@ -479,6 +480,10 @@ def render_leaderboard(year=None):
 
             # Provisional calibration status: < 15 matches and not inactive > 1 year
             p['is_calibrating'] = bool(p.get('opponents_count', 0) < 15 and p['is_active'])
+
+            pk_t = p.get('peak_title')
+            cr_t = p.get('title')
+            p['is_peak_higher'] = bool(pk_t and p.get('peak_year') and (not cr_t or TITLE_ORDER.get(pk_t, 99) < TITLE_ORDER.get(cr_t, 99)))
 
             # Attach delta
             if delta_window != 'none':

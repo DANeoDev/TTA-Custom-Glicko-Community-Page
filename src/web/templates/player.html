@@ -190,6 +190,11 @@
       {% elif player.title == 'W' %}
         <span class="badge badge-w" data-tooltip="{{ player.badge_reason or 'Wood' }}">Wood</span>
       {% endif %}
+      {% if player.is_peak_higher %}
+        <span class="peak-badge-indicator" style="font-family: var(--font-heading); font-size: 0.82rem; color: #ffd54f; margin-top: 0.15rem; letter-spacing: 0.3px;">
+          (Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})
+        </span>
+      {% endif %}
       <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}{% if is_calibrating %} <span style="font-size: 1.1rem; vertical-align: middle; cursor: help;" data-tooltip="Provisional / Calibrating Prior: {{ total_matches_count }}/15 matches completed">⏳</span>{% endif %}</h1>
     </div>
     <div class="player-meta-pill">
@@ -266,7 +271,11 @@
       <p style="margin-bottom: 0.5rem;">
         <strong>{{ player.name }}</strong> has competed in <strong>{{ total_matches_count }}</strong> competitive matches across TTA tournament divisions
         {% if player.title %}
-          and holds the official title of <strong>{{ get_title_name(player.title) }}</strong>.
+          and holds the official title of <strong>{{ get_title_name(player.title) }}</strong>{% if player.is_peak_higher %} <span style="color: var(--accent-gold); font-weight: 600;">(Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})</span>{% endif %}.
+        {% elif player.peak_title %}
+          and held the peak career title of <strong>{{ get_title_name(player.peak_title) }}</strong> in <strong>{{ player.peak_year }}</strong>.
+        {% else %}
+          .
         {% endif %}
       </p>
     {% endif %}
@@ -291,6 +300,8 @@
               Peak Career Season: {{ career_peak_year.year }}
               {% if career_peak_year.has_wc %}
                 <span class="badge badge-wc" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">World Champion</span>
+              {% elif career_peak_year.title %}
+                <span class="badge badge-{{ career_peak_year.title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; margin-left: 0.4rem; vertical-align: middle;">{{ career_peak_year.title_name }}</span>
               {% endif %}
             </div>
             <div style="font-family: var(--font-stats); font-size: 0.85rem; color: #f3e5c8;">

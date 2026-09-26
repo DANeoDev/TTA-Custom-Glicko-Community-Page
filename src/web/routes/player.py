@@ -1,14 +1,43 @@
 from datetime import datetime
 import json
 import math
+from typing import Dict, Optional, Any
 from flask import Blueprint, render_template, abort, request, session
 from src.data.db import get_connection
 from src.web.routes.leaderboard import VALID_MODELS, VALID_FORMATS, VALID_RESET_MODES
 from src.models.glicko2.engine import Rating, update_rating
 from src.models.glicko2.adaptive_t import update_rating_adaptive, ADAPTIVE_T_PARAMS
 from src.models.glicko2.calculator import GOLDEN_MP_WEIGHTS
+from src.data.badges import classify_division_tier, TIER_TITLE_MAP, TIER_NAMES, TITLE_ORDER, HISTORICAL_WC_INFO
 
 player_bp = Blueprint('player', __name__)
+
+def get_player_yearly_tiers(conn, player_name: str) -> Dict[int, int]:
+    """Retrieves the highest tournament division tier played by a player in each calendar year."""
+    tourney_rows = conn.execute("""
+        SELECT tournament, date
+        FROM matches
+        WHERE (player1 = ? OR player2 = ? OR player3 = ? OR player4 = ?)
+          AND tournament IS NOT NULL
+    """, (player_name, player_name, player_name, player_name)).fetchall()
+
+    yearly_tiers = {}
+    for tr in tourney_rows:
+        d = tr['date']
+        if d and len(d) >= 4:
+            try:
+                yr_int = int(d[:4])
+                t = classify_division_tier(tr['tournament'])
+                if t is not None:
+                    yearly_tiers[yr_int] = min(yearly_tiers.get(yr_int, 99), t)
+            except (ValueError, TypeError):
+                pass
+
+    for p_wc, (wc_yr, wc_title) in HISTORICAL_WC_INFO.items():
+        if p_wc.lower() == player_name.lower():
+            yearly_tiers[wc_yr] = 0
+
+    return yearly_tiers
 
 KNOWN_PLAYER_ALIASES = {
     'tinaren': 'tianren4561367',
@@ -51,7 +80,7 @@ def profile(player_name):
     try:
         lookup_name = KNOWN_PLAYER_ALIASES.get(player_name.lower(), player_name)
         player_row = conn.execute(
-            'SELECT name, country_code, title, title_count, badge_reason, last_played FROM players WHERE name = ? COLLATE NOCASE',
+            'SELECT name, country_code, title, title_count, badge_reason, last_played, peak_title, peak_year FROM players WHERE name = ? COLLATE NOCASE',
             (lookup_name,)
         ).fetchone()
 
@@ -63,9 +92,13 @@ def profile(player_name):
             ).fetchone()
             if not exists:
                 abort(404)
-            player = {'name': lookup_name, 'country_code': None, 'title': None, 'title_count': 0, 'last_played': None, 'first_played': None}
+            player = {'name': lookup_name, 'country_code': None, 'title': None, 'title_count': 0, 'last_played': None, 'first_played': None, 'peak_title': None, 'peak_year': None}
         else:
             player = dict(player_row)
+
+        pk_t = player.get('peak_title')
+        cr_t = player.get('title')
+        player['is_peak_higher'] = bool(pk_t and player.get('peak_year') and (not cr_t or TITLE_ORDER.get(pk_t, 99) < TITLE_ORDER.get(cr_t, 99)))
 
         # Query first played match date for debut display
         first_m = conn.execute(
@@ -207,6 +240,8 @@ def profile(player_name):
             except (ValueError, TypeError):
                 pass
 
+        yearly_tiers = get_player_yearly_tiers(conn, player_name)
+
         for yr_row in yearly_stats_rows:
             y_val = yr_row['year']
             peak_r = peaks_by_year.get(y_val)
@@ -224,6 +259,10 @@ def profile(player_name):
                 wc_bonus = 150
                 score += wc_bonus
 
+            y_tier = yearly_tiers.get(y_val)
+            y_title = 'WC' if y_tier == 0 else (TIER_TITLE_MAP.get(y_tier) if y_tier is not None else None)
+            y_title_name = 'World Champion' if y_tier == 0 else (TIER_NAMES.get(y_tier) if y_tier is not None else None)
+
             y_entry = {
                 'year': y_val,
                 'opps': opps,
@@ -233,7 +272,9 @@ def profile(player_name):
                 'win_rate': wr,
                 'peak_rating': peak_r,
                 'score': round(score, 1),
-                'has_wc': wc_bonus > 0
+                'has_wc': wc_bonus > 0,
+                'title': y_title,
+                'title_name': y_title_name
             }
             career_years.append(y_entry)
 
@@ -561,12 +602,16 @@ def player_achievements(player_name):
     conn = get_connection()
     try:
         lookup_name = KNOWN_PLAYER_ALIASES.get(player_name.lower(), player_name)
-        player = conn.execute(
-            'SELECT name, country_code, title, title_count, last_played FROM players WHERE LOWER(name) = LOWER(?)',
+        player_row = conn.execute(
+            'SELECT name, country_code, title, title_count, last_played, peak_title, peak_year FROM players WHERE LOWER(name) = LOWER(?)',
             (lookup_name,)
         ).fetchone()
-        if not player:
+        if not player_row:
             abort(404)
+        player = dict(player_row)
+        pk_t = player.get('peak_title')
+        cr_t = player.get('title')
+        player['is_peak_higher'] = bool(pk_t and player.get('peak_year') and (not cr_t or TITLE_ORDER.get(pk_t, 99) < TITLE_ORDER.get(cr_t, 99)))
         player_name = player['name']
 
         ach_row = conn.execute(
@@ -702,13 +747,17 @@ def player_matrix(player_name):
     conn = get_connection()
     try:
         lookup_name = KNOWN_PLAYER_ALIASES.get(player_name.lower(), player_name)
-        player = conn.execute(
-            'SELECT name, country_code, title, title_count, last_played FROM players WHERE LOWER(name) = LOWER(?)',
+        player_row = conn.execute(
+            'SELECT name, country_code, title, title_count, last_played, peak_title, peak_year FROM players WHERE LOWER(name) = LOWER(?)',
             (lookup_name,)
         ).fetchone()
 
-        if not player:
+        if not player_row:
             abort(404)
+        player = dict(player_row)
+        pk_t = player.get('peak_title')
+        cr_t = player.get('title')
+        player['is_peak_higher'] = bool(pk_t and player.get('peak_year') and (not cr_t or TITLE_ORDER.get(pk_t, 99) < TITLE_ORDER.get(cr_t, 99)))
         player_name = player['name']
 
         # Combinations: (model, reset_mode, db_key)
@@ -789,6 +838,8 @@ def player_matrix(player_name):
         best_year = None
         best_year_score = -999999.0
 
+        yearly_tiers = get_player_yearly_tiers(conn, player_name)
+
         for yr_row in yearly_rows:
             y = yr_row['year']
             pk_row = conn.execute(
@@ -812,6 +863,10 @@ def player_matrix(player_name):
                 score += 150
                 is_wc = True
 
+            y_tier = yearly_tiers.get(y)
+            y_title = 'WC' if y_tier == 0 else (TIER_TITLE_MAP.get(y_tier) if y_tier is not None else None)
+            y_title_name = 'World Champion' if y_tier == 0 else (TIER_NAMES.get(y_tier) if y_tier is not None else None)
+
             entry = {
                 'year': y,
                 'opps': yr_row['opponents_count'],
@@ -827,7 +882,9 @@ def player_matrix(player_name):
                 'peak_rating': peak_r,
                 'year_end_rating': round(snap_row['rating'], 1) if snap_row else None,
                 'score': round(score, 1),
-                'is_wc': is_wc
+                'is_wc': is_wc,
+                'title': y_title,
+                'title_name': y_title_name
             }
             career_history_table.append(entry)
 

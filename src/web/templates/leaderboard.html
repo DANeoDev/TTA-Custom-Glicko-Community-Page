@@ -969,6 +969,9 @@
             {% else %}
               <span style="color: #665544;">-</span>
             {% endif %}
+            {% if p.is_peak_higher %}
+              <span style="font-size: 0.72rem; color: #ffd54f; margin-left: 0.25rem; white-space: nowrap; font-family: var(--font-stats);" title="Peak Career Division: {{ get_title_name(p.peak_title) }} in {{ p.peak_year }}">(Peak: {{ p.peak_title }} in {{ p.peak_year }})</span>
+            {% endif %}
           </td>
           <td>
             <span class="c-rating-val">{{ "%.2f"|format(p.c_rating) }}</span>

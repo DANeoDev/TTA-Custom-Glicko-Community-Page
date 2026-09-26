@@ -207,6 +207,11 @@
       {% elif player.title == 'W' %}
         <span class="badge badge-w" title="Official Competitive Title: Wood">Wood</span>
       {% endif %}
+      {% if player.is_peak_higher %}
+        <span class="peak-badge-indicator" style="font-family: var(--font-heading); font-size: 0.82rem; color: #ffd54f; margin-top: 0.15rem; letter-spacing: 0.3px;">
+          (Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})
+        </span>
+      {% endif %}
       <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}</h1>
     </div>
     <div class="player-meta-pill">

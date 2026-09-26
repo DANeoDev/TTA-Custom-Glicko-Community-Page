@@ -186,3 +186,48 @@ def test_faq_gold_standard_and_grozz_badge():
         conn.close()
 
 
+def test_peak_year_title_and_breakdown_badge():
+    """Verify peak title derivation, (Peak: Rank in year) indicator, and Year-by-Year Career Breakdown."""
+    from src.data.badges import derive_tournament_badges
+    derive_tournament_badges()
+
+    app = create_app()
+    client = app.test_client()
+
+    # 1. barboucha: Current Master, Peak Grandmaster in 2024
+    resp_barb_m = client.get('/player/barboucha/matrix')
+    assert resp_barb_m.status_code == 200
+    html_barb_m = resp_barb_m.get_data(as_text=True)
+    assert 'Peak: Grandmaster in 2024' in html_barb_m
+    assert 'Division Tier' in html_barb_m
+
+    resp_barb_p = client.get('/player/barboucha')
+    assert resp_barb_p.status_code == 200
+    html_barb_p = resp_barb_p.get_data(as_text=True)
+    assert 'Peak: Grandmaster in 2024' in html_barb_p
+
+    # 2. Olesch: Current Silver, Peak Platinum in 2023
+    resp_olesch = client.get('/player/Olesch')
+    assert resp_olesch.status_code == 200
+    html_olesch = resp_olesch.get_data(as_text=True)
+    assert 'Peak: Platinum in 2023' in html_olesch
+
+    # 3. Weidenbaum: Current GM, Peak WC in 2023
+    resp_weid = client.get('/player/Weidenbaum')
+    assert resp_weid.status_code == 200
+    html_weid = resp_weid.get_data(as_text=True)
+    assert 'Peak: World Champion in 2023' in html_weid
+
+    # 4. ArthursDad: Current Bronze, Peak Bronze -> No peak indicator shown
+    resp_arthur = client.get('/player/ArthursDad')
+    assert resp_arthur.status_code == 200
+    html_arthur = resp_arthur.get_data(as_text=True)
+    assert '(Peak:' not in html_arthur
+
+    # 5. Leaderboard displays (Peak: GM in 2024) for barboucha
+    resp_lb = client.get('/ratings?status=all&search=barboucha')
+    assert resp_lb.status_code == 200
+    html_lb = resp_lb.get_data(as_text=True)
+    assert 'Peak: GM in 2024' in html_lb
+
+

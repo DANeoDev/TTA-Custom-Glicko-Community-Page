@@ -12,7 +12,9 @@ CREATE TABLE IF NOT EXISTS players (
     title TEXT,
     title_count INTEGER DEFAULT 0,
     badge_reason TEXT,
-    last_played TEXT
+    last_played TEXT,
+    peak_title TEXT,
+    peak_year INTEGER
 );
 
 CREATE INDEX IF NOT EXISTS idx_players_name ON players(name);
@@ -277,6 +279,14 @@ def init_db(db_path=None):
             pass
         try:
             conn.execute("ALTER TABLE players ADD COLUMN badge_reason TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE players ADD COLUMN peak_title TEXT")
+        except sqlite3.OperationalError:
+            pass
+        try:
+            conn.execute("ALTER TABLE players ADD COLUMN peak_year INTEGER")
         except sqlite3.OperationalError:
             pass
         for col, col_def in [

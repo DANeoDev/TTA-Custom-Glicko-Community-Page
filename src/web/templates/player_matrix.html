@@ -186,7 +186,12 @@
       {% elif player.name == 'Weidenbaum' %}
         <span class="badge-wc">💎 2023 WC</span>
       {% elif player.title %}
-        <span class="badge badge-{{ player.title.lower() }}">{{ player.title }}</span>
+        <span class="badge badge-{{ player.title.lower() }}">{{ get_title_name(player.title) }}</span>
+      {% endif %}
+      {% if player.is_peak_higher %}
+        <span class="badge-peak-sub" style="font-size: 0.85rem; color: #ffd54f; font-weight: 600; margin-left: 0.25rem;">
+          (Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})
+        </span>
       {% endif %}
     </div>
     <div style="color: var(--text-muted); font-size: 0.9rem;">
@@ -241,12 +246,17 @@
       Peak Career Season: <span style="color: var(--accent-gold);">{{ best_year.year }}</span>
       {% if best_year.is_wc %}
         <span class="badge-wc" style="font-size: 0.75rem; margin-left: 0.5rem;">💎 World Champion</span>
+      {% elif best_year.title %}
+        <span class="badge badge-{{ best_year.title.lower() }}" style="font-size: 0.75rem; margin-left: 0.5rem;">{{ best_year.title_name }}</span>
       {% endif %}
     </div>
     <div style="color: var(--text-muted); font-size: 0.92rem; line-height: 1.5;">
       In {{ best_year.year }}, <strong>{{ player.name }}</strong> achieved a dominant <strong>{{ best_year.win_rate }}% win rate</strong> across <strong>{{ best_year.opps }} competitive matches</strong> ({{ best_year.wins }} wins, {{ best_year.losses }} losses)
       {% if best_year.peak_rating %}
         with a seasonal peak rating of <strong style="color: #ffd54f;">{{ best_year.peak_rating }}</strong>
+      {% endif %}
+      {% if best_year.title_name %}
+        competing in the <strong>{{ best_year.title_name }}</strong> division
       {% endif %}
       (Composite Performance Index: <strong style="color: var(--accent-gold);">{{ best_year.score }} pts</strong>).
     </div>
@@ -429,6 +439,7 @@
       <thead>
         <tr>
           <th>Year</th>
+          <th>Division Tier</th>
           <th>Season Opps</th>
           <th>Season W-L-D</th>
           <th>Season Win %</th>
@@ -450,6 +461,15 @@
               <strong style="color: #fff;">{{ yr.year }}</strong>
               {% if yr.is_wc %}<span class="badge-wc" style="font-size: 0.65rem; padding: 0.1rem 0.3rem;">WC</span>{% endif %}
             </td>
+            <td>
+              {% if yr.is_wc %}
+                <span class="badge badge-wc" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">World Champion</span>
+              {% elif yr.title %}
+                <span class="badge badge-{{ yr.title.lower() }}" style="font-size: 0.72rem; padding: 0.15rem 0.45rem;">{{ yr.title_name }}</span>
+              {% else %}
+                <span style="color: #665544; font-size: 0.8rem;">-</span>
+              {% endif %}
+            </td>
             <td>{{ yr.opps }}</td>
             <td>
               <span style="color: #66bb6a;">{{ yr.wins }}</span> - 
@@ -464,7 +484,7 @@
             <td style="color: var(--accent-gold); font-weight: 700;">{{ yr.score }}</td>
             <td>
               {% if best_year and best_year.year == yr.year %}
-                <span class="badge" style="background: rgba(229, 169, 60, 0.25); color: #ffd700; border: 1px solid #ffd700; font-size: 0.75rem;">👑 Peak Career Year</span>
+                <span class="badge" style="background: rgba(229, 169, 60, 0.25); color: #ffd700; border: 1px solid #ffd700; font-size: 0.75rem;">👑 Peak Career Year{% if yr.title_name %} ({{ yr.title_name }}){% endif %}</span>
               {% else %}
                 <span style="color: var(--text-muted); font-size: 0.8rem;">Active</span>
               {% endif %}

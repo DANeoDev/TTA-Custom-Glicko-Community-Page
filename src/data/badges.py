@@ -46,6 +46,12 @@ TITLE_ORDER = {'WC': 0, 'GM': 1, 'M': 2, 'P': 3, 'G': 4, 'S': 5, 'B': 6, 'W': 7}
 # Reigning World Champion holding active 'WC' title
 REIGNING_WC_PLAYERS = {'a440'}
 
+HISTORICAL_WC_INFO = {
+    'a440': (2025, 'WC'),
+    'Martin_Pecheur': (2024, 'WC'),
+    'Weidenbaum': (2023, 'WC')
+}
+
 
 def classify_division_tier(tournament_name: str) -> Optional[int]:
     """Classifies a match's tournament/division string into a tier from 1 (highest) to 7 (wood).
@@ -192,6 +198,13 @@ def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
     """Derives and saves tournament badges for all active players within the last 1 year (12 months)."""
     conn = get_connection(db_path)
     try:
+        # Ensure peak_title and peak_year columns exist on players table
+        col_names = [col[1] for col in conn.execute("PRAGMA table_info(players)").fetchall()]
+        if 'peak_title' not in col_names:
+            conn.execute("ALTER TABLE players ADD COLUMN peak_title TEXT")
+        if 'peak_year' not in col_names:
+            conn.execute("ALTER TABLE players ADD COLUMN peak_year INTEGER")
+
         # Determine 1-year (12-month) recency cutoff based on latest match in DB
         max_row = conn.execute("SELECT MAX(date) FROM matches").fetchone()
         if not max_row or not max_row[0]:
@@ -199,22 +212,26 @@ def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
         max_date = datetime.strptime(max_row[0], "%Y-%m-%d")
         cutoff_date = (max_date - relativedelta(years=1)).strftime("%Y-%m-%d")
 
-        # Select matches played within last 12 months (1 year)
-        rows = conn.execute("""
+        # Select all tournament matches to derive both active badges (last 1 year) and career peak titles (all-time)
+        all_tourney_matches = conn.execute("""
             SELECT tournament, date, player1, player2, player3, player4
             FROM matches
-            WHERE date >= ? AND tournament IS NOT NULL
+            WHERE tournament IS NOT NULL
             ORDER BY date DESC
-        """, (cutoff_date,)).fetchall()
+        """).fetchall()
 
         player_best = {}
+        player_career_best = {}
         player_tier_counts = {}
 
-        for r in rows:
+        for r in all_tourney_matches:
             tourney = r['tournament']
             tier = classify_division_tier(tourney)
             if tier is None:
                 continue
+
+            d_str = r['date']
+            yr = int(d_str[:4]) if d_str and len(d_str) >= 4 else None
 
             participants = [r['player1'], r['player2']]
             if r['player3']:
@@ -225,45 +242,84 @@ def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
             for p in participants:
                 if not p:
                     continue
-                if p not in player_best or tier < player_best[p]['tier'] or (tier == player_best[p]['tier'] and r['date'] > player_best[p]['date']):
-                    player_best[p] = {
+
+                # 1. Active window evaluation (within last 12 months)
+                if d_str >= cutoff_date:
+                    if p not in player_best or tier < player_best[p]['tier'] or (tier == player_best[p]['tier'] and d_str > player_best[p]['date']):
+                        player_best[p] = {
+                            'tier': tier,
+                            'tournament': tourney,
+                            'date': d_str,
+                            'reason': parse_badge_reason(tourney, tier)
+                        }
+
+                    if tier == 1:
+                        player_tier_counts[p] = player_tier_counts.get(p, 0) + 1
+
+                # 2. Career all-time peak evaluation
+                if p not in player_career_best or tier < player_career_best[p]['tier'] or (tier == player_career_best[p]['tier'] and d_str > player_career_best[p]['date']):
+                    player_career_best[p] = {
                         'tier': tier,
-                        'tournament': tourney,
-                        'date': r['date'],
-                        'reason': parse_badge_reason(tourney, tier)
+                        'year': yr,
+                        'date': d_str
                     }
 
-                if tier == 1:
-                    player_tier_counts[p] = player_tier_counts.get(p, 0) + 1
+        # Historical World Champions hold exclusive Tier 0 ('WC') career peak title
+        for p, (yr, title) in HISTORICAL_WC_INFO.items():
+            player_career_best[p] = {
+                'tier': 0,
+                'year': yr,
+                'date': f"{yr}-12-15"
+            }
 
         derived_data = {}
         for p, info in player_best.items():
             title = TIER_TITLE_MAP.get(info['tier'], 'W')
             reason = info['reason']
+            c_info = player_career_best.get(p, {'tier': info['tier'], 'year': int(info['date'][:4]) if info.get('date') else None})
+            pk_title = 'WC' if c_info['tier'] == 0 else TIER_TITLE_MAP.get(c_info['tier'], 'W')
+            pk_yr = c_info.get('year')
+
             derived_data[p] = {
                 'title': title,
                 'title_count': player_tier_counts.get(p, 1 if title == 'GM' else 0),
-                'badge_reason': reason
+                'badge_reason': reason,
+                'peak_title': pk_title,
+                'peak_year': pk_yr
             }
 
         # Reigning World Champion holds exclusive active WC badge
         for p in REIGNING_WC_PLAYERS:
+            c_info = player_career_best.get(p, {'tier': 0, 'year': 2025})
             derived_data[p] = {
                 'title': 'WC',
                 'title_count': 1,
-                'badge_reason': 'Reigning World Champion (World Championship 2025)'
+                'badge_reason': 'Reigning World Champion (World Championship 2025)',
+                'peak_title': 'WC',
+                'peak_year': c_info.get('year', 2025)
             }
 
-        # Clear badges for all players first (inactive players lose badge)
-        conn.execute("UPDATE players SET title = NULL, title_count = 0, badge_reason = NULL")
+        # Clear badges for all players first (inactive players lose active badge)
+        conn.execute("UPDATE players SET title = NULL, title_count = 0, badge_reason = NULL, peak_title = NULL, peak_year = NULL")
 
         # Update active players
         for p, data in derived_data.items():
             conn.execute("""
                 UPDATE players
-                SET title = ?, title_count = ?, badge_reason = ?
+                SET title = ?, title_count = ?, badge_reason = ?, peak_title = ?, peak_year = ?
                 WHERE name = ?
-            """, (data['title'], data['title_count'], data['badge_reason'], p))
+            """, (data['title'], data['title_count'], data['badge_reason'], data['peak_title'], data['peak_year'], p))
+
+        # Update career peak title & year for inactive players who still hold historical tournament achievements
+        for p, c_info in player_career_best.items():
+            if p not in derived_data:
+                pk_title = 'WC' if c_info['tier'] == 0 else TIER_TITLE_MAP.get(c_info['tier'], 'W')
+                pk_yr = c_info.get('year')
+                conn.execute("""
+                    UPDATE players
+                    SET peak_title = ?, peak_year = ?
+                    WHERE name = ?
+                """, (pk_title, pk_yr, p))
 
         conn.commit()
         return derived_data
