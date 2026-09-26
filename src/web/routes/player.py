@@ -21,7 +21,10 @@ def profile(player_name):
     model_param = request.args.get('model')
     if model_param in VALID_MODELS:
         session['active_model'] = model_param
-    active_model = session.get('active_model', 'glicko2_daneo')
+    active_model = session.get('active_model')
+    if not active_model or active_model not in VALID_MODELS:
+        active_model = 'glicko2_daneo'
+        session['active_model'] = 'glicko2_daneo'
 
     # Handle format switch
     format_param = request.args.get('format')
@@ -633,7 +636,13 @@ def api_h2h(player1, player2):
 @player_bp.route('/player/<player_name>/modes')
 def player_matrix(player_name):
     """Subpage displaying the complete 3x3 rating matrix across models and resets, filterable by year, with career peak year evaluation."""
-    active_model = session.get('active_model', 'glicko2_std')
+    model_param = request.args.get('model')
+    if model_param in VALID_MODELS:
+        session['active_model'] = model_param
+    active_model = session.get('active_model')
+    if not active_model or active_model not in VALID_MODELS:
+        active_model = 'glicko2_daneo'
+        session['active_model'] = 'glicko2_daneo'
 
     format_param = request.args.get('format')
     if format_param is not None:

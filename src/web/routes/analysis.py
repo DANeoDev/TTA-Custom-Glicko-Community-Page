@@ -468,9 +468,11 @@ def calibration():
 @analysis_bp.route('/analysis')
 def index():
     global _ANALYSIS_CACHE
-    active_model = request.args.get('model', session.get('active_model', 'all'))
+    active_model = request.args.get('model', session.get('analysis_model', session.get('active_model', 'all')))
     if active_model in VALID_MODELS or active_model == 'all':
-        session['active_model'] = active_model
+        session['analysis_model'] = active_model
+        if active_model in VALID_MODELS:
+            session['active_model'] = active_model
 
     format_param = request.args.get('format')
     if format_param is not None:
@@ -484,8 +486,10 @@ def index():
 
     reset_param = request.args.get('reset_mode')
     if reset_param in VALID_RESET_MODES or reset_param == 'all':
-        session['active_reset_mode'] = reset_param
-    active_reset_mode = session.get('active_reset_mode', 'all')
+        session['analysis_reset_mode'] = reset_param
+        if reset_param in VALID_RESET_MODES:
+            session['active_reset_mode'] = reset_param
+    active_reset_mode = session.get('analysis_reset_mode', 'all')
     if active_reset_mode not in VALID_RESET_MODES and active_reset_mode != 'all':
         active_reset_mode = 'all'
 

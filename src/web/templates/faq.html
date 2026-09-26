@@ -1498,287 +1498,267 @@ $$
           {{ block_scenarios_walkthrough.content }}
         {% else %}
           <p>
-        To understand exactly how each rating engine calculates win expectations and allocates rating shifts (\(\Delta \text{Rating}\)), below are <strong>9 actual competitive matches extracted directly from our database</strong> across 2-Player, 3-Player, and 4-Player formats under Even Parity, Moderate Disparity, and Extreme Tail Disparity.
+        To understand the exact mathematical divergence between the naive <strong>Glicko-2 Standard</strong> baseline and our premier <strong>GlickoD</strong> engine, below are <strong>actual competitive tournament encounters extracted directly from our database</strong> across 3-Player and 4-Player formats.
       </p>
 
-      <!-- 2-PLAYER MATCHES -->
-      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.35rem;">
-        1. Format 2-Player Duels (\(N=2\), Weight \(w = 1.0\))
-      </h4>
-
-      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-        <!-- 2P Scenario 1 -->
-        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Even Parity &bull; Match #132646 (Royal League S09)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-25</span>
-          </div>
-          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>Cogito3</strong> (1846 &plusmn; 21) defeated <strong>lhrljr</strong> (1837 &plusmn; 30). Scores: 289 vs 264.
-          </p>
-          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Win Probability Expectation:</strong> Standard &amp; MP: <strong>51.2% vs 48.8%</strong> &bull; Adaptive-T (\(T=1.02\)): <strong>51.2% vs 48.8%</strong>.</li>
-            <li><strong>Cogito3 Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+1.25</strong> | G2 MP: <strong style="color: #4ade80;">+1.25</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+1.25</strong>.</li>
-            <li><strong>lhrljr Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-2.62</strong> | G2 MP: <strong style="color: #ef5350;">-2.62</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-2.62</strong>.</li>
-            <li><em>Takeaway:</em> In evenly matched contests, \(T \approx 1.00\) exactly, preserving standard logistic dynamics with zero distortion.</li>
-          </ul>
-        </div>
-
-        <!-- 2P Scenario 2 -->
-        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: Moderate Disparity &bull; Match #89955 (World Championship 2026 Stage 6)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-27</span>
-          </div>
-          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>maximpodg</strong> (1849 &plusmn; 27) defeated <strong>Grozz</strong> (1985 &plusmn; 21). Scores: 134 vs 125 (Underdog victory).
-          </p>
-          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Win Probability Expectation:</strong> Standard &amp; MP: <strong>31.5% vs 68.5%</strong> &bull; Adaptive-T (\(T=1.20\)): <strong>34.4% vs 65.6%</strong>.</li>
-            <li><strong>maximpodg Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+2.98</strong> | G2 MP: <strong style="color: #4ade80;">+2.98</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+2.86</strong>.</li>
-            <li><strong>Grozz Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-1.77</strong> | G2 MP: <strong style="color: #ef5350;">-1.77</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-1.70</strong>.</li>
-            <li><em>Takeaway:</em> Because Adaptive-T recognizes natural stochastic variance (\(T=1.20\)), the upset penalty on the favorite is appropriately calibrated rather than over-punitive.</li>
-          </ul>
-        </div>
-
-        <!-- 2P Scenario 3 -->
-        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Heavy Favorite &bull; Match #132647 (Royal League S09)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-25</span>
-          </div>
-          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>vito</strong> (1678 &plusmn; 43) defeated <strong>MyriamVanErum</strong> (1365 &plusmn; 71). Scores: 272 vs 197.
-          </p>
-          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Win Probability Expectation:</strong> Standard &amp; MP: <strong>85.3% vs 14.7%</strong> &bull; Adaptive-T (\(T=1.34\)): <strong>78.8% vs 21.2%</strong>.</li>
-            <li><strong>vito Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+1.53</strong> | G2 MP: <strong style="color: #4ade80;">+1.53</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+2.20</strong> (+44% gain).</li>
-            <li><strong>MyriamVanErum Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-4.13</strong> | G2 MP: <strong style="color: #ef5350;">-4.13</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-5.98</strong>.</li>
-            <li><em>Takeaway:</em> Standard Glicko overconfidently assumes an 85.3% win rate and gives virtually no reward (+1.53) for winning. Adaptive-T corrects for bounded skill expression (\(78.8\%\)), awarding a fair +2.20 rating gain.</li>
-          </ul>
-        </div>
+      <div style="background: rgba(229, 169, 60, 0.08); border-left: 3px solid var(--accent-gold); padding: 0.85rem 1.15rem; border-radius: 4px; margin: 1rem 0 1.5rem 0;">
+        <strong style="color: var(--accent-gold); font-size: 0.95rem; display: block; margin-bottom: 0.35rem;">
+          💡 Why This Comparison Only Applies to Multiplayer (MP) Contests (3P &amp; 4P)
+        </strong>
+        <p style="margin: 0; font-size: 0.88rem; color: #cfbeab; line-height: 1.55;">
+          In <strong>2-Player Duels (\(N=2\))</strong>, information scaling is \(W(2) = \phi^{2-2} = \phi^0 = 1.0\). Both Glicko-2 Standard and GlickoD assign a match weight of \(w = 1.0\). For established competitors, their 1v1 formulas yield <strong>mathematically identical rating updates</strong>.<br>
+          In <strong>Multiplayer Games (\(N \ge 3\))</strong>, however, Standard Glicko naively decomposes the table into unscaled 1v1 duels, treating a 3-player match as <strong>2 full 1v1 games</strong> (\(W(3) = 2.0\)) and a 4-player match as <strong>3 full 1v1 games</strong> (\(W(4) = 3.0\)). This doubles or triples all rating swings, artificially deflates uncertainty (RD), and inflates leaderboards.<br>
+          By contrast, <strong>GlickoD</strong> deploys <strong>Golden Ratio (\(\phi \approx 1.618\)) Information Scaling</strong>, setting \(W(N) = \phi^{N-2}\) effective match equivalents (\(W(3) \approx 1.618\) and \(W(4) \approx 2.618\)). Combined with the <strong>15-Game Recalibration Breakthrough</strong>, GlickoD captures multilateral evidence without runaway variance or newcomer distortion.
+        </p>
       </div>
 
       <!-- 3-PLAYER MATCHES -->
       <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.35rem;">
-        2. Format 3-Player Matches (\(N=3\), Weight \(w = 1/2 = 0.500\))
+        1. Format 3-Player Matches (\(N=3\), Effective Evidence \(W(3) = \phi \approx 1.618\), Pairwise Weight \(w_3 = \phi/2 \approx 0.809\))
       </h4>
 
-      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
         <!-- 3P Scenario 1 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Elite Tri-Parity &bull; Match #89970 (World Championship 2026 Stage 6)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-30</span>
+            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Elite Grandmaster Tri-Parity &bull; Match #33943 (International S34 Grandmaster)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-07-25</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>DANeo</strong> (1909 &plusmn; 23, Score 275) &gt; <strong>tianren4561367</strong> (1924 &plusmn; 33, Score 246) &gt; <strong>Michiel</strong> (1921 &plusmn; 35, Score 215).
+            <strong>Genghisip</strong> (1988 &plusmn; 25, Score 166) &gt; <strong>funestus</strong> (1940 &plusmn; 25, Score 140) &gt; <strong>Martin_Pecheur</strong> (1951 &plusmn; 20, Score 118).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>DANeo (1st Place) Rating Delta:</strong> G2 Standard (2x unscaled): <strong style="color: #4ade80;">+3.15</strong> | G2 MP (\(w=0.5\)): <strong style="color: #4ade80;">+1.58</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+1.58</strong>.</li>
-            <li><strong>tianren4561367 (2nd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-0.18</strong> | G2 MP: <strong style="color: #ef5350;">-0.09</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-0.09</strong>.</li>
-            <li><strong>Michiel (3rd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-7.24</strong> | G2 MP: <strong style="color: #ef5350;">-3.66</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-3.66</strong>.</li>
-            <li><em>Takeaway:</em> Under Standard Glicko, DANeo receives 2 full matches of rating inflation (+3.15). Fractional MP weighting (\(w=0.5\)) properly scales evidence to exactly 1 match (+1.58).</li>
+            <li><strong>Genghisip (1st Place):</strong> G2 Standard (2x unscaled): <strong style="color: #4ade80;">+3.31</strong> | GlickoD (\(w = 0.809\)): <strong style="color: #4ade80;">+2.68</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.63 inflation dampened)</span>.</li>
+            <li><strong>funestus (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+0.31</strong> | GlickoD: <strong style="color: #4ade80;">+0.25</strong>.</li>
+            <li><strong>Martin_Pecheur (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-2.35</strong> | GlickoD: <strong style="color: #ef5350;">-1.91</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+0.44 excess penalty mitigated)</span>.</li>
+            <li><em>Takeaway:</em> Standard Glicko rewards Genghisip as if he won two full independent duels back-to-back (+3.31). GlickoD scales evidence to 1.618 matches (+2.68), honoring the triumph without inflating rating certainty.</li>
           </ul>
         </div>
 
         <!-- 3P Scenario 2 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: Moderate Disparity &bull; Match #135401 (Survivors Cup 2026 Final)</strong>
+            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: World Championship Tri-Duel &bull; Match #89970 (World Championship 2026 Stage 6)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-30</span>
+          </div>
+          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
+            <strong>DANeo</strong> (1909 &plusmn; 23, Score 275) &gt; <strong>tianren4561367</strong> (1924 &plusmn; 33, Score 246) &gt; <strong>Michiel</strong> (1921 &plusmn; 35, Score 215).
+          </p>
+          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
+            <li><strong>DANeo (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+3.28</strong> | GlickoD: <strong style="color: #4ade80;">+2.66</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.62 inflation dampened)</span>.</li>
+            <li><strong>tianren4561367 (2nd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-0.17</strong> | GlickoD: <strong style="color: #ef5350;">-0.14</strong>.</li>
+            <li><strong>Michiel (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-7.13</strong> | GlickoD: <strong style="color: #ef5350;">-5.79</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+1.34 loss penalty protection)</span>.</li>
+            <li><em>Takeaway:</em> Under Standard G2, Michiel absorbs an unscaled double loss (-7.13). GlickoD's \(\phi\)-scaling cushions the penalty to -5.79 while strictly maintaining transitive rank integrity.</li>
+          </ul>
+        </div>
+
+        <!-- 3P Scenario 3 -->
+        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Survivors Cup Grand Final &bull; Match #135401 (Survivors Cup 2026 Final)</strong>
             <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-09-05</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
             <strong>Grozz</strong> (1985 &plusmn; 21, Score 213) &gt; <strong>Weidenbaum</strong> (1976 &plusmn; 21, Score 208) &gt; <strong>Sellux</strong> (1794 &plusmn; 28, Score 201).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Grozz (1st Place) Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+1.90</strong> | G2 MP (\(w=0.5\)): <strong style="color: #4ade80;">+0.96</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+0.98</strong>.</li>
-            <li><strong>Weidenbaum (2nd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-0.59</strong> | G2 MP: <strong style="color: #ef5350;">-0.29</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-0.27</strong>.</li>
-            <li><strong>Sellux (3rd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-2.27</strong> | G2 MP: <strong style="color: #ef5350;">-1.14</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-1.22</strong>.</li>
+            <li><strong>Grozz (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+1.97</strong> | GlickoD: <strong style="color: #4ade80;">+1.60</strong>.</li>
+            <li><strong>Weidenbaum (2nd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-0.61</strong> | GlickoD: <strong style="color: #ef5350;">-0.49</strong>.</li>
+            <li><strong>Sellux (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-2.35</strong> | GlickoD: <strong style="color: #ef5350;">-1.91</strong>.</li>
+            <li><em>Takeaway:</em> In a high-stakes title match decided by single-digit margins (213 vs 208 vs 201), GlickoD stabilizes the podium without catastrophic rating penalties.</li>
           </ul>
         </div>
       </div>
 
       <!-- 4-PLAYER MATCHES -->
       <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.35rem;">
-        3. Format 4-Player Matches (\(N=4\), Weight \(w = 1/3 = 0.333\))
+        2. Format 4-Player Matches (\(N=4\), Effective Evidence \(W(4) = \phi^2 \approx 2.618\), Pairwise Weight \(w_4 = \phi^2/3 \approx 0.873\))
       </h4>
 
       <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 0.5rem;">
         <!-- 4P Scenario 1 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Quad-Parity &bull; Match #134347 (Sodium Ladder S16)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-24</span>
+            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Grandmaster Quad-Parity &bull; Match #33909 (International S34 Grandmaster)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-07-23</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>EnozamaIV</strong> (1563, Score 178) &gt; <strong>FireBones</strong> (1563, Score 159) &gt; <strong>comant</strong> (1555, Score 125) &gt; <strong>Gubbstyv</strong> (1576, Score -1).
+            <strong>Grozz</strong> (1979 &plusmn; 20, Score 298) &gt; <strong>Martin_Pecheur</strong> (1951 &plusmn; 20, Score 271) &gt; <strong>Genghisip</strong> (1988 &plusmn; 25, Score 264) &gt; <strong>Vovka</strong> (1899 &plusmn; 24, Score 232).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>EnozamaIV (1st Place):</strong> G2 Standard (3x unscaled): <strong style="color: #4ade80;">+4.60</strong> | G2 MP (\(w=1/3\)): <strong style="color: #4ade80;">+1.55</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+1.55</strong>.</li>
-            <li><strong>FireBones (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+7.33</strong> | G2 MP (\(w=1/3\)): <strong style="color: #4ade80;">+2.55</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+2.55</strong>.</li>
-            <li><strong>Gubbstyv (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-10.65</strong> | G2 MP (\(w=1/3\)): <strong style="color: #ef5350;">-3.62</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-3.61</strong>.</li>
-            <li><em>Takeaway:</em> In 4-player games, naive Standard Elo triples all rating swings (+4.60 / -10.65). Fractional MP weighting (\(w=1/3\)) keeps uncertainty reduction and rating swings mathematically honest (+1.55 / -3.62).</li>
+            <li><strong>Grozz (1st Place):</strong> G2 Standard (3x unscaled): <strong style="color: #4ade80;">+3.34</strong> | GlickoD (\(w = 0.873\)): <strong style="color: #4ade80;">+2.92</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.42 inflation dampened)</span>.</li>
+            <li><strong>Martin_Pecheur (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+1.27</strong> | GlickoD: <strong style="color: #4ade80;">+1.11</strong>.</li>
+            <li><strong>Genghisip (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-2.59</strong> | GlickoD: <strong style="color: #ef5350;">-2.26</strong>.</li>
+            <li><strong>Vovka (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-3.96</strong> | GlickoD: <strong style="color: #ef5350;">-3.46</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+0.50 protection)</span>.</li>
+            <li><em>Takeaway:</em> Standard G2 treats this as 3 separate 1v1 wins for Grozz (+3.34), decaying his RD 3x faster than warranted. GlickoD scales information to \(2.618\) matches (+2.92), accurately accounting for shared table variance.</li>
+          </ul>
+        </div>
+
+        <!-- 4P Scenario 2 -->
+        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: Tail Disparity &amp; Resignation &bull; Match #33993 (International S34 Grandmaster)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-07-30</span>
+          </div>
+          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
+            <strong>Genghisip</strong> (1988 &plusmn; 25, Score 240) &gt; <strong>Grozz</strong> (1979 &plusmn; 20, Score 167) &gt; <strong>funestus</strong> (1940 &plusmn; 25, Score 161) &gt; <strong>Eepogi</strong> (1905 &plusmn; 22, Score -4).
+          </p>
+          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
+            <li><strong>Genghisip (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+4.88</strong> | GlickoD: <strong style="color: #4ade80;">+4.27</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.61 inflation dampened)</span>.</li>
+            <li><strong>Grozz (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+0.86</strong> | GlickoD: <strong style="color: #4ade80;">+0.76</strong>.</li>
+            <li><strong>funestus (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-1.57</strong> | GlickoD: <strong style="color: #ef5350;">-1.38</strong>.</li>
+            <li><strong>Eepogi (4th Place Resignation):</strong> G2 Standard: <strong style="color: #ef5350;">-3.49</strong> | GlickoD: <strong style="color: #ef5350;">-3.05</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+0.44 penalty cushion)</span>.</li>
+            <li><em>Takeaway:</em> When a competitor suffers an extreme military collapse or resignation (-4 pts), Standard G2 punishes them as 3 independent losses (-3.49). GlickoD limits the shock (-3.05), protecting long-term Bayesian stability.</li>
           </ul>
         </div>
 
         <!-- 4P Scenario 3 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Heavy Favorite Sweep &bull; Match #134401 (Sodium Ladder S16)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-24</span>
+            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Mid-Tier Division &amp; Uncertainty Dynamics &bull; Match #34013 (International S34 Gold 3)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-05</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>ecec</strong> (1675 &plusmn; 79, Score 164) &gt; <strong>Melon6688</strong> (1419 &plusmn; 22, Score 115) &gt; <strong>mooscolly</strong> (1315 &plusmn; 24, Score 81) &gt; <strong>Exile</strong> (1370 &plusmn; 24, Score 80).
+            <strong>RudyRunner666</strong> (1642 &plusmn; 48, Score 208) &gt; <strong>Sunmaster14_LV</strong> (1615 &plusmn; 42, Score 195) &gt; <strong>Malakesh</strong> (1598 &plusmn; 52, Score 192) &gt; <strong>kenchan</strong> (1610 &plusmn; 45, Score 186).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>ecec (Favorite 1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+14.97</strong> | G2 MP (\(w=1/3\)): <strong style="color: #4ade80;">+5.24</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+6.75</strong> (+29% gain).</li>
-            <li><strong>Exile (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-3.80</strong> | G2 MP (\(w=1/3\)): <strong style="color: #ef5350;">-1.28</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-1.32</strong>.</li>
-            <li><em>Takeaway:</em> Under Adaptive-T (\(T=1.22\)), the model recognizes that beating 3 opponents simultaneously carries non-trivial entropy, properly rewarding the 1st place favorite (+6.75 vs +5.24).</li>
+            <li><strong>RudyRunner666 (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+17.02</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 48.0 \to 47.0\))</span> | GlickoD: <strong style="color: #4ade80;">+14.95</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 48.0 \to 47.1\))</span>.</li>
+            <li><strong>kenchan (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-16.30</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 45.0 \to 44.2\))</span> | GlickoD: <strong style="color: #ef5350;">-14.31</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 45.0 \to 44.3\))</span>.</li>
+            <li><em>Takeaway:</em> In mid-tier divisions where RDs are wider (\(\approx 45-50\)), Standard Glicko's unscaled triple-matching collapses RD too rapidly, locking in ratings prematurely. GlickoD preserves healthy epistemic uncertainty for subsequent calibration.</li>
           </ul>
         </div>
       </div>
         {% endif %}
       </div>
       <template class="cms-default-source" style="display:none;">
-        <p>
-        To understand exactly how each rating engine calculates win expectations and allocates rating shifts (\(\Delta \text{Rating}\)), below are <strong>9 actual competitive matches extracted directly from our database</strong> across 2-Player, 3-Player, and 4-Player formats under Even Parity, Moderate Disparity, and Extreme Tail Disparity.
+          <p>
+        To understand the exact mathematical divergence between the naive <strong>Glicko-2 Standard</strong> baseline and our premier <strong>GlickoD</strong> engine, below are <strong>actual competitive tournament encounters extracted directly from our database</strong> across 3-Player and 4-Player formats.
       </p>
 
-      <!-- 2-PLAYER MATCHES -->
-      <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.35rem;">
-        1. Format 2-Player Duels (\(N=2\), Weight \(w = 1.0\))
-      </h4>
-
-      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.25rem;">
-        <!-- 2P Scenario 1 -->
-        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Even Parity &bull; Match #132646 (Royal League S09)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-25</span>
-          </div>
-          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>Cogito3</strong> (1846 &plusmn; 21) defeated <strong>lhrljr</strong> (1837 &plusmn; 30). Scores: 289 vs 264.
-          </p>
-          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Win Probability Expectation:</strong> Standard &amp; MP: <strong>51.2% vs 48.8%</strong> &bull; Adaptive-T (\(T=1.02\)): <strong>51.2% vs 48.8%</strong>.</li>
-            <li><strong>Cogito3 Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+1.25</strong> | G2 MP: <strong style="color: #4ade80;">+1.25</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+1.25</strong>.</li>
-            <li><strong>lhrljr Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-2.62</strong> | G2 MP: <strong style="color: #ef5350;">-2.62</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-2.62</strong>.</li>
-            <li><em>Takeaway:</em> In evenly matched contests, \(T \approx 1.00\) exactly, preserving standard logistic dynamics with zero distortion.</li>
-          </ul>
-        </div>
-
-        <!-- 2P Scenario 2 -->
-        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: Moderate Disparity &bull; Match #89955 (World Championship 2026 Stage 6)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-27</span>
-          </div>
-          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>maximpodg</strong> (1849 &plusmn; 27) defeated <strong>Grozz</strong> (1985 &plusmn; 21). Scores: 134 vs 125 (Underdog victory).
-          </p>
-          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Win Probability Expectation:</strong> Standard &amp; MP: <strong>31.5% vs 68.5%</strong> &bull; Adaptive-T (\(T=1.20\)): <strong>34.4% vs 65.6%</strong>.</li>
-            <li><strong>maximpodg Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+2.98</strong> | G2 MP: <strong style="color: #4ade80;">+2.98</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+2.86</strong>.</li>
-            <li><strong>Grozz Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-1.77</strong> | G2 MP: <strong style="color: #ef5350;">-1.77</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-1.70</strong>.</li>
-            <li><em>Takeaway:</em> Because Adaptive-T recognizes natural stochastic variance (\(T=1.20\)), the upset penalty on the favorite is appropriately calibrated rather than over-punitive.</li>
-          </ul>
-        </div>
-
-        <!-- 2P Scenario 3 -->
-        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
-          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Heavy Favorite &bull; Match #132647 (Royal League S09)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-25</span>
-          </div>
-          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>vito</strong> (1678 &plusmn; 43) defeated <strong>MyriamVanErum</strong> (1365 &plusmn; 71). Scores: 272 vs 197.
-          </p>
-          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Win Probability Expectation:</strong> Standard &amp; MP: <strong>85.3% vs 14.7%</strong> &bull; Adaptive-T (\(T=1.34\)): <strong>78.8% vs 21.2%</strong>.</li>
-            <li><strong>vito Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+1.53</strong> | G2 MP: <strong style="color: #4ade80;">+1.53</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+2.20</strong> (+44% gain).</li>
-            <li><strong>MyriamVanErum Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-4.13</strong> | G2 MP: <strong style="color: #ef5350;">-4.13</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-5.98</strong>.</li>
-            <li><em>Takeaway:</em> Standard Glicko overconfidently assumes an 85.3% win rate and gives virtually no reward (+1.53) for winning. Adaptive-T corrects for bounded skill expression (\(78.8\%\)), awarding a fair +2.20 rating gain.</li>
-          </ul>
-        </div>
+      <div style="background: rgba(229, 169, 60, 0.08); border-left: 3px solid var(--accent-gold); padding: 0.85rem 1.15rem; border-radius: 4px; margin: 1rem 0 1.5rem 0;">
+        <strong style="color: var(--accent-gold); font-size: 0.95rem; display: block; margin-bottom: 0.35rem;">
+          💡 Why This Comparison Only Applies to Multiplayer (MP) Contests (3P &amp; 4P)
+        </strong>
+        <p style="margin: 0; font-size: 0.88rem; color: #cfbeab; line-height: 1.55;">
+          In <strong>2-Player Duels (\(N=2\))</strong>, information scaling is \(W(2) = \phi^{2-2} = \phi^0 = 1.0\). Both Glicko-2 Standard and GlickoD assign a match weight of \(w = 1.0\). For established competitors, their 1v1 formulas yield <strong>mathematically identical rating updates</strong>.<br>
+          In <strong>Multiplayer Games (\(N \ge 3\))</strong>, however, Standard Glicko naively decomposes the table into unscaled 1v1 duels, treating a 3-player match as <strong>2 full 1v1 games</strong> (\(W(3) = 2.0\)) and a 4-player match as <strong>3 full 1v1 games</strong> (\(W(4) = 3.0\)). This doubles or triples all rating swings, artificially deflates uncertainty (RD), and inflates leaderboards.<br>
+          By contrast, <strong>GlickoD</strong> deploys <strong>Golden Ratio (\(\phi \approx 1.618\)) Information Scaling</strong>, setting \(W(N) = \phi^{N-2}\) effective match equivalents (\(W(3) \approx 1.618\) and \(W(4) \approx 2.618\)). Combined with the <strong>15-Game Recalibration Breakthrough</strong>, GlickoD captures multilateral evidence without runaway variance or newcomer distortion.
+        </p>
       </div>
 
       <!-- 3-PLAYER MATCHES -->
       <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.35rem;">
-        2. Format 3-Player Matches (\(N=3\), Weight \(w = 1/2 = 0.500\))
+        1. Format 3-Player Matches (\(N=3\), Effective Evidence \(W(3) = \phi \approx 1.618\), Pairwise Weight \(w_3 = \phi/2 \approx 0.809\))
       </h4>
 
-      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.25rem;">
+      <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 1.5rem;">
         <!-- 3P Scenario 1 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Elite Tri-Parity &bull; Match #89970 (World Championship 2026 Stage 6)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-30</span>
+            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Elite Grandmaster Tri-Parity &bull; Match #33943 (International S34 Grandmaster)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-07-25</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>DANeo</strong> (1909 &plusmn; 23, Score 275) &gt; <strong>tianren4561367</strong> (1924 &plusmn; 33, Score 246) &gt; <strong>Michiel</strong> (1921 &plusmn; 35, Score 215).
+            <strong>Genghisip</strong> (1988 &plusmn; 25, Score 166) &gt; <strong>funestus</strong> (1940 &plusmn; 25, Score 140) &gt; <strong>Martin_Pecheur</strong> (1951 &plusmn; 20, Score 118).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>DANeo (1st Place) Rating Delta:</strong> G2 Standard (2x unscaled): <strong style="color: #4ade80;">+3.15</strong> | G2 MP (\(w=0.5\)): <strong style="color: #4ade80;">+1.58</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+1.58</strong>.</li>
-            <li><strong>tianren4561367 (2nd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-0.18</strong> | G2 MP: <strong style="color: #ef5350;">-0.09</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-0.09</strong>.</li>
-            <li><strong>Michiel (3rd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-7.24</strong> | G2 MP: <strong style="color: #ef5350;">-3.66</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-3.66</strong>.</li>
-            <li><em>Takeaway:</em> Under Standard Glicko, DANeo receives 2 full matches of rating inflation (+3.15). Fractional MP weighting (\(w=0.5\)) properly scales evidence to exactly 1 match (+1.58).</li>
+            <li><strong>Genghisip (1st Place):</strong> G2 Standard (2x unscaled): <strong style="color: #4ade80;">+3.31</strong> | GlickoD (\(w = 0.809\)): <strong style="color: #4ade80;">+2.68</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.63 inflation dampened)</span>.</li>
+            <li><strong>funestus (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+0.31</strong> | GlickoD: <strong style="color: #4ade80;">+0.25</strong>.</li>
+            <li><strong>Martin_Pecheur (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-2.35</strong> | GlickoD: <strong style="color: #ef5350;">-1.91</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+0.44 excess penalty mitigated)</span>.</li>
+            <li><em>Takeaway:</em> Standard Glicko rewards Genghisip as if he won two full independent duels back-to-back (+3.31). GlickoD scales evidence to 1.618 matches (+2.68), honoring the triumph without inflating rating certainty.</li>
           </ul>
         </div>
 
         <!-- 3P Scenario 2 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: Moderate Disparity &bull; Match #135401 (Survivors Cup 2026 Final)</strong>
+            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: World Championship Tri-Duel &bull; Match #89970 (World Championship 2026 Stage 6)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-30</span>
+          </div>
+          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
+            <strong>DANeo</strong> (1909 &plusmn; 23, Score 275) &gt; <strong>tianren4561367</strong> (1924 &plusmn; 33, Score 246) &gt; <strong>Michiel</strong> (1921 &plusmn; 35, Score 215).
+          </p>
+          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
+            <li><strong>DANeo (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+3.28</strong> | GlickoD: <strong style="color: #4ade80;">+2.66</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.62 inflation dampened)</span>.</li>
+            <li><strong>tianren4561367 (2nd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-0.17</strong> | GlickoD: <strong style="color: #ef5350;">-0.14</strong>.</li>
+            <li><strong>Michiel (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-7.13</strong> | GlickoD: <strong style="color: #ef5350;">-5.79</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+1.34 loss penalty protection)</span>.</li>
+            <li><em>Takeaway:</em> Under Standard G2, Michiel absorbs an unscaled double loss (-7.13). GlickoD's \(\phi\)-scaling cushions the penalty to -5.79 while strictly maintaining transitive rank integrity.</li>
+          </ul>
+        </div>
+
+        <!-- 3P Scenario 3 -->
+        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Survivors Cup Grand Final &bull; Match #135401 (Survivors Cup 2026 Final)</strong>
             <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-09-05</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
             <strong>Grozz</strong> (1985 &plusmn; 21, Score 213) &gt; <strong>Weidenbaum</strong> (1976 &plusmn; 21, Score 208) &gt; <strong>Sellux</strong> (1794 &plusmn; 28, Score 201).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>Grozz (1st Place) Rating Delta:</strong> G2 Standard: <strong style="color: #4ade80;">+1.90</strong> | G2 MP (\(w=0.5\)): <strong style="color: #4ade80;">+0.96</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+0.98</strong>.</li>
-            <li><strong>Weidenbaum (2nd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-0.59</strong> | G2 MP: <strong style="color: #ef5350;">-0.29</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-0.27</strong>.</li>
-            <li><strong>Sellux (3rd Place) Rating Delta:</strong> G2 Standard: <strong style="color: #ef5350;">-2.27</strong> | G2 MP: <strong style="color: #ef5350;">-1.14</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-1.22</strong>.</li>
+            <li><strong>Grozz (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+1.97</strong> | GlickoD: <strong style="color: #4ade80;">+1.60</strong>.</li>
+            <li><strong>Weidenbaum (2nd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-0.61</strong> | GlickoD: <strong style="color: #ef5350;">-0.49</strong>.</li>
+            <li><strong>Sellux (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-2.35</strong> | GlickoD: <strong style="color: #ef5350;">-1.91</strong>.</li>
+            <li><em>Takeaway:</em> In a high-stakes title match decided by single-digit margins (213 vs 208 vs 201), GlickoD stabilizes the podium without catastrophic rating penalties.</li>
           </ul>
         </div>
       </div>
 
       <!-- 4-PLAYER MATCHES -->
       <h4 style="color: var(--accent-gold); font-family: var(--font-subheading); font-size: 1.2rem; margin: 1.5rem 0 0.75rem 0; border-bottom: 1px solid rgba(229, 169, 60, 0.3); padding-bottom: 0.35rem;">
-        3. Format 4-Player Matches (\(N=4\), Weight \(w = 1/3 = 0.333\))
+        2. Format 4-Player Matches (\(N=4\), Effective Evidence \(W(4) = \phi^2 \approx 2.618\), Pairwise Weight \(w_4 = \phi^2/3 \approx 0.873\))
       </h4>
 
       <div style="display: grid; grid-template-columns: 1fr; gap: 1rem; margin-bottom: 0.5rem;">
         <!-- 4P Scenario 1 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Quad-Parity &bull; Match #134347 (Sodium Ladder S16)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-24</span>
+            <strong style="color: #4ade80; font-size: 1rem;">Scenario 1: Grandmaster Quad-Parity &bull; Match #33909 (International S34 Grandmaster)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-07-23</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>EnozamaIV</strong> (1563, Score 178) &gt; <strong>FireBones</strong> (1563, Score 159) &gt; <strong>comant</strong> (1555, Score 125) &gt; <strong>Gubbstyv</strong> (1576, Score -1).
+            <strong>Grozz</strong> (1979 &plusmn; 20, Score 298) &gt; <strong>Martin_Pecheur</strong> (1951 &plusmn; 20, Score 271) &gt; <strong>Genghisip</strong> (1988 &plusmn; 25, Score 264) &gt; <strong>Vovka</strong> (1899 &plusmn; 24, Score 232).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>EnozamaIV (1st Place):</strong> G2 Standard (3x unscaled): <strong style="color: #4ade80;">+4.60</strong> | G2 MP (\(w=1/3\)): <strong style="color: #4ade80;">+1.55</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+1.55</strong>.</li>
-            <li><strong>FireBones (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+7.33</strong> | G2 MP (\(w=1/3\)): <strong style="color: #4ade80;">+2.55</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+2.55</strong>.</li>
-            <li><strong>Gubbstyv (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-10.65</strong> | G2 MP (\(w=1/3\)): <strong style="color: #ef5350;">-3.62</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-3.61</strong>.</li>
-            <li><em>Takeaway:</em> In 4-player games, naive Standard Elo triples all rating swings (+4.60 / -10.65). Fractional MP weighting (\(w=1/3\)) keeps uncertainty reduction and rating swings mathematically honest (+1.55 / -3.62).</li>
+            <li><strong>Grozz (1st Place):</strong> G2 Standard (3x unscaled): <strong style="color: #4ade80;">+3.34</strong> | GlickoD (\(w = 0.873\)): <strong style="color: #4ade80;">+2.92</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.42 inflation dampened)</span>.</li>
+            <li><strong>Martin_Pecheur (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+1.27</strong> | GlickoD: <strong style="color: #4ade80;">+1.11</strong>.</li>
+            <li><strong>Genghisip (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-2.59</strong> | GlickoD: <strong style="color: #ef5350;">-2.26</strong>.</li>
+            <li><strong>Vovka (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-3.96</strong> | GlickoD: <strong style="color: #ef5350;">-3.46</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+0.50 protection)</span>.</li>
+            <li><em>Takeaway:</em> Standard G2 treats this as 3 separate 1v1 wins for Grozz (+3.34), decaying his RD 3x faster than warranted. GlickoD scales information to \(2.618\) matches (+2.92), accurately accounting for shared table variance.</li>
+          </ul>
+        </div>
+
+        <!-- 4P Scenario 2 -->
+        <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
+          <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
+            <strong style="color: #ffd54f; font-size: 1rem;">Scenario 2: Tail Disparity &amp; Resignation &bull; Match #33993 (International S34 Grandmaster)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-07-30</span>
+          </div>
+          <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
+            <strong>Genghisip</strong> (1988 &plusmn; 25, Score 240) &gt; <strong>Grozz</strong> (1979 &plusmn; 20, Score 167) &gt; <strong>funestus</strong> (1940 &plusmn; 25, Score 161) &gt; <strong>Eepogi</strong> (1905 &plusmn; 22, Score -4).
+          </p>
+          <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
+            <li><strong>Genghisip (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+4.88</strong> | GlickoD: <strong style="color: #4ade80;">+4.27</strong> <span style="color: var(--accent-gold); font-size: 0.85rem;">(&minus;0.61 inflation dampened)</span>.</li>
+            <li><strong>Grozz (2nd Place):</strong> G2 Standard: <strong style="color: #4ade80;">+0.86</strong> | GlickoD: <strong style="color: #4ade80;">+0.76</strong>.</li>
+            <li><strong>funestus (3rd Place):</strong> G2 Standard: <strong style="color: #ef5350;">-1.57</strong> | GlickoD: <strong style="color: #ef5350;">-1.38</strong>.</li>
+            <li><strong>Eepogi (4th Place Resignation):</strong> G2 Standard: <strong style="color: #ef5350;">-3.49</strong> | GlickoD: <strong style="color: #ef5350;">-3.05</strong> <span style="color: #4ade80; font-size: 0.85rem;">(+0.44 penalty cushion)</span>.</li>
+            <li><em>Takeaway:</em> When a competitor suffers an extreme military collapse or resignation (-4 pts), Standard G2 punishes them as 3 independent losses (-3.49). GlickoD limits the shock (-3.05), protecting long-term Bayesian stability.</li>
           </ul>
         </div>
 
         <!-- 4P Scenario 3 -->
         <div style="background: rgba(14, 9, 6, 0.85); border: 1px solid var(--border-subtle); border-radius: 6px; padding: 1rem 1.25rem;">
           <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.5rem;">
-            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Heavy Favorite Sweep &bull; Match #134401 (Sodium Ladder S16)</strong>
-            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-24</span>
+            <strong style="color: #f87171; font-size: 1rem;">Scenario 3: Mid-Tier Division &amp; Uncertainty Dynamics &bull; Match #34013 (International S34 Gold 3)</strong>
+            <span style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted);">2026-08-05</span>
           </div>
           <p style="margin: 0.25rem 0 0.5rem 0; font-size: 0.92rem; color: #cfbeab;">
-            <strong>ecec</strong> (1675 &plusmn; 79, Score 164) &gt; <strong>Melon6688</strong> (1419 &plusmn; 22, Score 115) &gt; <strong>mooscolly</strong> (1315 &plusmn; 24, Score 81) &gt; <strong>Exile</strong> (1370 &plusmn; 24, Score 80).
+            <strong>RudyRunner666</strong> (1642 &plusmn; 48, Score 208) &gt; <strong>Sunmaster14_LV</strong> (1615 &plusmn; 42, Score 195) &gt; <strong>Malakesh</strong> (1598 &plusmn; 52, Score 192) &gt; <strong>kenchan</strong> (1610 &plusmn; 45, Score 186).
           </p>
           <ul class="faq-list" style="font-size: 0.9rem; margin-bottom: 0;">
-            <li><strong>ecec (Favorite 1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+14.97</strong> | G2 MP (\(w=1/3\)): <strong style="color: #4ade80;">+5.24</strong> | G2 Adaptive-T: <strong style="color: #4ade80;">+6.75</strong> (+29% gain).</li>
-            <li><strong>Exile (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-3.80</strong> | G2 MP (\(w=1/3\)): <strong style="color: #ef5350;">-1.28</strong> | G2 Adaptive-T: <strong style="color: #ef5350;">-1.32</strong>.</li>
-            <li><em>Takeaway:</em> Under Adaptive-T (\(T=1.22\)), the model recognizes that beating 3 opponents simultaneously carries non-trivial entropy, properly rewarding the 1st place favorite (+6.75 vs +5.24).</li>
+            <li><strong>RudyRunner666 (1st Place):</strong> G2 Standard: <strong style="color: #4ade80;">+17.02</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 48.0 \to 47.0\))</span> | GlickoD: <strong style="color: #4ade80;">+14.95</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 48.0 \to 47.1\))</span>.</li>
+            <li><strong>kenchan (4th Place):</strong> G2 Standard: <strong style="color: #ef5350;">-16.30</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 45.0 \to 44.2\))</span> | GlickoD: <strong style="color: #ef5350;">-14.31</strong> <span style="font-size: 0.8rem; color: var(--text-muted);">(\(\mathrm{RD}: 45.0 \to 44.3\))</span>.</li>
+            <li><em>Takeaway:</em> In mid-tier divisions where RDs are wider (\(\approx 45-50\)), Standard Glicko's unscaled triple-matching collapses RD too rapidly, locking in ratings prematurely. GlickoD preserves healthy epistemic uncertainty for subsequent calibration.</li>
           </ul>
         </div>
       </div>

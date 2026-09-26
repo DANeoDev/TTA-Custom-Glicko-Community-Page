@@ -42,7 +42,10 @@ def create_app():
 
     @app.context_processor
     def inject_context():
-        active_model = session.get('active_model', 'glicko2_std')
+        active_model = session.get('active_model')
+        if not active_model or active_model not in VALID_MODELS:
+            active_model = 'glicko2_daneo'
+            session['active_model'] = 'glicko2_daneo'
         active_format = session.get('active_format', 0)
         from src.data.db import get_all_cms_blocks, get_custom_cards
         try:
@@ -82,7 +85,7 @@ def create_app():
 
         return {
             'active_model': active_model,
-            'active_model_name': VALID_MODELS.get(active_model, 'Glicko-2 Standard'),
+            'active_model_name': VALID_MODELS.get(active_model, 'GlickoD'),
             'models': VALID_MODELS,
             'active_format': active_format,
             'active_format_name': VALID_FORMATS.get(active_format, 'All Formats'),

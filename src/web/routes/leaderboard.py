@@ -64,9 +64,12 @@ def render_leaderboard(year=None):
 
     # 1. Model selection
     model_param = request.args.get('model')
-    if model_param in VALID_MODELS:
+    if model_param and model_param in VALID_MODELS:
         session['active_model'] = model_param
-    active_model = session.get('active_model', 'glicko2_daneo')
+    active_model = session.get('active_model')
+    if not active_model or active_model not in VALID_MODELS:
+        active_model = 'glicko2_daneo'
+        session['active_model'] = 'glicko2_daneo'
 
     # 2. Season Reset Mode selection (continuous, softer)
     reset_param = request.args.get('reset_mode')
@@ -74,9 +77,10 @@ def render_leaderboard(year=None):
         reset_param = 'softer'
     if reset_param in VALID_RESET_MODES:
         session['active_reset_mode'] = reset_param
-    active_reset_mode = session.get('active_reset_mode', 'continuous')
-    if active_reset_mode not in VALID_RESET_MODES:
+    active_reset_mode = session.get('active_reset_mode')
+    if not active_reset_mode or active_reset_mode not in VALID_RESET_MODES:
         active_reset_mode = 'continuous'
+        session['active_reset_mode'] = 'continuous'
 
     # Retrospective Prior Calibration (Option A) lever
     retro_param = request.args.get('retro')
