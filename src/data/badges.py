@@ -285,7 +285,7 @@ def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
             }
 
         # Query premier tournament winners for Super GM (SGM) title:
-        # Having won one of International Championship (Grandmaster/Diamond), Intermezzo Championship (Grandmaster),
+        # Having won one of International Championship (Grandmaster), Intermezzo Championship (Grandmaster),
         # or Royal League (Emperor)
         sgm_records = conn.execute("""
             SELECT player_name, tournament_name, season, division, finish_date

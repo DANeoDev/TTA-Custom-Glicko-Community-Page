@@ -133,6 +133,12 @@ def create_app():
     app.register_blueprint(admin_bp)
     app.register_blueprint(hall_of_fame_bp)
 
+    from src.data.db import ensure_schema_migrations
+    try:
+        ensure_schema_migrations()
+    except Exception:
+        pass
+
     return app
 
 

@@ -247,6 +247,106 @@ CREATE INDEX IF NOT EXISTS idx_tr_player ON tournament_records(player_name);
 CREATE INDEX IF NOT EXISTS idx_tr_tourney ON tournament_records(tournament_name);
 """
 
+_SCHEMA_MIGRATED = False
+
+def ensure_schema_migrations(conn=None):
+    """Ensures newly introduced columns exist in existing tables across deployments."""
+    global _SCHEMA_MIGRATED
+    if _SCHEMA_MIGRATED:
+        return
+    close_after = False
+    if conn is None:
+        conn = get_connection()
+        close_after = True
+
+    try:
+        # Check players table columns
+        p_cols = {row[1] for row in conn.execute("PRAGMA table_info(players)").fetchall()}
+        if 'badge_reason' not in p_cols:
+            try:
+                conn.execute("ALTER TABLE players ADD COLUMN badge_reason TEXT")
+            except sqlite3.OperationalError:
+                pass
+        if 'peak_title' not in p_cols:
+            try:
+                conn.execute("ALTER TABLE players ADD COLUMN peak_title TEXT")
+            except sqlite3.OperationalError:
+                pass
+        if 'peak_year' not in p_cols:
+            try:
+                conn.execute("ALTER TABLE players ADD COLUMN peak_year INTEGER")
+            except sqlite3.OperationalError:
+                pass
+
+        # Matches & pairwise migrations
+        m_cols = {row[1] for row in conn.execute("PRAGMA table_info(matches)").fetchall()}
+        if 'glicko_eligible' not in m_cols:
+            try:
+                conn.execute("ALTER TABLE matches ADD COLUMN glicko_eligible INTEGER NOT NULL DEFAULT 1")
+            except sqlite3.OperationalError:
+                pass
+        if 'replay_code' not in m_cols:
+            try:
+                conn.execute("ALTER TABLE matches ADD COLUMN replay_code TEXT")
+            except sqlite3.OperationalError:
+                pass
+
+        pw_cols = {row[1] for row in conn.execute("PRAGMA table_info(pairwise_matches)").fetchall()}
+        if 'glicko_eligible' not in pw_cols:
+            try:
+                conn.execute("ALTER TABLE pairwise_matches ADD COLUMN glicko_eligible INTEGER NOT NULL DEFAULT 1")
+            except sqlite3.OperationalError:
+                pass
+
+        # Yearly player stats career columns
+        y_cols = {row[1] for row in conn.execute("PRAGMA table_info(yearly_player_stats)").fetchall()}
+        for col, col_def in [
+            ('career_opps', 'INTEGER NOT NULL DEFAULT 0'),
+            ('career_wins', 'INTEGER NOT NULL DEFAULT 0'),
+            ('career_losses', 'INTEGER NOT NULL DEFAULT 0'),
+            ('career_draws', 'INTEGER NOT NULL DEFAULT 0'),
+            ('career_win_rate', 'REAL NOT NULL DEFAULT 0.0')
+        ]:
+            if col not in y_cols:
+                try:
+                    conn.execute(f"ALTER TABLE yearly_player_stats ADD COLUMN {col} {col_def}")
+                except sqlite3.OperationalError:
+                    pass
+
+        # CMS content blocks columns
+        cms_cols = {row[1] for row in conn.execute("PRAGMA table_info(cms_content_blocks)").fetchall()}
+        for col, col_def in [
+            ('is_deleted', 'INTEGER DEFAULT 0'),
+            ('relative_to', 'TEXT'),
+            ('placement', 'TEXT'),
+            ('sort_order', 'INTEGER DEFAULT 0'),
+            ('is_custom_card', 'INTEGER DEFAULT 0')
+        ]:
+            if col not in cms_cols:
+                try:
+                    conn.execute(f"ALTER TABLE cms_content_blocks ADD COLUMN {col} {col_def}")
+                except sqlite3.OperationalError:
+                    pass
+
+        conn.commit()
+        _SCHEMA_MIGRATED = True
+
+        # Check if peak_title needs population (if columns were just added or empty)
+        try:
+            count_row = conn.execute("SELECT COUNT(*) FROM players WHERE peak_title IS NOT NULL").fetchone()
+            if count_row and count_row[0] == 0:
+                from src.data.badges import derive_tournament_badges
+                derive_tournament_badges()
+        except Exception:
+            pass
+
+    except Exception:
+        pass
+    finally:
+        if close_after:
+            conn.close()
+
+
 def get_connection(db_path=None):
     path = db_path or DEFAULT_DB_PATH
     Path(path).parent.mkdir(parents=True, exist_ok=True)
@@ -258,7 +358,13 @@ def get_connection(db_path=None):
     is_pa = bool(os.environ.get('PYTHONANYWHERE_DOMAIN') or os.environ.get('PYTHONANYWHERE_SITE'))
     if is_pa:
         conn.execute('PRAGMA journal_mode = DELETE;')
+
+    global _SCHEMA_MIGRATED
+    if not _SCHEMA_MIGRATED:
+        ensure_schema_migrations(conn)
+
     return conn
+
 
 def init_db(db_path=None):
     conn = get_connection(db_path)

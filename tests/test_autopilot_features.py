@@ -992,3 +992,38 @@ def test_download_ratings_csv(client):
     csv_yr = rv_yr.get_data(as_text=True)
     assert '2024' in csv_yr
 
+
+def test_ensure_schema_migrations_auto_heals_missing_columns(tmp_path):
+    """Verify that connecting to an older database automatically heals and migrates missing columns like peak_title, peak_year, badge_reason."""
+    import sqlite3
+    import src.data.db as db_mod
+    db_file = tmp_path / "legacy_tta.db"
+
+    # Create legacy schema without peak_title or peak_year
+    conn = sqlite3.connect(str(db_file))
+    conn.execute("""
+        CREATE TABLE players (
+            player_id INTEGER PRIMARY KEY,
+            name TEXT UNIQUE,
+            country_code TEXT,
+            title TEXT,
+            title_count INTEGER,
+            last_played TEXT
+        )
+    """)
+    conn.commit()
+    conn.close()
+
+    # Reset migrated cache to force check on new connection
+    db_mod._SCHEMA_MIGRATED = False
+
+    c = db_mod.get_connection(db_file)
+    try:
+        cols = {row[1] for row in c.execute("PRAGMA table_info(players)").fetchall()}
+        assert 'peak_title' in cols
+        assert 'peak_year' in cols
+        assert 'badge_reason' in cols
+    finally:
+        c.close()
+        db_mod._SCHEMA_MIGRATED = False
+
