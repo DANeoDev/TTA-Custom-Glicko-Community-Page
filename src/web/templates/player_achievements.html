@@ -164,6 +164,21 @@
     border-color: #ffd700;
     box-shadow: 0 3px 12px rgba(229, 169, 60, 0.45);
   }
+
+  @media (max-width: 768px) {
+    .achievements-header {
+      padding: 1.25rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .medals-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 0.75rem;
+    }
+    .records-tab-btn {
+      padding: 0.5rem 0.85rem;
+      font-size: 0.82rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -282,11 +297,10 @@
   </div>
 
   <!-- VIEW 1: Individual Seasons Table (Default) -->
-  <div id="seasonsView" style="overflow-x: auto;">
-    <p style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-      Standard View: Sorted chronologically by <strong>Date of Finish</strong> (newest to oldest). Click any column header to sort.
-    </p>
-    <table class="records-table" id="seasonsTable">
+  <div id="seasonsView">
+    <div class="scroll-hint"><span>Swipe table horizontally for full achievement details ➔</span></div>
+    <div class="table-responsive">
+      <table class="records-table" id="seasonsTable">
       <thead>
         <tr>
           <th onclick="sortSeasonsTable(0)" style="cursor: pointer;" title="Click to sort by Date of Finish">Date of Finish <span id="s-arrow-0">▼</span></th>
@@ -330,14 +344,14 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 
   <!-- VIEW 2: Career Totals & Hall of Fame Table -->
-  <div id="careerView" style="display: none; overflow-x: auto;">
-    <p style="font-family: var(--font-stats); font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
-      Career View: Cumulative Hall of Fame standings, career title counts, and tournament medal tallies.
-    </p>
-    <table class="records-table" id="careerTable">
+  <div id="careerView" style="display: none;">
+    <div class="scroll-hint"><span>Swipe table horizontally for full career details ➔</span></div>
+    <div class="table-responsive">
+      <table class="records-table" id="careerTable">
       <thead>
         <tr>
           <th onclick="sortCareerTable(0)" style="cursor: pointer;">Tournament <span id="c-arrow-0">▲</span></th>
@@ -379,6 +393,7 @@
         {% endfor %}
       </tbody>
     </table>
+    </div>
   </div>
 </div>
 

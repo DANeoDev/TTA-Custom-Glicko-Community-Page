@@ -131,6 +131,25 @@
       grid-template-columns: 1fr;
     }
   }
+  @media (max-width: 768px) {
+    .tournament-hero {
+      padding: 1.25rem 1rem;
+    }
+    .tournament-hero-title {
+      font-size: 1.45rem;
+    }
+    .tournament-hero-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .stories-grid {
+      grid-template-columns: 1fr;
+    }
+    .panel-card {
+      padding: 1rem;
+    }
+  }
 
   .panel-card {
     background: linear-gradient(145deg, rgba(28, 18, 12, 0.95), rgba(20, 13, 9, 0.98));
@@ -180,6 +199,8 @@
   .trophy-table-container {
     max-height: 480px;
     overflow-y: auto;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
     border-radius: 6px;
     border: 1px solid rgba(229, 169, 60, 0.2);
     background: rgba(0, 0, 0, 0.25);

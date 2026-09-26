@@ -134,6 +134,39 @@
     padding: 1.5rem;
     margin-bottom: 2rem;
   }
+
+  @media (max-width: 768px) {
+    .matrix-header-card {
+      padding: 1.25rem 1rem;
+    }
+    .peak-year-card {
+      padding: 1rem;
+      gap: 1rem;
+    }
+    .peak-year-badge {
+      font-size: 2rem;
+      padding: 0.5rem;
+    }
+    .year-filter-bar {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding: 0.5rem;
+    }
+    .year-filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .year-filter-bar > span {
+      flex-shrink: 0;
+    }
+    .year-filter-bar .year-pill {
+      flex-shrink: 0;
+    }
+    .chart-container-box {
+      padding: 1rem 0.75rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -180,9 +213,6 @@
         {{ f_name }}
       </a>
     {% endfor %}
-  </div>
-  <div style="font-family: var(--font-stats); font-size: 0.85rem; color: var(--text-muted);">
-    Mode: <strong>All 9 Engine &times; Reset Combinations</strong>
   </div>
 </div>
 
@@ -240,14 +270,15 @@
     </span>
   </div>
 
-  <div style="overflow-x: auto;">
+  <div class="scroll-hint"><span>Swipe table horizontally for full matrix data ➔</span></div>
+  <div class="table-responsive">
     <table class="matrix-table" style="margin-bottom: 0;">
       <thead>
         <tr>
-          <th style="width: 25%; text-align: left;">Rating Engine</th>
-          <th style="width: 25%;">Continuous (Career)</th>
-          <th style="width: 25%;">Soft Reset (&phi;)</th>
-          <th style="width: 25%;">Amplified / Softer Reset</th>
+          <th style="width: 28%; text-align: left;">Rating Engine</th>
+          <th style="width: 24%;">Continuous (Career)</th>
+          <th style="width: 24%;">Season Reset (Standard)</th>
+          <th style="width: 24%;">Soft Reset (&phi;)</th>
         </tr>
       </thead>
       <tbody>
@@ -257,7 +288,7 @@
             <div style="font-weight: 700; color: #ffd54f; font-size: 1.05rem;">👑 GlickoD</div>
             <div style="font-size: 0.8rem; color: #c7a76d; margin-top: 0.2rem;">φ^(N-2) MP decomposition &amp; 15-game re-calibration</div>
           </td>
-          {% for r_mode in ['continuous', 'soft', 'softer'] %}
+          {% for r_mode in ['continuous', 'softer', 'soft'] %}
             {% set cell = matrix_cells.get(('glicko2_daneo', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -281,7 +312,7 @@
             <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Glicko-2 Standard</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Naive 1v1 pairwise baseline</div>
           </td>
-          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+          {% for r_mode in ['continuous', 'softer', 'soft'] %}
             {% set cell = matrix_cells.get(('glicko2_std', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -305,7 +336,7 @@
             <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Glicko-2 MP-Weighted</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Coulom fractional w=1/(N-1)</div>
           </td>
-          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+          {% for r_mode in ['continuous', 'softer', 'soft'] %}
             {% set cell = matrix_cells.get(('glicko2_mp', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -329,7 +360,7 @@
             <div style="font-weight: 700; color: #4ade80; font-size: 1.05rem;">Glicko-2 Adaptive-T</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Format-specific temperature $T(P, N)$</div>
           </td>
-          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+          {% for r_mode in ['continuous', 'softer', 'soft'] %}
             {% set cell = matrix_cells.get(('glicko2_adapt', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -353,7 +384,7 @@
             <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Whole-History Rating (WHR)</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Retrospective Brownian MAP</div>
           </td>
-          {% for r_mode in ['continuous', 'soft', 'amplified'] %}
+          {% for r_mode in ['continuous', 'softer', 'soft'] %}
             {% set cell = matrix_cells.get(('whr', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -375,40 +406,7 @@
   </div>
 </div>
 
-<!-- Reset Modes Trajectory Comparison Chart Card with Engine Switcher -->
-<div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
-  <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.75rem;">
-    <div>
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.25rem; margin: 0 0 0.25rem 0;">
-        📈 Reset Mode Trajectory Comparison (<span id="chartActiveEngineName">{{ active_model_name }}</span>)
-      </h3>
-      <span style="font-size: 0.82rem; color: var(--text-muted);">
-        Continuous vs Soft Reset (&phi;) vs Amplified Reset (&phi;&sup2;) across career history
-      </span>
-    </div>
 
-    <!-- Dynamic Rating Engine Switcher Toolbar -->
-    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
-      <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.25rem;">Engine:</span>
-      <button type="button" id="btnEngineStd" class="format-btn {% if active_model == 'glicko2_std' %}active{% endif %}" onclick="switchChartEngine('glicko2_std', 'Glicko-2 Standard')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        Glicko-2 Std
-      </button>
-      <button type="button" id="btnEngineMp" class="format-btn {% if active_model == 'glicko2_mp' %}active{% endif %}" onclick="switchChartEngine('glicko2_mp', 'Glicko-2 MP-Weighted')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        Glicko-2 MP
-      </button>
-      <button type="button" id="btnEngineAdapt" class="format-btn {% if active_model == 'glicko2_adapt' %}active{% endif %}" onclick="switchChartEngine('glicko2_adapt', 'Glicko-2 Adaptive-T')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        Adaptive-T
-      </button>
-      <button type="button" id="btnEngineWhr" class="format-btn {% if active_model == 'whr' %}active{% endif %}" onclick="switchChartEngine('whr', 'Whole-History Rating (WHR)')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        WHR
-      </button>
-    </div>
-  </div>
-
-  <div style="position: relative; height: 320px; width: 100%;">
-    <canvas id="resetModesChart"></canvas>
-  </div>
-</div>
 
 <!-- Career Year-by-Year Performance Breakdown Table -->
 <div class="rating-card" style="padding: 1.5rem; margin-bottom: 2rem;">
@@ -426,7 +424,8 @@
     </span>
   </div>
 
-  <div style="overflow-x: auto;">
+  <div class="scroll-hint"><span>Swipe table horizontally for full career history ➔</span></div>
+  <div class="table-responsive">
     <table class="career-history-table">
       <thead>
         <tr>
@@ -478,120 +477,4 @@
   </div>
 </div>
 
-<script>
-  let trajectoryChart = null;
-  const rawChartData = {{ chart_json|safe }};
-  let currentEngine = rawChartData.active_model || 'glicko2_std';
-
-  function initOrUpdateChart(engineKey) {
-    const ctx = document.getElementById('resetModesChart');
-    if (!ctx || !rawChartData.labels || rawChartData.labels.length === 0) return;
-
-    const engData = rawChartData[engineKey] || rawChartData.glicko2_std || {};
-    const contSeries = engData.continuous || [];
-    const softSeries = engData.soft || [];
-    const ampSeries = engData.amplified || [];
-
-    if (trajectoryChart) {
-      trajectoryChart.data.datasets[0].data = contSeries;
-      trajectoryChart.data.datasets[1].data = softSeries;
-      trajectoryChart.data.datasets[2].data = ampSeries;
-      trajectoryChart.update();
-      return;
-    }
-
-    trajectoryChart = new Chart(ctx, {
-      type: 'line',
-      data: {
-        labels: rawChartData.labels,
-        datasets: [
-          {
-            label: 'Continuous (Career)',
-            data: contSeries,
-            borderColor: '#e5a93c',
-            backgroundColor: 'rgba(229, 169, 60, 0.15)',
-            borderWidth: 2.5,
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Soft Reset (φ)',
-            data: softSeries,
-            borderColor: '#60a5fa',
-            backgroundColor: 'rgba(96, 165, 250, 0.15)',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Amplified Reset (φ²)',
-            data: ampSeries,
-            borderColor: '#a855f7',
-            backgroundColor: 'rgba(168, 85, 247, 0.15)',
-            borderWidth: 2,
-            borderDash: [2, 2],
-            pointRadius: 2,
-            pointHoverRadius: 5,
-            tension: 0.1,
-            spanGaps: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: {
-            position: 'top',
-            labels: {
-              color: '#d0c0b0',
-              font: { family: 'Cinzel, Georgia, serif', size: 12 }
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(20, 13, 8, 0.95)',
-            titleColor: '#e5a93c',
-            bodyColor: '#f5efe6',
-            borderColor: '#5c4028',
-            borderWidth: 1
-          }
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#8c7662', font: { family: 'Share Tech Mono, monospace' } }
-          },
-          y: {
-            grid: { color: 'rgba(255, 255, 255, 0.05)' },
-            ticks: { color: '#8c7662', font: { family: 'Share Tech Mono, monospace' } }
-          }
-        }
-      }
-    });
-  }
-
-  function switchChartEngine(engineKey, engineName) {
-    currentEngine = engineKey;
-    document.getElementById('chartActiveEngineName').textContent = engineName;
-    document.getElementById('btnEngineStd').classList.toggle('active', engineKey === 'glicko2_std');
-    document.getElementById('btnEngineMp').classList.toggle('active', engineKey === 'glicko2_mp');
-    const btnAdapt = document.getElementById('btnEngineAdapt');
-    if (btnAdapt) btnAdapt.classList.toggle('active', engineKey === 'glicko2_adapt');
-    document.getElementById('btnEngineWhr').classList.toggle('active', engineKey === 'whr');
-    initOrUpdateChart(engineKey);
-  }
-
-  document.addEventListener('DOMContentLoaded', function() {
-    initOrUpdateChart(currentEngine);
-  });
-</script>
 {% endblock %}

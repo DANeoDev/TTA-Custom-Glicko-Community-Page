@@ -142,6 +142,45 @@ def profile(player_name):
             'glicko2_daneo_c': [model_series_c['glicko2_daneo'].get(d) for d in sorted_dates]
         }
 
+        # Build Season Reset comparison chart data for player profile (Continuous vs Season Reset vs Soft Reset)
+        reset_models = ['glicko2_daneo', 'glicko2_std', 'glicko2_mp', 'glicko2_adapt', 'whr']
+        reset_target_keys = []
+        for rm in reset_models:
+            reset_target_keys.extend([rm, f"{rm}_softer", f"{rm}_soft"])
+        ph_reset = ', '.join(['?'] * len(reset_target_keys))
+        reset_hist_rows = conn.execute(
+            f'SELECT model_type, period_date, rating '
+            f'FROM rating_history WHERE player_name = ? AND player_count = ? AND model_type IN ({ph_reset}) '
+            f'ORDER BY period_date ASC',
+            [player_name, active_format] + reset_target_keys
+        ).fetchall()
+
+        reset_dates_set = set()
+        reset_model_series = {rm: {'continuous': {}, 'softer': {}, 'soft': {}} for rm in reset_models}
+        for hr in reset_hist_rows:
+            d = hr['period_date']
+            m = hr['model_type']
+            reset_dates_set.add(d)
+            for rm in reset_models:
+                if m == rm:
+                    reset_model_series[rm]['continuous'][d] = round(hr['rating'], 1)
+                elif m == f"{rm}_softer":
+                    reset_model_series[rm]['softer'][d] = round(hr['rating'], 1)
+                elif m == f"{rm}_soft":
+                    reset_model_series[rm]['soft'][d] = round(hr['rating'], 1)
+
+        sorted_reset_dates = sorted(list(reset_dates_set))
+        reset_chart_data = {
+            'labels': sorted_reset_dates,
+            'active_model': active_model,
+        }
+        for rm in reset_models:
+            reset_chart_data[rm] = {
+                'continuous': [reset_model_series[rm]['continuous'].get(d) for d in sorted_reset_dates],
+                'softer': [reset_model_series[rm]['softer'].get(d) for d in sorted_reset_dates],
+                'soft': [reset_model_series[rm]['soft'].get(d) for d in sorted_reset_dates],
+            }
+
         # Calculate Career Peak Year evaluation from yearly_player_stats
         yearly_stats_rows = conn.execute(
             'SELECT year, opponents_count, wins, losses, draws, win_rate '
@@ -493,6 +532,7 @@ def profile(player_name):
             player=player,
             ratings=ratings_by_model,
             chart_json=json.dumps(chart_data),
+            reset_chart_json=json.dumps(reset_chart_data),
             recent_matches=recent_matches,
             h2h=h2h_list,
             narrative=narrative,
@@ -677,17 +717,17 @@ def player_matrix(player_name):
             ('glicko2_daneo', 'softer', 'glicko2_daneo_softer'),
             ('glicko2_daneo', 'soft', 'glicko2_daneo_soft'),
             ('glicko2_std', 'continuous', 'glicko2_std'),
+            ('glicko2_std', 'softer', 'glicko2_std_softer'),
             ('glicko2_std', 'soft', 'glicko2_std_soft'),
-            ('glicko2_std', 'amplified', 'glicko2_std_amplified'),
             ('glicko2_mp', 'continuous', 'glicko2_mp'),
+            ('glicko2_mp', 'softer', 'glicko2_mp_softer'),
             ('glicko2_mp', 'soft', 'glicko2_mp_soft'),
-            ('glicko2_mp', 'amplified', 'glicko2_mp_amplified'),
             ('glicko2_adapt', 'continuous', 'glicko2_adapt'),
+            ('glicko2_adapt', 'softer', 'glicko2_adapt_softer'),
             ('glicko2_adapt', 'soft', 'glicko2_adapt_soft'),
-            ('glicko2_adapt', 'amplified', 'glicko2_adapt_amplified'),
             ('whr', 'continuous', 'whr'),
+            ('whr', 'softer', 'whr_softer'),
             ('whr', 'soft', 'whr_soft'),
-            ('whr', 'amplified', 'whr_amplified'),
         ]
 
         matrix_cells = {}

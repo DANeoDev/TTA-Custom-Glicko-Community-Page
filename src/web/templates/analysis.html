@@ -24,6 +24,22 @@
     }
   }
 
+  @media (max-width: 768px) {
+    .graph-main-card, .eval-table-card, .analysis-hero-card {
+      padding: 1.1rem 0.85rem;
+    }
+    .analysis-hero-title {
+      font-size: 1.45rem;
+    }
+    .hero-chart-container {
+      height: 280px !important;
+    }
+    .options-sticky-panel {
+      position: static;
+      max-height: none;
+    }
+  }
+
   .analysis-main-column {
     display: flex;
     flex-direction: column;
@@ -263,7 +279,7 @@
         </div>
       </div>
 
-      <div style="position: relative; height: 420px; width: 100%;">
+      <div class="hero-chart-container" style="position: relative; height: 420px; width: 100%;">
         <canvas id="heroCalibrationChart"></canvas>
       </div>
     </div>
@@ -281,7 +297,8 @@
         </div>
       </div>
 
-      <div style="overflow-x: auto;">
+      <div class="scroll-hint"><span>Swipe table horizontally for all 4 metrics ➔</span></div>
+      <div class="table-responsive">
         <table class="ranked-table">
           <thead>
             <tr>

@@ -899,7 +899,7 @@ def test_player_profile_format_filtering(client):
 
 
 def test_player_modes_subpage_and_engine_switcher(client):
-    """Verify /modes subpage alias, Score Index explainer tooltip, and dynamic engine switcher."""
+    """Verify /modes subpage alias, Score Index explainer tooltip, and dynamic engine switcher on player profile."""
     # 1. Access /modes alias
     rv = client.get('/player/Martin_Pecheur/modes')
     assert rv.status_code == 200
@@ -907,9 +907,16 @@ def test_player_modes_subpage_and_engine_switcher(client):
     assert 'Rating Model &times; Reset Mode Comparison Matrix' in html or 'Comparison Matrix' in html
     assert 'Score Index' in html
     assert 'Composite Performance Index' in html
-    assert 'switchChartEngine' in html
-    assert 'btnEngineStd' in html
-    assert 'btnEngineMp' in html
-    assert 'btnEngineWhr' in html
+
+    # 2. Access player profile where Season Reset trajectory chart and engine switcher reside
+    rv_prof = client.get('/player/Martin_Pecheur')
+    assert rv_prof.status_code == 200
+    prof_html = rv_prof.get_data(as_text=True)
+    assert 'switchResetChartEngine' in prof_html
+    assert 'btnResetDaneo' in prof_html
+    assert 'btnResetStd' in prof_html
+    assert 'btnResetMp' in prof_html
+    assert 'btnResetWhr' in prof_html
+
 
 

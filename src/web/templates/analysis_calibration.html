@@ -59,6 +59,18 @@
     color: #1c130d;
     box-shadow: 0 2px 6px rgba(229, 169, 60, 0.3);
   }
+
+  @media (max-width: 768px) {
+    .eval-mode-toggle {
+      width: 100%;
+      flex-direction: column;
+    }
+    .eval-mode-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 0.5rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -174,7 +186,8 @@
     <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
       Aggregated out-of-sample forecast accuracy evaluated on hundreds of thousands of competitive encounters across 2022–2026.
     </p>
-    <div style="overflow-x: auto;">
+    <div class="scroll-hint"><span>Swipe table horizontally for calibration metrics ➔</span></div>
+    <div class="table-responsive">
       <table class="calib-table">
         <thead>
           <tr>
@@ -261,7 +274,8 @@
     <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
       Observed win percentages for the favored competitor across all out-of-sample forecast games.
     </p>
-    <div style="overflow-x: auto;">
+    <div class="scroll-hint"><span>Swipe table horizontally for probability bin stats ➔</span></div>
+    <div class="table-responsive">
       <table class="calib-table">
         <thead>
           <tr>
@@ -356,7 +370,8 @@
     <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
       Comprehensive diagnostic comparison across all 9 rating engines in {{ formats.get(active_format, 'All Formats') }} based on full historical trajectories.
     </p>
-    <div style="overflow-x: auto;">
+    <div class="scroll-hint"><span>Swipe table horizontally for retrospective engine diagnostics ➔</span></div>
+    <div class="table-responsive">
       <table class="calib-table">
         <thead>
           <tr>
@@ -409,7 +424,7 @@
     <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1.25rem;">
       Predictions are evaluated from the favored player's perspective (&ge; 50%). A model is perfectly calibrated when its curve coincides with the dashed diagonal.
     </p>
-    <div style="position: relative; height: 380px; width: 100%;">
+    <div class="hero-chart-container" style="position: relative; height: 380px; width: 100%;">
       <canvas id="deepCalibChart"></canvas>
     </div>
   </div>
@@ -422,7 +437,8 @@
     <p style="color: var(--text-muted); font-size: 0.88rem; margin-bottom: 1rem;">
       Observed win percentages for the favored competitor (&ge; 50%) across competitive matches.
     </p>
-    <div style="overflow-x: auto;">
+    <div class="scroll-hint"><span>Swipe table horizontally for empirical bin breakdown ➔</span></div>
+    <div class="table-responsive">
       <table class="calib-table">
         <thead>
           <tr>

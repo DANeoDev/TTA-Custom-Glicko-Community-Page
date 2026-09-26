@@ -730,18 +730,21 @@ def movers():
     min_games = max(0, int(request.args.get('min_games', 15)))
 
     ALL_CONFIGS = [
+        ('glicko2_daneo', '👑 GlickoD (Dynamic)', 'Continuous'),
+        ('glicko2_daneo_softer', '👑 GlickoD (Dynamic)', 'Season Reset'),
+        ('glicko2_daneo_soft', '👑 GlickoD (Dynamic)', 'Soft Reset'),
         ('glicko2_std', 'Glicko-2 Standard', 'Continuous'),
+        ('glicko2_std_softer', 'Glicko-2 Standard', 'Season Reset'),
         ('glicko2_std_soft', 'Glicko-2 Standard', 'Soft Reset'),
-        ('glicko2_std_amplified', 'Glicko-2 Standard', 'Hard Reset'),
         ('glicko2_mp', 'Glicko-2 MP-Weighted', 'Continuous'),
+        ('glicko2_mp_softer', 'Glicko-2 MP-Weighted', 'Season Reset'),
         ('glicko2_mp_soft', 'Glicko-2 MP-Weighted', 'Soft Reset'),
-        ('glicko2_mp_amplified', 'Glicko-2 MP-Weighted', 'Hard Reset'),
         ('glicko2_adapt', 'Glicko-2 Adaptive-T', 'Continuous'),
+        ('glicko2_adapt_softer', 'Glicko-2 Adaptive-T', 'Season Reset'),
         ('glicko2_adapt_soft', 'Glicko-2 Adaptive-T', 'Soft Reset'),
-        ('glicko2_adapt_amplified', 'Glicko-2 Adaptive-T', 'Hard Reset'),
         ('whr', 'Whole-History Rating (WHR)', 'Continuous'),
+        ('whr_softer', 'Whole-History Rating (WHR)', 'Season Reset'),
         ('whr_soft', 'Whole-History Rating (WHR)', 'Soft Reset'),
-        ('whr_amplified', 'Whole-History Rating (WHR)', 'Hard Reset'),
     ]
 
     conn = get_connection()

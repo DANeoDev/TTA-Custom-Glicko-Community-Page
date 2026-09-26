@@ -58,7 +58,7 @@
   {% endif %}
 
   <!-- Summary Cards -->
-  <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; margin-bottom: 2rem;">
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.25rem; margin-bottom: 2rem;">
     <div style="background: rgba(26, 17, 12, 0.92); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 1.25rem; text-align: center;">
       <div style="font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted);">Total Scraped Games</div>
       <div style="font-size: 2rem; font-weight: 700; color: #f5eedb; font-family: var(--font-heading); margin-top: 0.4rem;">{{ total_scraped }}</div>
@@ -98,7 +98,10 @@
       Discovered New Matches Preview (Showing up to {{ new_matches|length }})
     </h3>
 
-    <div style="overflow-x: auto;">
+    <div class="scroll-hint">
+      <span>&#8596; Scroll table horizontally</span>
+    </div>
+    <div class="table-responsive">
       <table style="width: 100%; border-collapse: collapse; font-size: 0.88rem;">
         <thead>
           <tr style="border-bottom: 2px solid var(--border-subtle); color: var(--accent-gold); text-align: left;">

@@ -511,6 +511,65 @@
     box-shadow: 0 2px 8px rgba(229, 169, 60, 0.4);
   }
 
+  @media (max-width: 768px) {
+    .comm-hero {
+      padding: 1.25rem 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .comm-title {
+      font-size: 1.5rem;
+    }
+    .comm-subtitle {
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+    .comm-stats-grid {
+      grid-template-columns: repeat(2, 1fr) !important;
+      gap: 0.6rem;
+    }
+    .stat-tile {
+      padding: 0.75rem 0.5rem;
+    }
+    .stat-tile-num {
+      font-size: 1.4rem;
+    }
+    .comm-controls {
+      padding: 0.85rem;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 0.75rem;
+    }
+    .comm-search-form {
+      min-width: 0 !important;
+      max-width: 100% !important;
+      width: 100%;
+    }
+    .comm-search-input {
+      min-height: 40px;
+    }
+    .view-toggle-bar {
+      width: 100%;
+      justify-content: center;
+    }
+    .view-btn {
+      flex: 1;
+      text-align: center;
+      padding: 0.5rem 0.5rem;
+    }
+    .table-wrapper {
+      margin-bottom: 1.5rem;
+      -webkit-overflow-scrolling: touch;
+    }
+    .table-wrapper.expanded-view {
+      max-width: 100vw;
+      width: 100vw;
+      margin-left: -0.75rem;
+      margin-right: -0.75rem;
+      border-radius: 0;
+      border-left: none;
+      border-right: none;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -663,6 +722,7 @@
 </div>
 
 <!-- Interactive Table -->
+<div class="scroll-hint" style="max-width: 1400px; margin: 0 auto 0.4rem auto;"><span>Swipe table horizontally for full community ranking ➔</span></div>
 <div class="table-wrapper {% if view_mode == 'expanded' %}expanded-view{% endif %}">
   <table class="comm-table">
     <thead>

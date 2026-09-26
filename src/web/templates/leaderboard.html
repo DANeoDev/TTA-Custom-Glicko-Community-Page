@@ -537,6 +537,141 @@
     letter-spacing: 0.5px;
     font-weight: 700;
   }
+
+  /* Mobile Responsive Leaderboard Styles */
+  .format-bar-formats {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  .format-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .search-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  @media (max-width: 768px) {
+    .format-bar {
+      flex-direction: column;
+      align-items: stretch !important;
+      gap: 0.65rem;
+      padding: 0.65rem;
+    }
+    .format-bar-formats {
+      flex-wrap: nowrap;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: none;
+      padding-bottom: 2px;
+    }
+    .format-bar-formats::-webkit-scrollbar {
+      display: none;
+    }
+    .format-btn {
+      flex-shrink: 0;
+      padding: 0.45rem 0.85rem;
+      font-size: 0.82rem;
+    }
+    .format-bar-actions {
+      display: flex;
+      gap: 0.5rem;
+      width: 100%;
+      align-items: center;
+    }
+    .search-form-mobile {
+      flex: 1;
+      min-width: 0;
+      margin: 0 !important;
+    }
+    .search-input-wrapper {
+      width: 100%;
+    }
+    .search-input-wrapper input[type="text"] {
+      width: 100% !important;
+      min-height: 40px;
+      box-sizing: border-box;
+    }
+    .btn-options-toggle {
+      min-height: 40px;
+      flex-shrink: 0;
+      padding: 0.4rem 0.75rem;
+    }
+    .leaderboard-layout-container.options-open .leaderboard-sidebar-column {
+      position: fixed !important;
+      inset: 0 !important;
+      width: 100vw !important;
+      height: 100vh !important;
+      height: 100dvh !important;
+      max-width: 100% !important;
+      z-index: 10001 !important;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(5px);
+      display: flex !important;
+      flex-direction: column;
+      justify-content: flex-end;
+      animation: fadeInModal 0.2s ease-out;
+    }
+    .leaderboard-layout-container.options-open .leaderboard-options-panel {
+      width: 100%;
+      max-height: 85vh;
+      overflow-y: auto;
+      border-radius: 14px 14px 0 0;
+      border: 2px solid var(--accent-gold);
+      border-bottom: none;
+      box-shadow: 0 -8px 30px rgba(0, 0, 0, 0.95);
+      padding: 1.25rem 1rem 2rem 1rem;
+      animation: slideUpSheet 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .col-sticky-rank {
+      position: sticky;
+      left: 0;
+      z-index: 4;
+      background: rgba(22, 14, 10, 0.98) !important;
+      box-shadow: 1px 0 3px rgba(0,0,0,0.5);
+    }
+    .col-sticky-player {
+      position: sticky;
+      left: 55px;
+      z-index: 4;
+      background: rgba(22, 14, 10, 0.98) !important;
+      box-shadow: 3px 0 6px rgba(0,0,0,0.4);
+      min-width: 140px;
+      white-space: nowrap;
+    }
+    .pagination {
+      flex-direction: column;
+      gap: 0.85rem;
+      text-align: center;
+    }
+    .pagination > div {
+      justify-content: center;
+    }
+    .pagination a, .page-jumper button {
+      min-height: 42px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .page-jumper input {
+      min-height: 40px;
+    }
+  }
+
+  @keyframes fadeInModal {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes slideUpSheet {
+    from { transform: translateY(100%); }
+    to { transform: translateY(0); }
+  }
 </style>
 {% endblock %}
 
@@ -551,7 +686,7 @@
       <!-- Streamlined Top Row: Format bar on left, Search in center, Options Toggle on right -->
       <div class="format-bar">
         <!-- 1. Format Selector (2p / 3p / 4p / All) -->
-        <div style="display: flex; gap: 0.4rem; flex-wrap: wrap; align-items: center;">
+        <div class="format-bar-formats">
           {% for f_id, f_name in formats.items() %}
             <a href="{{ make_url({'format': f_id, 'page': 1}) }}"
                class="format-btn {% if active_format == f_id %}active{% endif %}">
@@ -560,34 +695,34 @@
           {% endfor %}
         </div>
 
-        <!-- 2. Player Search Bar (Centered, submits on Enter or 🔍 click) -->
-        <form method="GET" action="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year) }}{% else %}{{ url_for('leaderboard.index') }}{% endif %}" style="display: flex; align-items: center; gap: 0.35rem; margin: 0.2rem 0;">
-          <input type="hidden" name="model" value="{{ active_model }}">
-          <input type="hidden" name="format" value="{{ active_format }}">
-          <input type="hidden" name="reset_mode" value="{{ reset_mode }}">
-          {% if selected_year %}<input type="hidden" name="stats_view" value="{{ stats_view }}">{% endif %}
-          {% if active_retro %}<input type="hidden" name="retro" value="1">{% endif %}
-          {% if title_filter and title_filter != 'ALL' %}<input type="hidden" name="title" value="{{ title_filter }}">{% endif %}
-          {% if status and status != 'active' %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
-          {% if delta_window and delta_window != 'none' %}<input type="hidden" name="delta" value="{{ delta_window }}">{% endif %}
-          {% if min_opps %}<input type="hidden" name="min_opps" value="{{ min_opps }}">{% endif %}
+        <div class="format-bar-actions">
+          <!-- 2. Player Search Bar (Centered, submits on Enter or 🔍 click) -->
+          <form method="GET" action="{% if selected_year %}{{ url_for('leaderboard.yearly', year=selected_year) }}{% else %}{{ url_for('leaderboard.index') }}{% endif %}" class="search-form-mobile" style="display: flex; align-items: center; gap: 0.35rem; margin: 0.2rem 0;">
+            <input type="hidden" name="model" value="{{ active_model }}">
+            <input type="hidden" name="format" value="{{ active_format }}">
+            <input type="hidden" name="reset_mode" value="{{ reset_mode }}">
+            {% if selected_year %}<input type="hidden" name="stats_view" value="{{ stats_view }}">{% endif %}
+            {% if active_retro %}<input type="hidden" name="retro" value="1">{% endif %}
+            {% if title_filter and title_filter != 'ALL' %}<input type="hidden" name="title" value="{{ title_filter }}">{% endif %}
+            {% if status and status != 'active' %}<input type="hidden" name="status" value="{{ status }}">{% endif %}
+            {% if delta_window and delta_window != 'none' %}<input type="hidden" name="delta" value="{{ delta_window }}">{% endif %}
+            {% if min_opps %}<input type="hidden" name="min_opps" value="{{ min_opps }}">{% endif %}
 
-          <div style="position: relative; display: flex; align-items: center;">
-            <input type="text" name="search" value="{{ search }}" 
-                   placeholder="Search player ..." 
-                   class="input-antique" style="width: 230px; padding: 0.4rem 2rem 0.4rem 0.65rem; font-size: 0.88rem;"
-                   title="Separate multiple names with commas.">
-            <button type="submit" style="position: absolute; right: 6px; background: transparent; border: none; color: var(--accent-gold); cursor: pointer; padding: 2px 4px; font-size: 0.9rem;" title="Search">
-              🔍
-            </button>
-          </div>
-          {% if search %}
-            <a href="{{ make_url({'search': '', 'page': 1}) }}" class="btn-reset" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Clear search">✕</a>
-          {% endif %}
-        </form>
+            <div class="search-input-wrapper">
+              <input type="text" name="search" value="{{ search }}" 
+                     placeholder="Search player ..." 
+                     class="input-antique" style="padding: 0.4rem 2rem 0.4rem 0.65rem; font-size: 0.88rem;"
+                     title="Separate multiple names with commas.">
+              <button type="submit" style="position: absolute; right: 6px; background: transparent; border: none; color: var(--accent-gold); cursor: pointer; padding: 2px 4px; font-size: 0.9rem;" title="Search">
+                🔍
+              </button>
+            </div>
+            {% if search %}
+              <a href="{{ make_url({'search': '', 'page': 1}) }}" class="btn-reset" style="padding: 0.35rem 0.6rem; font-size: 0.78rem;" title="Clear search">✕</a>
+            {% endif %}
+          </form>
 
-        <!-- 3. Options Toggle Button (Top right, aligned with card) -->
-        <div style="display: flex; align-items: center; gap: 0.5rem;">
+          <!-- 3. Options Toggle Button (Top right, aligned with card) -->
           <button type="button" class="btn-options-toggle {% if non_default_options %}active{% endif %}" onclick="toggleOptionsSidebar()" id="optionsToggleBtn" title="Toggle advanced rating options, season archive, and filters">
             <span>⚙️ Options</span>
             {% if non_default_options %}
@@ -725,11 +860,12 @@
         </div>
       </div>
 
-  <div style="overflow-x: auto;">
+  <div class="scroll-hint"><span>Swipe table horizontally for full stats ➔</span></div>
+  <div class="table-responsive">
     <table class="leaderboard-table">
       <thead>
         <tr>
-          <th>
+          <th class="col-sticky-rank">
             <a href="{{ make_url({'sort': 'rank', 'order': 'desc' if sort_by == 'rank' and order == 'asc' else 'asc', 'page': 1}) }}"
                data-tooltip="Current competitive ranking based on Conservative Rating (C = μ - 3σ).">
               Rank
@@ -791,7 +927,7 @@
       <tbody>
         {% for p in players %}
         <tr id="player-{{ p.player_name }}" class="{% if jump_to_player == p.player_name %}jump-highlight{% endif %}">
-          <td class="rank-col {% if p.display_rank <= 3 %}top-3-rank{% endif %}">
+          <td class="col-sticky-rank rank-col {% if p.display_rank <= 3 %}top-3-rank{% endif %}">
             #{{ p.display_rank }}
             {% if p.delta and p.delta.rank != 0 %}
               <span class="delta-badge {% if p.delta.rank > 0 %}delta-pos{% else %}delta-neg{% endif %}" data-tooltip="Rank change over selected timeframe">
@@ -1105,6 +1241,12 @@
     const sidebar = document.getElementById('leaderboardSidebar');
     if (!layout || !sidebar || !layout.classList.contains('options-open')) return;
 
+    if (window.innerWidth <= 768) {
+      sidebar.style.left = '';
+      sidebar.style.right = '';
+      return;
+    }
+
     const cardRect = layout.getBoundingClientRect();
     const viewportWidth = document.documentElement.clientWidth;
     const freeSpaceRight = viewportWidth - cardRect.right;
@@ -1148,6 +1290,11 @@
     }
     if (isOpen) {
       positionOptionsSidebar();
+      if (window.innerWidth <= 768) {
+        document.body.style.overflow = 'hidden';
+      }
+    } else {
+      document.body.style.overflow = '';
     }
     localStorage.setItem('tta_lb_options_open', isOpen ? 'true' : 'false');
   }
@@ -1160,11 +1307,21 @@
     const arrow = document.getElementById('optionsToggleArrow');
     const btn = document.getElementById('optionsToggleBtn');
 
-    if (savedState === 'true' && layout) {
+    // Only auto-open if desktop
+    if (savedState === 'true' && layout && window.innerWidth > 768) {
       layout.classList.add('options-open');
       if (arrow) arrow.textContent = '✕';
       if (btn) btn.classList.add('open');
       positionOptionsSidebar();
+    }
+
+    const sidebarCol = document.getElementById('leaderboardSidebar');
+    if (sidebarCol) {
+      sidebarCol.addEventListener('click', function(e) {
+        if (window.innerWidth <= 768 && e.target === sidebarCol) {
+          toggleOptionsSidebar();
+        }
+      });
     }
   });
 

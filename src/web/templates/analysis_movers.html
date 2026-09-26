@@ -45,6 +45,12 @@
     border-bottom: 1px solid rgba(74, 53, 37, 0.3);
   }
   .comp-table td:first-child { text-align: left; font-weight: 600; color: #f5eedb; }
+
+  @media (max-width: 768px) {
+    .player-comp-card {
+      padding: 1.15rem 0.85rem;
+    }
+  }
 </style>
 {% endblock %}
 
@@ -62,7 +68,7 @@
       Multi-Engine Player Comparison Tool
     </h1>
     <p class="analysis-hero-desc">
-      Inspect and compare individual player rating trajectories across all <strong>9 rating configurations</strong> (Glicko-2 Standard, Glicko-2 MP-Weighted, and WHR under Continuous, Soft Reset, and Hard Reset modes).
+      Inspect and compare individual player rating trajectories across the rating engines (👑 <strong>GlickoD</strong>, Glicko-2 Standard, Glicko-2 MP-Weighted, Adaptive-T, and WHR) across Continuous, Season Reset, and Soft Reset configurations.
     </p>
   </div>
 </div>
@@ -133,7 +139,8 @@
       </div>
     </div>
 
-    <div style="overflow-x: auto;">
+    <div class="scroll-hint"><span>Swipe table horizontally for all engine comparisons ➔</span></div>
+    <div class="table-responsive">
       <table class="comp-table">
         <thead>
           <tr>
@@ -148,7 +155,7 @@
         </thead>
         <tbody>
           {% for st in item.stats %}
-          <tr {% if 'mp' in st.model_key and 'soft' not in st.model_key and 'amplified' not in st.model_key %}style="background: rgba(229, 169, 60, 0.08);"{% endif %}>
+          <tr {% if 'daneo' in st.model_key and 'softer' not in st.model_key and 'soft' not in st.model_key %}style="background: rgba(139, 92, 246, 0.16); border-left: 3px solid #8b5cf6;"{% elif 'daneo' in st.model_key %}style="background: rgba(139, 92, 246, 0.07); border-left: 3px solid rgba(139, 92, 246, 0.5);"{% elif 'softer' in st.model_key %}style="background: rgba(229, 169, 60, 0.04);"{% endif %}>
             <td>
               <span style="font-weight: 600; color: #f5eedb;">{{ st.engine }}</span>
               <span class="badge badge-rank" style="margin-left: 0.4rem; font-size: 0.72rem; padding: 2px 6px;">{{ st.reset_mode }}</span>
