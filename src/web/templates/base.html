@@ -415,6 +415,75 @@
       opacity: 1;
       visibility: visible;
     }
+    /* Universal Search Autocomplete Dropdown */
+    #site-search-autocomplete {
+      position: absolute;
+      z-index: 1000000;
+      background: rgba(22, 14, 9, 0.98);
+      border: 1.5px solid var(--accent-gold);
+      border-radius: 6px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 15px rgba(212, 160, 23, 0.3);
+      max-height: 360px;
+      overflow-y: auto;
+      min-width: 240px;
+      display: none;
+      font-family: var(--font-stats, monospace);
+      backdrop-filter: blur(12px);
+      padding: 4px 0;
+    }
+    .search-autocomplete-item {
+      padding: 0.55rem 0.85rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.75rem;
+      cursor: pointer;
+      border-bottom: 1px solid rgba(255, 215, 0, 0.08);
+      color: #dfd7cc;
+      font-size: 0.88rem;
+      transition: background 0.1s ease, color 0.1s ease;
+    }
+    .search-autocomplete-item:last-child {
+      border-bottom: none;
+    }
+    .search-autocomplete-item:hover,
+    .search-autocomplete-item.active {
+      background: rgba(212, 160, 23, 0.25);
+      color: #ffffff;
+    }
+    .search-autocomplete-left {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .search-autocomplete-name {
+      font-weight: 600;
+      color: #ffd700;
+    }
+    .search-autocomplete-item.active .search-autocomplete-name {
+      color: #fff;
+      text-shadow: 0 0 8px rgba(255, 215, 0, 0.6);
+    }
+    .search-autocomplete-item .search-match {
+      color: #fff;
+      font-weight: 700;
+      text-decoration: underline;
+      text-decoration-color: var(--accent-gold);
+      text-underline-offset: 3px;
+    }
+    .search-autocomplete-hint {
+      padding: 0.4rem 0.85rem;
+      color: var(--text-muted);
+      font-size: 0.72rem;
+      border-top: 1px solid rgba(255, 215, 0, 0.1);
+      display: flex;
+      justify-content: space-between;
+      background: rgba(12, 8, 5, 0.8);
+      letter-spacing: 0.5px;
+    }
     /* High contrast dark gold text and outlines */
     .text-gold-contrast {
       color: #e5a544 !important;
@@ -2007,6 +2076,233 @@
           positionTooltip(activeTarget);
         }
       }, { passive: true });
+    })();
+
+    // Universal Player Search Autocomplete / Prefilter Engine
+    (function() {
+      const dropdown = document.createElement('div');
+      dropdown.id = 'site-search-autocomplete';
+      dropdown.setAttribute('role', 'listbox');
+      document.body.appendChild(dropdown);
+
+      let activeInput = null;
+      let activeIndex = -1;
+      let currentSuggestions = [];
+      let debounceTimer = null;
+      let fetchAbortController = null;
+
+      function getCountryFlag(code) {
+        if (!code || code.length !== 2) return '';
+        const codePoints = code.toUpperCase().split('').map(c => 127397 + c.charCodeAt(0));
+        return String.fromCodePoint(...codePoints);
+      }
+
+      function highlightMatch(text, query) {
+        if (!query) return text;
+        const idx = text.toLowerCase().indexOf(query.toLowerCase());
+        if (idx === -1) return text;
+        const before = text.substring(0, idx);
+        const match = text.substring(idx, idx + query.length);
+        const after = text.substring(idx + query.length);
+        return `${before}<span class="search-match">${match}</span>${after}`;
+      }
+
+      function positionDropdown() {
+        if (!activeInput || dropdown.style.display !== 'block') return;
+        const rect = activeInput.getBoundingClientRect();
+        dropdown.style.left = (rect.left + window.scrollX) + 'px';
+        dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
+        dropdown.style.width = Math.max(rect.width, 240) + 'px';
+      }
+
+      function closeDropdown() {
+        dropdown.style.display = 'none';
+        dropdown.innerHTML = '';
+        currentSuggestions = [];
+        activeIndex = -1;
+      }
+
+      function selectPlayer(name) {
+        if (!activeInput) return;
+        const val = activeInput.value;
+        const isMulti = (activeInput.placeholder && activeInput.placeholder.includes(',')) || val.includes(',');
+        
+        if (isMulti && val.includes(',')) {
+          const parts = val.split(',');
+          parts[parts.length - 1] = ' ' + name;
+          activeInput.value = parts.join(',').trim();
+        } else {
+          activeInput.value = name;
+        }
+        
+        closeDropdown();
+        if (activeInput.form) {
+          activeInput.form.submit();
+        }
+      }
+
+      function updateActiveItem() {
+        const items = dropdown.querySelectorAll('.search-autocomplete-item');
+        items.forEach((item, idx) => {
+          if (idx === activeIndex) {
+            item.classList.add('active');
+            item.scrollIntoView({ block: 'nearest' });
+          } else {
+            item.classList.remove('active');
+          }
+        });
+      }
+
+      function renderSuggestions(suggestions, query) {
+        currentSuggestions = suggestions;
+        activeIndex = -1;
+        if (!suggestions || suggestions.length === 0) {
+          closeDropdown();
+          return;
+        }
+
+        let html = '';
+        suggestions.forEach((s, idx) => {
+          const flag = getCountryFlag(s.country_code);
+          const flagHtml = flag ? `<span class="flag-icon" style="font-size: 1.05rem;">${flag}</span>` : '';
+          const badgeHtml = s.title ? `<span class="badge badge-${s.title.toLowerCase()}" style="font-size: 0.72rem; padding: 2px 6px;">${s.title}</span>` : '';
+          
+          html += `
+            <div class="search-autocomplete-item" data-index="${idx}" data-name="${s.name}" role="option">
+              <span class="search-autocomplete-left">
+                ${flagHtml}
+                <span class="search-autocomplete-name">${highlightMatch(s.name, query)}</span>
+              </span>
+              ${badgeHtml}
+            </div>
+          `;
+        });
+
+        html += `
+          <div class="search-autocomplete-hint">
+            <span>&uarr;&darr; navigate</span>
+            <span>&crarr; select</span>
+            <span>ESC close</span>
+          </div>
+        `;
+
+        dropdown.innerHTML = html;
+        positionDropdown();
+        dropdown.style.display = 'block';
+
+        dropdown.querySelectorAll('.search-autocomplete-item').forEach(item => {
+          item.addEventListener('mouseenter', () => {
+            activeIndex = parseInt(item.getAttribute('data-index'), 10);
+            updateActiveItem();
+          });
+          item.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            selectPlayer(item.getAttribute('data-name'));
+          });
+        });
+      }
+
+      function getCurrentQuery(input) {
+        const val = input.value;
+        if (!val) return '';
+        const isMulti = (input.placeholder && input.placeholder.includes(',')) || val.includes(',');
+        if (isMulti) {
+          const parts = val.split(',');
+          return parts[parts.length - 1].trim();
+        }
+        return val.trim();
+      }
+
+      function onInput(e) {
+        const input = e.target;
+        activeInput = input;
+        const query = getCurrentQuery(input);
+
+        if (debounceTimer) clearTimeout(debounceTimer);
+        if (fetchAbortController) fetchAbortController.abort();
+
+        if (query.length < 2) {
+          closeDropdown();
+          return;
+        }
+
+        debounceTimer = setTimeout(() => {
+          fetchAbortController = new AbortController();
+          fetch(`/api/players/suggest?q=${encodeURIComponent(query)}`, { signal: fetchAbortController.signal })
+            .then(res => res.json())
+            .then(data => {
+              if (activeInput === input && getCurrentQuery(input) === query) {
+                renderSuggestions(data.suggestions || [], query);
+              }
+            })
+            .catch(err => {
+              if (err.name !== 'AbortError') {
+                closeDropdown();
+              }
+            });
+        }, 150);
+      }
+
+      function onKeyDown(e) {
+        if (dropdown.style.display !== 'block') return;
+
+        if (e.key === 'ArrowDown') {
+          e.preventDefault();
+          if (currentSuggestions.length > 0) {
+            activeIndex = (activeIndex + 1) % currentSuggestions.length;
+            updateActiveItem();
+          }
+        } else if (e.key === 'ArrowUp') {
+          e.preventDefault();
+          if (currentSuggestions.length > 0) {
+            activeIndex = (activeIndex - 1 + currentSuggestions.length) % currentSuggestions.length;
+            updateActiveItem();
+          }
+        } else if (e.key === 'Enter') {
+          if (activeIndex >= 0 && activeIndex < currentSuggestions.length) {
+            e.preventDefault();
+            selectPlayer(currentSuggestions[activeIndex].name);
+          }
+        } else if (e.key === 'Escape') {
+          e.preventDefault();
+          closeDropdown();
+        } else if (e.key === 'Tab') {
+          if (activeIndex >= 0 && activeIndex < currentSuggestions.length) {
+            e.preventDefault();
+            selectPlayer(currentSuggestions[activeIndex].name);
+          } else {
+            closeDropdown();
+          }
+        }
+      }
+
+      function attachSearchListeners() {
+        const searchInputs = document.querySelectorAll('input[name="search"], input[name="q"], .comm-search-input');
+        searchInputs.forEach(input => {
+          if (input.dataset.autocompleteAttached) return;
+          input.dataset.autocompleteAttached = 'true';
+          input.setAttribute('autocomplete', 'off');
+          input.addEventListener('input', onInput);
+          input.addEventListener('focus', onInput);
+          input.addEventListener('keydown', onKeyDown);
+        });
+      }
+
+      document.addEventListener('pointerdown', (e) => {
+        if (!dropdown.contains(e.target) && e.target !== activeInput) {
+          closeDropdown();
+        }
+      });
+
+      window.addEventListener('resize', positionDropdown, { passive: true });
+      window.addEventListener('scroll', positionDropdown, { passive: true });
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', attachSearchListeners);
+      } else {
+        attachSearchListeners();
+      }
     })();
   </script>
 

@@ -58,6 +58,44 @@ def yearly(year):
     return render_leaderboard(year=year)
 
 
+@leaderboard_bp.route('/api/players/suggest')
+def suggest_players():
+    """Returns matching player suggestions for live search bar prefiltering."""
+    q = request.args.get('q', '').strip()
+    if not q or len(q) < 2:
+        return {'suggestions': []}
+
+    conn = get_connection()
+    try:
+        like_prefix = f"{q.lower()}%"
+        like_sub = f"%{q.lower()}%"
+        query = """
+            SELECT name, country_code, title
+            FROM players
+            WHERE LOWER(name) LIKE ?
+            ORDER BY
+                CASE
+                    WHEN LOWER(name) = ? THEN 0
+                    WHEN LOWER(name) LIKE ? THEN 1
+                    ELSE 2
+                END,
+                name ASC
+            LIMIT 12
+        """
+        rows = conn.execute(query, (like_sub, q.lower(), like_prefix)).fetchall()
+        suggestions = [
+            {
+                'name': r['name'],
+                'country_code': r['country_code'] or '',
+                'title': r['title'] or ''
+            }
+            for r in rows
+        ]
+        return {'suggestions': suggestions}
+    finally:
+        conn.close()
+
+
 def render_leaderboard(year=None):
     if year is not None and year not in AVAILABLE_YEARS:
         abort(404)

@@ -90,52 +90,52 @@ def classify_division_tier(tournament_name: str) -> Optional[int]:
         return None
 
     # 2. International Championship (4P)
-    # Tier 1: Diamond / Master 1 / Premier / Grandmaster
-    # Tier 2: Platinum / Div 2 / Master 2
-    # Tier 3: Gold / Div 3
-    # Tier 4: Silver / Div 4
-    # Tier 5: Bronze / Div 5
-    # Tier 6: Div 6
-    # Tier 7: Wood / Div 7
+    # Tier 1: Grandmaster (GM) / Diamond / Tier 1
+    # Tier 2: Master (M) / Master 1 / Master 2 / Div 2 / Division 2 / Tier 2
+    # Tier 3: Platinum (P) / Div 3 / Division 3 / Tier 3
+    # Tier 4: Gold (G) / Div 4 / Division 4 / Tier 4
+    # Tier 5: Silver (S) / Div 5 / Division 5 / Tier 5
+    # Tier 6: Bronze (B) / Div 6 / Division 6 / Tier 6
+    # Tier 7: Wood (W) / Div 7 / Division 7 / Tier 7
     if 'international' in t_lower:
-        if 'diamond' in t_lower or 'grandmaster' in t_lower or 'master 1' in t_lower or 'tier 1' in t_lower:
+        if 'grandmaster' in t_lower or 'diamond' in t_lower or 'tier 1' in t_lower:
             return 1
-        elif 'platinum' in t_lower or 'master 2' in t_lower or 'div 2' in t_lower or 'division 2' in t_lower or 'tier 2' in t_lower:
+        elif 'master' in t_lower or 'tier 2' in t_lower or 'div 2' in t_lower or 'division 2' in t_lower:
             return 2
-        elif 'gold' in t_lower or 'div 3' in t_lower or 'division 3' in t_lower or 'tier 3' in t_lower:
+        elif 'platinum' in t_lower or 'tier 3' in t_lower or 'div 3' in t_lower or 'division 3' in t_lower:
             return 3
-        elif 'silver' in t_lower or 'div 4' in t_lower or 'division 4' in t_lower or 'tier 4' in t_lower:
+        elif 'gold' in t_lower or 'tier 4' in t_lower or 'div 4' in t_lower or 'division 4' in t_lower:
             return 4
-        elif 'bronze' in t_lower or 'div 5' in t_lower or 'division 5' in t_lower or 'tier 5' in t_lower:
+        elif 'silver' in t_lower or 'tier 5' in t_lower or 'div 5' in t_lower or 'division 5' in t_lower:
             return 5
-        elif 'div 6' in t_lower or 'division 6' in t_lower or 'tier 6' in t_lower:
+        elif 'bronze' in t_lower or 'tier 6' in t_lower or 'div 6' in t_lower or 'division 6' in t_lower:
             return 6
-        elif 'wood' in t_lower or 'div 7' in t_lower or 'division 7' in t_lower or 'tier 7' in t_lower:
+        elif 'wood' in t_lower or 'tier 7' in t_lower or 'div 7' in t_lower or 'division 7' in t_lower:
             return 7
         return None
 
     # 3. Intermezzo Championship (3P)
-    # Tier 1: Diamond / Master 1 / Grandmaster / Master (when top tier)
-    # Tier 2: Platinum / Master 2 / Div 2
-    # Tier 3: Gold / Div 3
-    # Tier 4: Silver / Div 4
-    # Tier 5: Bronze / Div 5
-    # Tier 6: Div 6
-    # Tier 7: Wood / Div 7
+    # Tier 1: Grandmaster (GM) / Diamond / Tier 1
+    # Tier 2: Master (M) / Master 1 / Master 2 / Div 2 / Division 2 / Tier 2
+    # Tier 3: Platinum (P) / Div 3 / Division 3 / Tier 3
+    # Tier 4: Gold (G) / Div 4 / Division 4 / Tier 4
+    # Tier 5: Silver (S) / Div 5 / Division 5 / Tier 5
+    # Tier 6: Bronze (B) / Div 6 / Division 6 / Tier 6
+    # Tier 7: Wood (W) / Div 7 / Division 7 / Tier 7
     if 'intermezzo' in t_lower:
-        if 'diamond' in t_lower or 'grandmaster' in t_lower or 'master 1' in t_lower or 'tier 1' in t_lower:
+        if 'grandmaster' in t_lower or 'diamond' in t_lower or 'tier 1' in t_lower:
             return 1
-        elif 'platinum' in t_lower or 'master 2' in t_lower or 'div 2' in t_lower or 'division 2' in t_lower or 'tier 2' in t_lower:
+        elif 'master' in t_lower or 'tier 2' in t_lower or 'div 2' in t_lower or 'division 2' in t_lower:
             return 2
-        elif 'gold' in t_lower or 'div 3' in t_lower or 'division 3' in t_lower or 'tier 3' in t_lower:
+        elif 'platinum' in t_lower or 'tier 3' in t_lower or 'div 3' in t_lower or 'division 3' in t_lower:
             return 3
-        elif 'silver' in t_lower or 'div 4' in t_lower or 'division 4' in t_lower or 'tier 4' in t_lower:
+        elif 'gold' in t_lower or 'tier 4' in t_lower or 'div 4' in t_lower or 'division 4' in t_lower:
             return 4
-        elif 'bronze' in t_lower or 'div 5' in t_lower or 'division 5' in t_lower or 'tier 5' in t_lower:
+        elif 'silver' in t_lower or 'tier 5' in t_lower or 'div 5' in t_lower or 'division 5' in t_lower:
             return 5
-        elif 'div 6' in t_lower or 'division 6' in t_lower or 'tier 6' in t_lower:
+        elif 'bronze' in t_lower or 'tier 6' in t_lower or 'div 6' in t_lower or 'division 6' in t_lower:
             return 6
-        elif 'wood' in t_lower or 'div 7' in t_lower or 'division 7' in t_lower or 'tier 7' in t_lower:
+        elif 'wood' in t_lower or 'tier 7' in t_lower or 'div 7' in t_lower or 'division 7' in t_lower:
             return 7
         return None
 
@@ -154,7 +154,26 @@ def parse_badge_reason(tournament_name: str, tier: int) -> str:
     tier_name = TIER_NAMES.get(tier, 'Wood')
     
     if 'rl_' in t_lower or 'royal league' in t_lower:
-        rl_title = "Emperor" if tier == 1 else ("King" if tier == 2 else ("Prince" if tier == 3 else ("Duke" if tier == 4 else ("Marquess" if tier == 5 else ("Count" if tier == 6 else "Viscount")))))
+        if 'baron' in t_lower:
+            rl_title = "Baron"
+        elif 'knight' in t_lower:
+            rl_title = "Knight"
+        elif 'viscount' in t_lower:
+            rl_title = "Viscount"
+        elif tier == 1:
+            rl_title = "Emperor"
+        elif tier == 2:
+            rl_title = "King"
+        elif tier == 3:
+            rl_title = "Prince"
+        elif tier == 4:
+            rl_title = "Duke"
+        elif tier == 5:
+            rl_title = "Marquess"
+        elif tier == 6:
+            rl_title = "Count"
+        else:
+            rl_title = "Viscount"
         s_part = f"Season {season_num}" if season_num else ""
         return f"Played in Royal League {rl_title} {s_part}".strip()
     

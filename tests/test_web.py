@@ -69,3 +69,28 @@ def test_player_profile_match_deltas(client):
     assert resp.status_code == 200
     assert b'Game History' in resp.data
     assert b'&Delta;R' in resp.data or b'Delta;R' in resp.data or b'Replay' in resp.data
+
+
+def test_player_suggest_api(client):
+    # Short queries return empty list
+    r_empty = client.get('/api/players/suggest?q=')
+    assert r_empty.status_code == 200
+    assert r_empty.get_json() == {'suggestions': []}
+
+    r_one = client.get('/api/players/suggest?q=d')
+    assert r_one.status_code == 200
+    assert r_one.get_json() == {'suggestions': []}
+
+    # Query 'dan'
+    r_dan = client.get('/api/players/suggest?q=dan')
+    assert r_dan.status_code == 200
+    names = [s['name'] for s in r_dan.get_json()['suggestions']]
+    assert 'DANeo' in names
+
+    # Query 'arthur' -> verifies ArthursDad with corrected Bronze badge 'B'
+    r_arthur = client.get('/api/players/suggest?q=arthur')
+    assert r_arthur.status_code == 200
+    arthur_entry = next((s for s in r_arthur.get_json()['suggestions'] if s['name'] == 'ArthursDad'), None)
+    assert arthur_entry is not None
+    assert arthur_entry['title'] == 'B'
+
