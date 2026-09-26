@@ -132,47 +132,62 @@ def profile(player_name):
 
         ratings_by_model = {inv_map.get(r['model_type'], r['model_type']): dict(r) for r in ratings_rows}
 
-        # Fetch history points for Chart.js across target keys in this format
+        # Fetch history points for Chart.js across both continuous and season reset modes
+        chart_base_keys = ['glicko2_daneo', 'glicko2_std', 'glicko2_mp', 'glicko2_adapt', 'whr']
+        chart_reset_keys = [f"{k}_softer" for k in chart_base_keys]
+        all_chart_query_keys = chart_base_keys + chart_reset_keys
+        ph_chart = ', '.join(['?'] * len(all_chart_query_keys))
+
         hist_rows = conn.execute(
             f'SELECT model_type, period_date, rating, rd, c_rating '
-            f'FROM rating_history WHERE player_name = ? AND player_count = ? AND model_type IN ({placeholders}) ORDER BY period_date ASC',
-            [player_name, active_format] + target_keys
+            f'FROM rating_history WHERE player_name = ? AND player_count = ? AND model_type IN ({ph_chart}) ORDER BY period_date ASC',
+            [player_name, active_format] + all_chart_query_keys
         ).fetchall()
 
-        if not hist_rows and active_reset_mode != 'continuous':
-            base_keys = ['glicko2_std', 'glicko2_mp', 'glicko2_adapt', 'whr', 'glicko2_daneo']
-            base_ph = ', '.join(['?'] * len(base_keys))
-            hist_rows = conn.execute(
-                f'SELECT model_type, period_date, rating, rd, c_rating '
-                f'FROM rating_history WHERE player_name = ? AND player_count = ? AND model_type IN ({base_ph}) ORDER BY period_date ASC',
-                [player_name, active_format] + base_keys
-            ).fetchall()
-
-        # Build unified chart data (both Expected E=Rating and Conservative C=Rating - 2*RD)
+        # Build unified chart data supporting both Continuous and Season Reset, and Expected vs Conservative
         dates_set = set()
-        model_series = {'glicko2_std': {}, 'glicko2_mp': {}, 'glicko2_adapt': {}, 'whr': {}, 'glicko2_daneo': {}}
-        model_series_c = {'glicko2_std': {}, 'glicko2_mp': {}, 'glicko2_adapt': {}, 'whr': {}, 'glicko2_daneo': {}}
+        series_cont = {m: {} for m in chart_base_keys}
+        series_cont_c = {m: {} for m in chart_base_keys}
+        series_reset = {m: {} for m in chart_base_keys}
+        series_reset_c = {m: {} for m in chart_base_keys}
+
         for r in hist_rows:
             d = r['period_date']
-            m = inv_map.get(r['model_type'])
+            m = r['model_type']
             dates_set.add(d)
-            if m in model_series:
-                model_series[m][d] = round(r['rating'], 1)
-                model_series_c[m][d] = round(r['c_rating'], 1) if r['c_rating'] is not None else round(r['rating'] - 2.0 * r['rd'], 1)
+            if m in chart_base_keys:
+                series_cont[m][d] = round(r['rating'], 1)
+                series_cont_c[m][d] = round(r['c_rating'], 1) if r['c_rating'] is not None else round(r['rating'] - 2.0 * r['rd'], 1)
+            elif m.endswith('_softer'):
+                bm = m.replace('_softer', '')
+                if bm in chart_base_keys:
+                    series_reset[bm][d] = round(r['rating'], 1)
+                    series_reset_c[bm][d] = round(r['c_rating'], 1) if r['c_rating'] is not None else round(r['rating'] - 2.0 * r['rd'], 1)
 
         sorted_dates = sorted(list(dates_set))
+        model_series = series_cont
+        model_series_c = series_cont_c
         chart_data = {
             'labels': sorted_dates,
-            'glicko2_std': [model_series['glicko2_std'].get(d) for d in sorted_dates],
-            'glicko2_mp': [model_series['glicko2_mp'].get(d) for d in sorted_dates],
-            'glicko2_adapt': [model_series['glicko2_adapt'].get(d) for d in sorted_dates],
-            'whr': [model_series['whr'].get(d) for d in sorted_dates],
-            'glicko2_daneo': [model_series['glicko2_daneo'].get(d) for d in sorted_dates],
-            'glicko2_std_c': [model_series_c['glicko2_std'].get(d) for d in sorted_dates],
-            'glicko2_mp_c': [model_series_c['glicko2_mp'].get(d) for d in sorted_dates],
-            'glicko2_adapt_c': [model_series_c['glicko2_adapt'].get(d) for d in sorted_dates],
-            'whr_c': [model_series_c['whr'].get(d) for d in sorted_dates],
-            'glicko2_daneo_c': [model_series_c['glicko2_daneo'].get(d) for d in sorted_dates]
+            'continuous': {
+                'expected': {m: [series_cont[m].get(d) for d in sorted_dates] for m in chart_base_keys},
+                'conservative': {m: [series_cont_c[m].get(d) for d in sorted_dates] for m in chart_base_keys}
+            },
+            'softer': {
+                'expected': {m: [series_reset[m].get(d) for d in sorted_dates] for m in chart_base_keys},
+                'conservative': {m: [series_reset_c[m].get(d) for d in sorted_dates] for m in chart_base_keys}
+            },
+            # Flat backwards-compatible keys for continuous expected and conservative:
+            'glicko2_std': [series_cont['glicko2_std'].get(d) for d in sorted_dates],
+            'glicko2_mp': [series_cont['glicko2_mp'].get(d) for d in sorted_dates],
+            'glicko2_adapt': [series_cont['glicko2_adapt'].get(d) for d in sorted_dates],
+            'whr': [series_cont['whr'].get(d) for d in sorted_dates],
+            'glicko2_daneo': [series_cont['glicko2_daneo'].get(d) for d in sorted_dates],
+            'glicko2_std_c': [series_cont_c['glicko2_std'].get(d) for d in sorted_dates],
+            'glicko2_mp_c': [series_cont_c['glicko2_mp'].get(d) for d in sorted_dates],
+            'glicko2_adapt_c': [series_cont_c['glicko2_adapt'].get(d) for d in sorted_dates],
+            'whr_c': [series_cont_c['whr'].get(d) for d in sorted_dates],
+            'glicko2_daneo_c': [series_cont_c['glicko2_daneo'].get(d) for d in sorted_dates]
         }
 
         # Build Season Reset comparison chart data for player profile (Continuous vs Season Reset vs Soft Reset)

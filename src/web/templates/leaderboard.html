@@ -952,6 +952,8 @@
           <td>
             {% if p.title == 'WC' or p.player_name == 'a440' %}
               <span class="badge badge-wc" title="{{ p.badge_reason or 'Reigning World Champion (World Championship 2025)' }}">WC</span>
+            {% elif p.title == 'SGM' %}
+              <span class="badge badge-sgm" title="{{ p.badge_reason or 'Super GM' }}">GM</span>
             {% elif p.title == 'GM' %}
               <span class="badge badge-gm" title="{{ p.badge_reason or 'Grandmaster' }}">GM</span>
             {% elif p.title == 'M' %}
@@ -968,9 +970,6 @@
               <span class="badge badge-w" title="{{ p.badge_reason or 'Wood' }}">W</span>
             {% else %}
               <span style="color: #665544;">-</span>
-            {% endif %}
-            {% if p.is_peak_higher %}
-              <span style="font-size: 0.72rem; color: #ffd54f; margin-left: 0.25rem; white-space: nowrap; font-family: var(--font-stats);" title="Peak Career Division: {{ get_title_name(p.peak_title) }} in {{ p.peak_year }}">(Peak: {{ p.peak_title }} in {{ p.peak_year }})</span>
             {% endif %}
           </td>
           <td>

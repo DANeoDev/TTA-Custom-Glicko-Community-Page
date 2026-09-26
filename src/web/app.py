@@ -85,6 +85,7 @@ def create_app():
 
         TITLE_FULL_NAMES = {
             'WC': 'World Champion',
+            'SGM': 'Super GM',
             'GM': 'Grandmaster',
             'M': 'Master',
             'P': 'Platinum',

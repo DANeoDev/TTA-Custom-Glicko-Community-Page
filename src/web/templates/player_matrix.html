@@ -188,9 +188,9 @@
       {% elif player.title %}
         <span class="badge badge-{{ player.title.lower() }}">{{ get_title_name(player.title) }}</span>
       {% endif %}
-      {% if player.is_peak_higher %}
-        <span class="badge-peak-sub" style="font-size: 0.85rem; color: #ffd54f; font-weight: 600; margin-left: 0.25rem;">
-          (Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})
+      {% if player.peak_title %}
+        <span class="badge badge-{{ player.peak_title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; vertical-align: middle;">
+          Peak: {{ get_title_name(player.peak_title) }} ({{ player.peak_year or 'Career' }})
         </span>
       {% endif %}
     </div>

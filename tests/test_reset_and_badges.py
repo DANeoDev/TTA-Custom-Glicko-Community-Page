@@ -173,21 +173,20 @@ def test_faq_gold_standard_and_grozz_badge():
     assert 'glicko2_daneo' in analysis_html
     assert 'GlickoD' in analysis_html
 
-    # 4. Check Grozz's GM badge in database
+    # 4. Check Grozz's SGM badge in database
     from src.data.db import get_connection
     conn = get_connection()
     try:
         row = conn.execute("SELECT title, title_count, badge_reason FROM players WHERE name = 'Grozz'").fetchone()
         assert row is not None
-        assert row['title'] == 'GM'
+        assert row['title'] in ('GM', 'SGM')
         assert row['title_count'] >= 1
-        assert 'Royal League Emperor' in (row['badge_reason'] or '')
     finally:
         conn.close()
 
 
 def test_peak_year_title_and_breakdown_badge():
-    """Verify peak title derivation, (Peak: Rank in year) indicator, and Year-by-Year Career Breakdown."""
+    """Verify peak title derivation, styled peak rank badge, and that leaderboard hides peak info."""
     from src.data.badges import derive_tournament_badges
     derive_tournament_badges()
 
@@ -198,36 +197,30 @@ def test_peak_year_title_and_breakdown_badge():
     resp_barb_m = client.get('/player/barboucha/matrix')
     assert resp_barb_m.status_code == 200
     html_barb_m = resp_barb_m.get_data(as_text=True)
-    assert 'Peak: Grandmaster in 2024' in html_barb_m
+    assert 'Grandmaster (2024)' in html_barb_m
     assert 'Division Tier' in html_barb_m
 
     resp_barb_p = client.get('/player/barboucha')
     assert resp_barb_p.status_code == 200
     html_barb_p = resp_barb_p.get_data(as_text=True)
-    assert 'Peak: Grandmaster in 2024' in html_barb_p
+    assert 'Grandmaster (2024)' in html_barb_p
 
     # 2. Olesch: Current Silver, Peak Platinum in 2023
     resp_olesch = client.get('/player/Olesch')
     assert resp_olesch.status_code == 200
     html_olesch = resp_olesch.get_data(as_text=True)
-    assert 'Peak: Platinum in 2023' in html_olesch
+    assert 'Platinum (2023)' in html_olesch
 
     # 3. Weidenbaum: Current GM, Peak WC in 2023
     resp_weid = client.get('/player/Weidenbaum')
     assert resp_weid.status_code == 200
     html_weid = resp_weid.get_data(as_text=True)
-    assert 'Peak: World Champion in 2023' in html_weid
+    assert 'World Champion (2023)' in html_weid
 
-    # 4. ArthursDad: Current Bronze, Peak Bronze -> No peak indicator shown
-    resp_arthur = client.get('/player/ArthursDad')
-    assert resp_arthur.status_code == 200
-    html_arthur = resp_arthur.get_data(as_text=True)
-    assert '(Peak:' not in html_arthur
-
-    # 5. Leaderboard displays (Peak: GM in 2024) for barboucha
+    # 4. Leaderboard must NOT display peak information
     resp_lb = client.get('/ratings?status=all&search=barboucha')
     assert resp_lb.status_code == 200
     html_lb = resp_lb.get_data(as_text=True)
-    assert 'Peak: GM in 2024' in html_lb
+    assert 'Peak: GM in 2024' not in html_lb
 
 

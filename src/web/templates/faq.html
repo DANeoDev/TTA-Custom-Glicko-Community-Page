@@ -2225,17 +2225,6 @@ $$
         </table>
       </div>
 
-      <div style="margin-top: 1.25rem; padding: 1rem 1.25rem; border-radius: 6px; background: rgba(229, 169, 60, 0.08); border-left: 3px solid #b8860b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-        <div>
-          <div style="font-weight: 700; color: #ffd54f; font-size: 0.95rem;">📐 Mathematical Derivation: Gaussian Tail Scaling &amp; Probability Bins</div>
-          <div style="color: #cfbeab; font-size: 0.85rem; margin-top: 0.25rem;">
-            See the continuous Gaussian normal tail equation \(\tau(z) = 1.0 - \exp(-z^2 / (2\phi))\), dynamic release \(\alpha(z)\), regression \(\lambda(z)\), and the 10 empirical probability reliability bins in the dedicated GlickoD calibration section.
-          </div>
-        </div>
-        <button type="button" onclick="switchFaqTab('gold-standard')" class="faq-link-btn" style="padding: 0.5rem 1rem; background: rgba(229, 169, 60, 0.2); border: 1px solid #c59b27; color: #ffd54f; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
-          Explore Calibration Derivations &rarr;
-        </button>
-      </div>
         {% endif %}
       </div>
       <template class="cms-default-source" style="display:none;">
@@ -2307,19 +2296,93 @@ $$
           </tbody>
         </table>
       </div>
-
-      <div style="margin-top: 1.25rem; padding: 1rem 1.25rem; border-radius: 6px; background: rgba(229, 169, 60, 0.08); border-left: 3px solid #b8860b; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 0.75rem;">
-        <div>
-          <div style="font-weight: 700; color: #ffd54f; font-size: 0.95rem;">📐 Mathematical Derivation: Gaussian Tail Scaling &amp; Probability Bins</div>
-          <div style="color: #cfbeab; font-size: 0.85rem; margin-top: 0.25rem;">
-            See the continuous Gaussian normal tail equation \(\tau(z) = 1.0 - \exp(-z^2 / (2\phi))\), dynamic release \(\alpha(z)\), regression \(\lambda(z)\), and the 10 empirical probability reliability bins in the dedicated GlickoD calibration section.
-          </div>
-        </div>
-        <button type="button" onclick="switchFaqTab('gold-standard')" class="faq-link-btn" style="padding: 0.5rem 1rem; background: rgba(229, 169, 60, 0.2); border: 1px solid #c59b27; color: #ffd54f; border-radius: 4px; font-weight: 700; cursor: pointer; font-size: 0.85rem; transition: all 0.2s;">
-          Explore Calibration Derivations &rarr;
-        </button>
-      </div>
       </template>
+    </div>
+
+    <!-- Card: Derivation of Calibration Bins -->
+    <div id="calibration-bins" class="faq-card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95), rgba(22, 14, 9, 0.98));">
+      <h3 style="color: #ffd54f;">
+        <span>📊</span> Derivation of Calibration Bins: Normal Distribution Density &amp; Probability Reliability Bins
+      </h3>
+      <p>
+        Calibration in GlickoD operates on two mathematical levels: <strong>Probability Prediction Bins</strong> (verifying that a $70\%$ forecast realizes as a $70\%$ win rate) and <strong>Competitive Tier Bins</strong> (reshaping seasonal resets to respect the natural Gaussian skill distribution).
+      </p>
+
+      <h4 style="color: #ffd54f; font-family: var(--font-subheading); font-size: 1.1rem; margin: 1.25rem 0 0.5rem 0;">
+        1. Probability Calibration Bins: The Reliability Curve (Soll vs. Ist)
+      </h4>
+      <p>
+        To evaluate whether a rating model is well-calibrated, historical pairwise predictions $P \in [0.50, 1.00]$ are partitioned into $K = 10$ confidence intervals $B_1, \dots, B_{10}$ of width $5\%$:
+      </p>
+      <div class="faq-formula">
+
+$$
+B_k = [p_k, \; p_{k+1}) = [0.50 + 0.05(k-1), \; 0.50 + 0.05k), \quad k \in \{1, \dots, 10\}
+$$
+
+      </div>
+      <p>
+        Within each bin $B_k$, two values are evaluated against all $|B_k|$ matches falling into that confidence window:
+      </p>
+      <ul class="faq-list">
+        <li><strong>Expected Forecast (Soll):</strong> The average predicted probability $\bar{P}_k = \frac{1}{|B_k|} \sum_{i \in B_k} P_i$.</li>
+        <li><strong>Observed Win Rate (Ist):</strong> The actual empirical fraction of victories $\bar{y}_k = \frac{1}{|B_k|} \sum_{i \in B_k} y_i$.</li>
+        <li><strong>Expected Calibration Error (ECE):</strong> The match-weighted discrepancy across all bins:
+          <div class="faq-formula">
+
+$$
+\mathrm{ECE} = \sum_{k=1}^{10} \frac{|B_k|}{N} \left|\bar{y}_k - \bar{P}_k\right|
+$$
+
+          </div>
+        </li>
+      </ul>
+      <p>
+        <strong>The Flaw in Standard Glicko:</strong> In naive Glicko-2, extreme bins (e.g. $B_{10} = [95\%, 100\%]$) suffer from apparent tail drooping: the model expects $\bar{P}_{10} \approx 97.5\%$, but in uncalibrated tournament reality, the favorite only won $\approx 88.5\%$ of the time (a massive $-9.0\%$ gap). As discovered through our ablation study, this was an artifact of uncalibrated newcomers entering at 1500 and facing Grandmasters. GlickoD resolves this at the root through 15-game emergent prior recalibration and bilateral composite variance $g(c)$, aligning match forecasts directly with true player skill and reducing ECE from $3.8\%$ down to an unprecedented <strong>$0.24\%$</strong> without requiring any artificial temperature damping.
+      </p>
+
+      <h4 style="color: #ffd54f; font-family: var(--font-subheading); font-size: 1.1rem; margin: 1.25rem 0 0.5rem 0;">
+        2. Competitive Tier Bins: Normal Distribution Gaussian Tail Scaling
+      </h4>
+      <p>
+        Why do seasonal calibration tier bins follow the 16-tier competitive hierarchy rather than uniform 100-point brackets?
+      </p>
+      <p>
+        In active tournament play, skill is not uniformly distributed across the rating line—it follows a bell curve (Gaussian normal distribution) centered near $\mu_0 = 1500.0$ with population standard deviation $\sigma_{\mathrm{pop}} \approx 175.0$:
+      </p>
+      <ul class="faq-list">
+        <li><strong>The Median Density Region ($1425 &ndash; 1575$):</strong> Over $70\%$ of all competitive matches occur between $1350$ and $1650$. If a seasonal reset arbitrarily deflates or compresses players near the middle, it destabilizes matchmaking for the vast majority of active competitors.</li>
+        <li><strong>The Extreme Tails ($\mu \ge 1900$ or $\mu \le 1100$):</strong> At the extremes ($|z| \ge 2.5$), player density drops below $1\%$. Here, unearned historical inertia allows inactive veterans to "camp" at top ranks for years unless an active variance expansion releases ratings back into competition.</li>
+      </ul>
+      <p>
+        To solve this, GlickoD establishes <strong>Gaussian Tail Scaling with Golden Ratio ($\phi$) Powers</strong>:
+      </p>
+      <div class="faq-formula">
+
+$$
+z = \frac{\mu - \mu_0}{\sigma_{\mathrm{pop}}} = \frac{\mu - 1500.0}{175.0}
+$$
+
+$$
+\tau(z) = 1.0 - \exp\left(-\frac{z^2}{2\phi}\right) \in [0.0, 1.0]
+$$
+
+$$
+\alpha(z) = 1.0 + (\phi - 1) \cdot \tau(z) \cdot 0.5
+$$
+
+$$
+\lambda(z) = 1.0 + \phi^{-1} \cdot \tau(z) \cdot 0.5
+$$
+
+      </div>
+      <p>
+        <strong>Mathematical Properties of the Gaussian $\phi$-Curve:</strong>
+      </p>
+      <ul class="faq-list">
+        <li><strong>Near the Median ($z \approx 0 \implies \mu \approx 1500$):</strong> $\tau(0) = 0 \implies \alpha(0) = 1.0$ and $\lambda(0) = 1.0$. Active players in Gold and Platinum experience minimal artificial dislocation, maintaining flawless day-to-day matchmaking stability.</li>
+        <li><strong>In the Elite Tails ($|z| \ge 2.5 \implies \mu \ge 1950$):</strong> $\tau(z) \to 1.0 \implies \alpha$ expands by $(\phi - 1)/2 \approx +30.9\%$ while regression $\lambda$ increases by $\phi^{-1}/2 \approx +30.9\%$. This gently taxes legacy camping, ensuring that active form and current tournament campaigns contest the highest podiums.</li>
+      </ul>
     </div>
 
     <!-- Empirical Walk-Forward Benchmark Table -->
@@ -2703,93 +2766,7 @@ $$
       </p>
     </div>
 
-    <!-- Card 5: Derivation of Calibration Bins -->
-    <div class="faq-card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95), rgba(22, 14, 9, 0.98));">
-      <h3 style="color: #ffd54f;">
-        <span>📊</span> Derivation of Calibration Bins: Normal Distribution Density &amp; Probability Reliability Bins
-      </h3>
-      <p>
-        Calibration in GlickoD operates on two mathematical levels: <strong>Probability Prediction Bins</strong> (verifying that a $70\%$ forecast realizes as a $70\%$ win rate) and <strong>Competitive Tier Bins</strong> (reshaping seasonal resets to respect the natural Gaussian skill distribution).
-      </p>
-
-      <h4 style="color: #ffd54f; font-family: var(--font-subheading); font-size: 1.1rem; margin: 1.25rem 0 0.5rem 0;">
-        1. Probability Calibration Bins: The Reliability Curve (Soll vs. Ist)
-      </h4>
-      <p>
-        To evaluate whether a rating model is well-calibrated, historical pairwise predictions $P \in [0.50, 1.00]$ are partitioned into $K = 10$ confidence intervals $B_1, \dots, B_{10}$ of width $5\%$:
-      </p>
-      <div class="faq-formula">
-
-$$
-B_k = [p_k, \; p_{k+1}) = [0.50 + 0.05(k-1), \; 0.50 + 0.05k), \quad k \in \{1, \dots, 10\}
-$$
-
-      </div>
-      <p>
-        Within each bin $B_k$, two values are evaluated against all $|B_k|$ matches falling into that confidence window:
-      </p>
-      <ul class="faq-list">
-        <li><strong>Expected Forecast (Soll):</strong> The average predicted probability $\bar{P}_k = \frac{1}{|B_k|} \sum_{i \in B_k} P_i$.</li>
-        <li><strong>Observed Win Rate (Ist):</strong> The actual empirical fraction of victories $\bar{y}_k = \frac{1}{|B_k|} \sum_{i \in B_k} y_i$.</li>
-        <li><strong>Expected Calibration Error (ECE):</strong> The match-weighted discrepancy across all bins:
-          <div class="faq-formula">
-
-$$
-\mathrm{ECE} = \sum_{k=1}^{10} \frac{|B_k|}{N} \left|\bar{y}_k - \bar{P}_k\right|
-$$
-
-          </div>
-        </li>
-      </ul>
-      <p>
-        <strong>The Flaw in Standard Glicko:</strong> In naive Glicko-2, extreme bins (e.g. $B_{10} = [95\%, 100\%]$) suffer from apparent tail drooping: the model expects $\bar{P}_{10} \approx 97.5\%$, but in uncalibrated tournament reality, the favorite only won $\approx 88.5\%$ of the time (a massive $-9.0\%$ gap). As discovered through our ablation study, this was an artifact of uncalibrated newcomers entering at 1500 and facing Grandmasters. GlickoD resolves this at the root through 15-game emergent prior recalibration and bilateral composite variance $g(c)$, aligning match forecasts directly with true player skill and reducing ECE from $3.8\%$ down to an unprecedented <strong>$0.24\%$</strong> without requiring any artificial temperature damping.
-      </p>
-
-      <h4 style="color: #ffd54f; font-family: var(--font-subheading); font-size: 1.1rem; margin: 1.25rem 0 0.5rem 0;">
-        2. Competitive Tier Bins: Normal Distribution Gaussian Tail Scaling
-      </h4>
-      <p>
-        Why do seasonal calibration tier bins follow the 16-tier competitive hierarchy rather than uniform 100-point brackets?
-      </p>
-      <p>
-        In active tournament play, skill is not uniformly distributed across the rating line—it follows a bell curve (Gaussian normal distribution) centered near $\mu_0 = 1500.0$ with population standard deviation $\sigma_{\text{pop}} \approx 175.0$:
-      </p>
-      <ul class="faq-list">
-        <li><strong>The Median Density Region ($1425 &ndash; 1575$):</strong> Over $70\%$ of all competitive matches occur between $1350$ and $1650$. If a seasonal reset arbitrarily deflates or compresses players near the middle, it destabilizes matchmaking for the vast majority of active competitors.</li>
-        <li><strong>The Extreme Tails ($\mu \ge 1900$ or $\mu \le 1100$):</strong> At the extremes ($|z| \ge 2.5$), player density drops below $1\%$. Here, unearned historical inertia allows inactive veterans to "camp" at top ranks for years unless an active variance expansion releases ratings back into competition.</li>
-      </ul>
-      <p>
-        To solve this, GlickoD establishes <strong>Gaussian Tail Scaling with Golden Ratio ($\phi$) Powers</strong>:
-      </p>
-      <div class="faq-formula">
-
-$$
-z = \frac{\mu - \mu_0}{\sigma_{\text{pop}}} = \frac{\mu - 1500.0}{175.0}
-$$
-
-$$
-\tau(z) = 1.0 - \exp\left(-\frac{z^2}{2\phi}\right) \in [0.0, 1.0]
-$$
-
-$$
-\alpha(z) = 1.0 + (\phi - 1) \cdot \tau(z) \cdot 0.5
-$$
-
-$$
-\lambda(z) = 1.0 + \phi^{-1} \cdot \tau(z) \cdot 0.5
-$$
-
-      </div>
-      <p>
-        <strong>Mathematical Properties of the Gaussian $\phi$-Curve:</strong>
-      </p>
-      <ul class="faq-list">
-        <li><strong>Near the Median ($z \approx 0 \implies \mu \approx 1500$):</strong> $\tau(0) = 0 \implies \alpha(0) = 1.0$ and $\lambda(0) = 1.0$. Active players in Gold and Platinum experience minimal artificial dislocation, maintaining flawless day-to-day matchmaking stability.</li>
-        <li><strong>In the Elite Tails ($|z| \ge 2.5 \implies \mu \ge 1950$):</strong> $\tau(z) \to 1.0 \implies \alpha$ expands by $(\phi - 1)/2 \approx +30.9\%$ while regression $\lambda$ increases by $\phi^{-1}/2 \approx +30.9\%$. This gently taxes legacy camping, ensuring that active form and current tournament campaigns contest the highest podiums.</li>
-      </ul>
-    </div>
-
-    <!-- Card 6: Empirical Benchmark Scoreboard -->
+    <!-- Card 5: Empirical Benchmark Scoreboard -->
     <div class="faq-card" style="border-left: 4px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95), rgba(22, 14, 9, 0.98));">
       <h3 style="color: #ffd54f;">
         <span>🏆</span> Empirical Benchmark Scoreboard Across Formats
@@ -2994,7 +2971,7 @@ $$
     'daneo': 'gold-standard',
     'gold': 'gold-standard',
     'gold-standard': 'gold-standard',
-    'calibration-bins': 'gold-standard',
+    'calibration-bins': 'resets',
     'recalibration': 'recalibration-15',
     'recalibration-15': 'recalibration-15',
     '15-game': 'recalibration-15',

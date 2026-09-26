@@ -41,7 +41,7 @@ TIER_NAMES = {
     7: 'Wood'
 }
 
-TITLE_ORDER = {'WC': 0, 'GM': 1, 'M': 2, 'P': 3, 'G': 4, 'S': 5, 'B': 6, 'W': 7}
+TITLE_ORDER = {'WC': 0, 'SGM': 1, 'GM': 2, 'M': 3, 'P': 4, 'G': 5, 'S': 6, 'B': 7, 'W': 8}
 
 # Reigning World Champion holding active 'WC' title
 REIGNING_WC_PLAYERS = {'a440'}
@@ -272,17 +272,68 @@ def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
                 'date': f"{yr}-12-15"
             }
 
+        # Query premier tournament winners for Super GM (SGM) title:
+        # Having won one of International Championship (Grandmaster/Diamond), Intermezzo Championship (Grandmaster),
+        # or Royal League (Emperor)
+        sgm_records = conn.execute("""
+            SELECT player_name, tournament_name, season, division, finish_date
+            FROM tournament_records
+            WHERE is_career_total = 0
+              AND (placement LIKE '1 / %' OR medal = 'gold')
+              AND tournament_name IN ('International Championship', 'Intermezzo Championship', 'Royal League')
+              AND division IN ('Grandmaster', 'Diamond', 'Emperor')
+            ORDER BY finish_date DESC
+        """).fetchall()
+
+        active_sgm = {}
+        career_sgm = {}
+        for sr in sgm_records:
+            pn = sr['player_name']
+            f_date = sr['finish_date']
+            yr = int(f_date[:4]) if f_date and len(f_date) >= 4 and f_date[:4].isdigit() else None
+
+            # Active qualification (within cutoff_date, last 12 months)
+            if f_date and f_date >= cutoff_date:
+                if pn not in active_sgm or f_date > active_sgm[pn]['date']:
+                    active_sgm[pn] = {
+                        'tournament': sr['tournament_name'],
+                        'season': sr['season'],
+                        'division': sr['division'],
+                        'date': f_date,
+                        'reason': f"Champion of {sr['tournament_name']} {sr['division']} ({sr['season']})"
+                    }
+
+            # Career qualification (all-time peak)
+            if pn not in career_sgm or (f_date and f_date > career_sgm[pn].get('date', '')):
+                career_sgm[pn] = {
+                    'year': yr,
+                    'date': f_date or '',
+                    'reason': f"Champion of {sr['tournament_name']} {sr['division']} ({sr['season']})"
+                }
+
         derived_data = {}
         for p, info in player_best.items():
-            title = TIER_TITLE_MAP.get(info['tier'], 'W')
-            reason = info['reason']
+            if p in active_sgm:
+                title = 'SGM'
+                reason = active_sgm[p]['reason']
+            else:
+                title = TIER_TITLE_MAP.get(info['tier'], 'W')
+                reason = info['reason']
+
             c_info = player_career_best.get(p, {'tier': info['tier'], 'year': int(info['date'][:4]) if info.get('date') else None})
-            pk_title = 'WC' if c_info['tier'] == 0 else TIER_TITLE_MAP.get(c_info['tier'], 'W')
-            pk_yr = c_info.get('year')
+            if c_info['tier'] == 0:
+                pk_title = 'WC'
+                pk_yr = c_info.get('year')
+            elif p in career_sgm:
+                pk_title = 'SGM'
+                pk_yr = career_sgm[p].get('year') or c_info.get('year')
+            else:
+                pk_title = TIER_TITLE_MAP.get(c_info['tier'], 'W')
+                pk_yr = c_info.get('year')
 
             derived_data[p] = {
                 'title': title,
-                'title_count': player_tier_counts.get(p, 1 if title == 'GM' else 0),
+                'title_count': player_tier_counts.get(p, 1 if title in ('GM', 'SGM') else 0),
                 'badge_reason': reason,
                 'peak_title': pk_title,
                 'peak_year': pk_yr
@@ -313,13 +364,29 @@ def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
         # Update career peak title & year for inactive players who still hold historical tournament achievements
         for p, c_info in player_career_best.items():
             if p not in derived_data:
-                pk_title = 'WC' if c_info['tier'] == 0 else TIER_TITLE_MAP.get(c_info['tier'], 'W')
-                pk_yr = c_info.get('year')
+                if c_info['tier'] == 0:
+                    pk_title = 'WC'
+                    pk_yr = c_info.get('year')
+                elif p in career_sgm:
+                    pk_title = 'SGM'
+                    pk_yr = career_sgm[p].get('year') or c_info.get('year')
+                else:
+                    pk_title = TIER_TITLE_MAP.get(c_info['tier'], 'W')
+                    pk_yr = c_info.get('year')
                 conn.execute("""
                     UPDATE players
                     SET peak_title = ?, peak_year = ?
                     WHERE name = ?
                 """, (pk_title, pk_yr, p))
+
+        # Inactive players whose premier win was recorded in tournament_records but not in player_career_best
+        for p, s_info in career_sgm.items():
+            if p not in derived_data and p not in player_career_best:
+                conn.execute("""
+                    UPDATE players
+                    SET peak_title = ?, peak_year = ?
+                    WHERE name = ?
+                """, ('SGM', s_info.get('year'), p))
 
         conn.commit()
         return derived_data

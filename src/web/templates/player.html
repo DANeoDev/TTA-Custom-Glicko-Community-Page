@@ -175,6 +175,8 @@
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 0.35rem;">
       {% if player.title == 'WC' or player.name == 'a440' %}
         <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" data-tooltip="{{ player.badge_reason or 'Reigning World Champion (World Championship 2025)' }}">World Champion</span>
+      {% elif player.title == 'SGM' %}
+        <span class="badge badge-sgm" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" data-tooltip="{{ player.badge_reason or 'Super GM' }}">Super GM</span>
       {% elif player.title == 'GM' %}
         <span class="badge badge-gm" data-tooltip="{{ player.badge_reason or 'Grandmaster' }}">Grandmaster</span>
       {% elif player.title == 'M' %}
@@ -190,17 +192,14 @@
       {% elif player.title == 'W' %}
         <span class="badge badge-w" data-tooltip="{{ player.badge_reason or 'Wood' }}">Wood</span>
       {% endif %}
-      {% if player.is_peak_higher %}
-        <span class="peak-badge-indicator" style="font-family: var(--font-heading); font-size: 0.82rem; color: #ffd54f; margin-top: 0.15rem; letter-spacing: 0.3px;">
-          (Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})
-        </span>
-      {% endif %}
       <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}{% if is_calibrating %} <span style="font-size: 1.1rem; vertical-align: middle; cursor: help;" data-tooltip="Provisional / Calibrating Prior: {{ total_matches_count }}/15 matches completed">⏳</span>{% endif %}</h1>
     </div>
     <div class="player-meta-pill">
       <span title="Nationality / Flag">{{ get_flag(player.country_code) }}</span>
-      <span class="meta-separator">&bull;</span>
-      <span>First Match: <strong>{{ player.first_played or player.last_played or 'N/A' }}</strong></span>
+      {% if player.peak_title %}
+        <span class="meta-separator">&bull;</span>
+        <span class="peak-meta-wrap">Peak Rank: <span class="badge badge-{{ player.peak_title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; vertical-align: middle;">{{ get_title_name(player.peak_title) }} ({{ player.peak_year or 'Career' }})</span></span>
+      {% endif %}
     </div>
   </div>
 
@@ -473,57 +472,32 @@
       </span>
     </div>
     
-    <!-- Rating Metric Toggle (Expected E=Rating vs Conservative C=Rating - 2*RD) -->
-    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
-      <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.2rem;">Curve:</span>
-      <button type="button" id="btnCurveExpected" class="format-btn active" onclick="switchRatingCurve('expected')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        Expected Mean (E = R)
-      </button>
-      <button type="button" id="btnCurveConservative" class="format-btn" onclick="switchRatingCurve('conservative')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        Conservative (C = R &minus; 2&sigma;)
-      </button>
+    <div style="display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap;">
+      <!-- Trajectory Mode Toggle (Continuous vs Season Reset) -->
+      <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+        <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--accent-gold); text-transform: uppercase; margin-right: 0.2rem;">Mode:</span>
+        <button type="button" id="btnModeContinuous" class="format-btn active" onclick="switchTrajectoryMode('continuous')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+          Continuous
+        </button>
+        <button type="button" id="btnModeReset" class="format-btn" onclick="switchTrajectoryMode('softer')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+          Season Reset
+        </button>
+      </div>
+
+      <!-- Rating Metric Toggle (Expected E=Rating vs Conservative C=Rating - 2*RD) -->
+      <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle);">
+        <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.2rem;">Curve:</span>
+        <button type="button" id="btnCurveExpected" class="format-btn active" onclick="switchRatingCurve('expected')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+          Expected Mean (E = R)
+        </button>
+        <button type="button" id="btnCurveConservative" class="format-btn" onclick="switchRatingCurve('conservative')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
+          Conservative (C = R &minus; 2&sigma;)
+        </button>
+      </div>
     </div>
   </div>
   <div class="chart-container-inner" style="position: relative; height: 360px; width: 100%;">
     <canvas id="ratingHistoryChart"></canvas>
-  </div>
-</div>
-
-<!-- Season Reset vs. Continuous Trajectory Comparison Chart -->
-<div class="chart-container" style="margin-top: 1.5rem;">
-  <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1rem;">
-    <div>
-      <h3 style="font-family: var(--font-heading); color: var(--accent-gold); font-size: 1.2rem; margin: 0 0 0.2rem 0;">
-        📈 Season Reset Trajectory Comparison (<span id="resetChartActiveEngineName">👑 GlickoD</span>)
-      </h3>
-      <span style="font-size: 0.82rem; color: var(--text-muted); font-family: var(--font-stats);">
-        Continuous (Career) vs. Season Reset across career history
-      </span>
-    </div>
-
-    <!-- Engine Switcher for Reset Comparison -->
-    <div style="display: flex; gap: 0.35rem; align-items: center; background: rgba(0,0,0,0.35); padding: 0.25rem 0.5rem; border-radius: 6px; border: 1px solid var(--border-subtle); flex-wrap: wrap;">
-      <span style="font-size: 0.75rem; font-family: var(--font-heading); color: var(--text-muted); text-transform: uppercase; margin-right: 0.2rem;">Engine:</span>
-      <button type="button" id="btnResetDaneo" class="format-btn active" onclick="switchResetChartEngine('glicko2_daneo', '👑 GlickoD')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        👑 GlickoD
-      </button>
-      <button type="button" id="btnResetStd" class="format-btn" onclick="switchResetChartEngine('glicko2_std', 'Glicko-2 Standard')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        G2 Std
-      </button>
-      <button type="button" id="btnResetMp" class="format-btn" onclick="switchResetChartEngine('glicko2_mp', 'Glicko-2 MP-Weighted')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        G2 MP
-      </button>
-      <button type="button" id="btnResetAdapt" class="format-btn" onclick="switchResetChartEngine('glicko2_adapt', 'Glicko-2 Adaptive-T')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        Adaptive-T
-      </button>
-      <button type="button" id="btnResetWhr" class="format-btn" onclick="switchResetChartEngine('whr', 'Whole-History Rating (WHR)')" style="font-size: 0.78rem; padding: 0.2rem 0.6rem;">
-        WHR
-      </button>
-    </div>
-  </div>
-
-  <div class="chart-container-inner" style="position: relative; height: 320px; width: 100%;">
-    <canvas id="resetModesChart"></canvas>
   </div>
 </div>
 
@@ -1004,98 +978,91 @@
 <script>
   let playerChart = null;
   const rawData = {{ chart_json|safe }};
+  let currentTrajectoryMode = 'continuous'; // 'continuous' | 'softer'
+  let currentRatingCurve = 'expected';      // 'expected' | 'conservative'
 
-  function switchRatingCurve(mode) {
-    document.getElementById('btnCurveExpected').classList.toggle('active', mode === 'expected');
-    document.getElementById('btnCurveConservative').classList.toggle('active', mode === 'conservative');
+  const MODEL_META = [
+    { key: 'glicko2_daneo', name: '👑 GlickoD', borderColor: '#c084fc', backgroundColor: 'rgba(168, 85, 247, 0.15)', borderWidth: 2.5, pointRadius: 1.5, tension: 0.1 },
+    { key: 'glicko2_std', name: 'Glicko-2 Standard', borderColor: '#e5a93c', backgroundColor: 'rgba(229, 169, 60, 0.1)', borderWidth: 2, pointRadius: 1, tension: 0.1 },
+    { key: 'glicko2_mp', name: 'Glicko-2 MP-Weighted', borderColor: '#8e1e1d', backgroundColor: 'rgba(142, 30, 29, 0.1)', borderWidth: 2, pointRadius: 1, tension: 0.1 },
+    { key: 'glicko2_adapt', name: 'Glicko-2 Adaptive-T', borderColor: '#22c55e', backgroundColor: 'rgba(34, 197, 94, 0.1)', borderWidth: 2, pointRadius: 1, tension: 0.1 },
+    { key: 'whr', name: 'Whole-History Rating', borderColor: '#4fc3f7', backgroundColor: 'rgba(79, 195, 247, 0.1)', borderWidth: 2, pointRadius: 1, tension: 0.2 }
+  ];
 
+  function updateChartDatasets() {
     if (!playerChart) return;
+    const modeData = (rawData[currentTrajectoryMode] && rawData[currentTrajectoryMode][currentRatingCurve]) ? rawData[currentTrajectoryMode][currentRatingCurve] : null;
 
-    if (mode === 'conservative') {
-      playerChart.data.datasets[0].data = rawData.glicko2_daneo_c || rawData.glicko2_daneo;
-      playerChart.data.datasets[0].label = '👑 GlickoD (Conservative)';
-      playerChart.data.datasets[1].data = rawData.glicko2_std_c || rawData.glicko2_std;
-      playerChart.data.datasets[1].label = 'Glicko-2 Std (Conservative)';
-      playerChart.data.datasets[2].data = rawData.glicko2_mp_c || rawData.glicko2_mp;
-      playerChart.data.datasets[2].label = 'Glicko-2 MP (Conservative)';
-      playerChart.data.datasets[3].data = rawData.glicko2_adapt_c || rawData.glicko2_adapt;
-      playerChart.data.datasets[3].label = 'Glicko-2 Adapt (Conservative)';
-      playerChart.data.datasets[4].data = rawData.whr_c || rawData.whr;
-      playerChart.data.datasets[4].label = 'WHR (Conservative)';
-    } else {
-      playerChart.data.datasets[0].data = rawData.glicko2_daneo;
-      playerChart.data.datasets[0].label = '👑 GlickoD (E)';
-      playerChart.data.datasets[1].data = rawData.glicko2_std;
-      playerChart.data.datasets[1].label = 'Glicko-2 Standard (E)';
-      playerChart.data.datasets[2].data = rawData.glicko2_mp;
-      playerChart.data.datasets[2].label = 'Glicko-2 MP-Weighted (E)';
-      playerChart.data.datasets[3].data = rawData.glicko2_adapt;
-      playerChart.data.datasets[3].label = 'Glicko-2 Adaptive-T (E)';
-      playerChart.data.datasets[4].data = rawData.whr;
-      playerChart.data.datasets[4].label = 'Whole-History Rating (E)';
-    }
+    MODEL_META.forEach((m, idx) => {
+      let series = null;
+      if (modeData && modeData[m.key]) {
+        series = modeData[m.key];
+      } else {
+        const flatKey = currentRatingCurve === 'conservative' ? (m.key + '_c') : m.key;
+        series = rawData[flatKey] || rawData[m.key] || [];
+      }
+      playerChart.data.datasets[idx].data = series;
+      const curveSuffix = currentRatingCurve === 'conservative' ? '(C)' : '(E)';
+      const modeSuffix = currentTrajectoryMode === 'softer' ? '[Reset] ' : '';
+      playerChart.data.datasets[idx].label = `${m.name} ${modeSuffix}${curveSuffix}`;
+    });
     playerChart.update();
   }
 
+  function switchTrajectoryMode(mode) {
+    currentTrajectoryMode = mode;
+    const btnCont = document.getElementById('btnModeContinuous');
+    const btnReset = document.getElementById('btnModeReset');
+    if (btnCont) btnCont.classList.toggle('active', mode === 'continuous');
+    if (btnReset) btnReset.classList.toggle('active', mode === 'softer');
+    updateChartDatasets();
+  }
+
+  function switchRatingCurve(curve) {
+    currentRatingCurve = curve;
+    const btnExp = document.getElementById('btnCurveExpected');
+    const btnCons = document.getElementById('btnCurveConservative');
+    if (btnExp) btnExp.classList.toggle('active', curve === 'expected');
+    if (btnCons) btnCons.classList.toggle('active', curve === 'conservative');
+    updateChartDatasets();
+  }
+
   document.addEventListener('DOMContentLoaded', function() {
-    const ctx = document.getElementById('ratingHistoryChart').getContext('2d');
+    const canvas = document.getElementById('ratingHistoryChart');
+    if (!canvas) return;
+
+    if (!rawData || !rawData.labels || rawData.labels.length === 0) {
+      const container = canvas.parentElement;
+      if (container) {
+        container.innerHTML = `
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; color: var(--text-muted); font-family: var(--font-heading); text-align: center; padding: 2rem;">
+            <span style="font-size: 2.2rem; margin-bottom: 0.6rem;">📈</span>
+            <span style="font-size: 1rem; color: #ffd54f;">No Historical Rating Trajectory</span>
+            <span style="font-size: 0.85rem; color: var(--text-muted); margin-top: 0.3rem;">This player does not have recorded match history in the selected format.</span>
+          </div>`;
+      }
+      return;
+    }
+
+    const ctx = canvas.getContext('2d');
+    const initialModeData = (rawData.continuous && rawData.continuous.expected) ? rawData.continuous.expected : rawData;
+
+    const datasets = MODEL_META.map(m => ({
+      label: `${m.name} (E)`,
+      data: (initialModeData && initialModeData[m.key]) ? initialModeData[m.key] : (rawData[m.key] || []),
+      borderColor: m.borderColor,
+      backgroundColor: m.backgroundColor,
+      borderWidth: m.borderWidth,
+      pointRadius: m.pointRadius,
+      tension: m.tension,
+      spanGaps: true
+    }));
 
     playerChart = new Chart(ctx, {
       type: 'line',
       data: {
         labels: rawData.labels,
-        datasets: [
-          {
-            label: '👑 GlickoD (E)',
-            data: rawData.glicko2_daneo,
-            borderColor: '#c084fc',
-            backgroundColor: 'rgba(168, 85, 247, 0.15)',
-            borderWidth: 2.5,
-            pointRadius: 1.5,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Glicko-2 Standard (E)',
-            data: rawData.glicko2_std,
-            borderColor: '#e5a93c',
-            backgroundColor: 'rgba(229, 169, 60, 0.1)',
-            borderWidth: 2,
-            pointRadius: 1,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Glicko-2 MP-Weighted (E)',
-            data: rawData.glicko2_mp,
-            borderColor: '#8e1e1d',
-            backgroundColor: 'rgba(142, 30, 29, 0.1)',
-            borderWidth: 2,
-            pointRadius: 1,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Glicko-2 Adaptive-T (E)',
-            data: rawData.glicko2_adapt,
-            borderColor: '#22c55e',
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            borderWidth: 2,
-            pointRadius: 1,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Whole-History Rating (E)',
-            data: rawData.whr,
-            borderColor: '#4fc3f7',
-            backgroundColor: 'rgba(79, 195, 247, 0.1)',
-            borderWidth: 2,
-            pointRadius: 1,
-            tension: 0.2,
-            spanGaps: true
-          }
-        ]
+        datasets: datasets
       },
       options: {
         responsive: true,
@@ -1131,116 +1098,7 @@
         }
       }
     });
-
-    initOrUpdateResetChart(currentResetEngine);
   });
-
-  // Season Reset Trajectory Comparison Chart
-  let resetChart = null;
-  const rawResetData = {{ reset_chart_json|safe }};
-  let currentResetEngine = '{{ active_model }}' || 'glicko2_daneo';
-  if (!rawResetData || !rawResetData[currentResetEngine]) {
-    currentResetEngine = 'glicko2_daneo';
-  }
-
-  function initOrUpdateResetChart(engineKey) {
-    const canvas = document.getElementById('resetModesChart');
-    if (!canvas || !rawResetData.labels || rawResetData.labels.length === 0) return;
-
-    const engData = rawResetData[engineKey] || rawResetData.glicko2_daneo || {};
-    const contSeries = engData.continuous || [];
-    const softerSeries = engData.softer || [];
-
-    if (resetChart) {
-      resetChart.data.datasets[0].data = contSeries;
-      resetChart.data.datasets[1].data = softerSeries;
-      resetChart.update();
-      return;
-    }
-
-    resetChart = new Chart(canvas.getContext('2d'), {
-      type: 'line',
-      data: {
-        labels: rawResetData.labels,
-        datasets: [
-          {
-            label: 'Continuous (Career)',
-            data: contSeries,
-            borderColor: '#e5a93c',
-            backgroundColor: 'rgba(229, 169, 60, 0.15)',
-            borderWidth: 2.5,
-            pointRadius: 1.5,
-            pointHoverRadius: 5,
-            tension: 0.1,
-            spanGaps: true
-          },
-          {
-            label: 'Season Reset',
-            data: softerSeries,
-            borderColor: '#22c55e',
-            backgroundColor: 'rgba(34, 197, 94, 0.15)',
-            borderWidth: 2,
-            borderDash: [5, 5],
-            pointRadius: 1.5,
-            pointHoverRadius: 5,
-            tension: 0.1,
-            spanGaps: true
-          }
-        ]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        interaction: {
-          mode: 'index',
-          intersect: false
-        },
-        plugins: {
-          legend: {
-            labels: {
-              color: '#f3e5c8',
-              font: { family: "'Cinzel', serif", size: 12 }
-            }
-          },
-          tooltip: {
-            backgroundColor: 'rgba(28, 19, 13, 0.95)',
-            titleColor: '#e5a93c',
-            bodyColor: '#f3e5c8',
-            borderColor: '#4a3525',
-            borderWidth: 1
-          }
-        },
-        scales: {
-          x: {
-            grid: { color: 'rgba(74, 53, 37, 0.25)' },
-            ticks: { color: '#a89880', maxTicksLimit: 12 }
-          },
-          y: {
-            grid: { color: 'rgba(74, 53, 37, 0.25)' },
-            ticks: { color: '#a89880' }
-          }
-        }
-      }
-    });
-  }
-
-  function switchResetChartEngine(engineKey, engineName) {
-    currentResetEngine = engineKey;
-    const titleEl = document.getElementById('resetChartActiveEngineName');
-    if (titleEl) titleEl.textContent = engineName;
-    const btns = {
-      'glicko2_daneo': 'btnResetDaneo',
-      'glicko2_std': 'btnResetStd',
-      'glicko2_mp': 'btnResetMp',
-      'glicko2_adapt': 'btnResetAdapt',
-      'whr': 'btnResetWhr'
-    };
-    for (const [key, btnId] of Object.entries(btns)) {
-      const el = document.getElementById(btnId);
-      if (el) el.classList.toggle('active', key === engineKey);
-    }
-    initOrUpdateResetChart(engineKey);
-  }
 
   function copyReplayCode(code, btn) {
     if (!navigator.clipboard) return;

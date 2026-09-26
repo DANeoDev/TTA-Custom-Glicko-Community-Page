@@ -192,6 +192,8 @@
         <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" title="Official Competitive Title: World Champion (2024)">World Champion</span>
       {% elif player.name == 'Weidenbaum' %}
         <span class="badge badge-wc" style="font-size: 0.95rem; padding: 0.25rem 0.85rem;" title="Official Competitive Title: World Champion (2023)">World Champion</span>
+      {% elif player.title == 'SGM' %}
+        <span class="badge badge-sgm" title="Official Competitive Title: Super GM">Super GM</span>
       {% elif player.title == 'GM' %}
         <span class="badge badge-gm" title="Official Competitive Title: Grandmaster">Grandmaster</span>
       {% elif player.title == 'M' %}
@@ -207,15 +209,14 @@
       {% elif player.title == 'W' %}
         <span class="badge badge-w" title="Official Competitive Title: Wood">Wood</span>
       {% endif %}
-      {% if player.is_peak_higher %}
-        <span class="peak-badge-indicator" style="font-family: var(--font-heading); font-size: 0.82rem; color: #ffd54f; margin-top: 0.15rem; letter-spacing: 0.3px;">
-          (Peak: {{ get_title_name(player.peak_title) }} in {{ player.peak_year }})
-        </span>
-      {% endif %}
       <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}</h1>
     </div>
     <div class="player-meta-pill">
       <span title="Nationality / Flag">{{ get_flag(player.country_code) }}</span>
+      {% if player.peak_title %}
+        <span class="meta-separator">&bull;</span>
+        <span class="peak-meta-wrap">Peak Rank: <span class="badge badge-{{ player.peak_title.lower() }}" style="font-size: 0.75rem; padding: 0.15rem 0.5rem; vertical-align: middle;">{{ get_title_name(player.peak_title) }} ({{ player.peak_year or 'Career' }})</span></span>
+      {% endif %}
       <span class="meta-separator">&bull;</span>
       <span>Tournament Records &amp; Career Hall of Fame Finishes &bull; Last Match: <strong>{{ player.last_played or 'N/A' }}</strong></span>
     </div>

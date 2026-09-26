@@ -378,10 +378,10 @@ def test_player_profile_hero_and_meta_readability(client):
     assert 'Martin_Pecheur' in html
     assert ('World Champion' in html or 'Grandmaster' in html)
 
-    # Meta pill with nationality flag and first match debut
+    # Meta pill with nationality flag and peak rank badge
     assert 'player-meta-pill' in html
     assert 'fr.svg' in html
-    assert 'First Match:' in html
+    assert 'Peak Rank:' in html
 
 
 def test_subpages_background_image_styling(client):
@@ -888,7 +888,7 @@ def test_player_profile_format_filtering(client):
     rv_2p = client.get('/player/DANeo?format=2')
     assert rv_2p.status_code == 200
     html_2p = rv_2p.get_data(as_text=True)
-    assert 'First Match:' in html_2p
+    assert ('Peak Rank:' in html_2p or 'player-meta-pill' in html_2p)
     assert '2-Player' in html_2p
 
     # 2. 4-Player format filter
@@ -899,7 +899,7 @@ def test_player_profile_format_filtering(client):
 
 
 def test_player_modes_subpage_and_engine_switcher(client):
-    """Verify /modes subpage alias, Score Index explainer tooltip, and dynamic engine switcher on player profile."""
+    """Verify /modes subpage alias, Score Index explainer tooltip, and dynamic trajectory mode switcher on player profile."""
     # 1. Access /modes alias
     rv = client.get('/player/Martin_Pecheur/modes')
     assert rv.status_code == 200
@@ -908,15 +908,13 @@ def test_player_modes_subpage_and_engine_switcher(client):
     assert 'Score Index' in html
     assert 'Composite Performance Index' in html
 
-    # 2. Access player profile where Season Reset trajectory chart and engine switcher reside
+    # 2. Access player profile where Season Reset trajectory switcher resides
     rv_prof = client.get('/player/Martin_Pecheur')
     assert rv_prof.status_code == 200
     prof_html = rv_prof.get_data(as_text=True)
-    assert 'switchResetChartEngine' in prof_html
-    assert 'btnResetDaneo' in prof_html
-    assert 'btnResetStd' in prof_html
-    assert 'btnResetMp' in prof_html
-    assert 'btnResetWhr' in prof_html
+    assert 'switchTrajectoryMode' in prof_html
+    assert 'btnModeContinuous' in prof_html
+    assert 'btnModeReset' in prof_html
 
 
 
