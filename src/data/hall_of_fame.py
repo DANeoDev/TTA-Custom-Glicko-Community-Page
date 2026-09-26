@@ -155,28 +155,56 @@ def derive_royal_league_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[D
 
 def derive_intermezzo_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[Dict[str, Any]]]:
     """Derives Grandmaster (Premier) division standings and podiums for all Intermezzo seasons."""
-    hof_path = Path("data/tournaments/Hall of Fame.xlsx")
     season_podiums = {}
     player_trophies = defaultdict(lambda: {'gold': 0, 'silver': 0, 'bronze': 0, 'points': 0.0})
 
-    if pd is not None and hof_path.exists():
-        xl = pd.ExcelFile(hof_path)
-        if 'Intermezzo Championship' in xl.sheet_names:
-            df = xl.parse('Intermezzo Championship')
-            for _, row in df.iterrows():
-                p = row.get('Unnamed: 3')
-                if pd.isna(p) or not str(p).strip() or str(p).startswith('Player') or str(p).startswith('Season') or 'ordered by' in str(p) or '*' in str(p):
-                    continue
-                p = str(p).strip()
-                gold = int(row['Winner']) if pd.notna(row['Winner']) else 0
-                silver = int(row['Runner-up']) if pd.notna(row['Runner-up']) else 0
-                bronze = int(row['3rd place']) if pd.notna(row['3rd place']) else 0
-                pts = float(row['Points']) if pd.notna(row['Points']) else 0.0
-                if (gold + silver + bronze) > 0 or pts > 0:
-                    player_trophies[p]['gold'] += gold
-                    player_trophies[p]['silver'] += silver
-                    player_trophies[p]['bronze'] += bronze
-                    player_trophies[p]['points'] += pts
+    # 1. Primary: query tournament_records table in SQLite (fully independent of pandas/openpyxl)
+    try:
+        rows = conn.execute("""
+            SELECT player_name, placement, points
+            FROM tournament_records
+            WHERE tournament_name = 'Intermezzo Championship' AND division LIKE '%Hall of Fame%'
+        """).fetchall()
+        for r in rows:
+            p = r['player_name']
+            plc = r['placement'] or ''
+            pts_str = r['points'] or ''
+            g = int(m.group(1)) if (m := re.search(r'(\d+)x 1st', plc)) else 0
+            s = int(m.group(1)) if (m := re.search(r'(\d+)x 2nd', plc)) else 0
+            b = int(m.group(1)) if (m := re.search(r'(\d+)x 3rd', plc)) else 0
+            pt = float(m.group(1)) if (m := re.search(r'([\d.]+)', pts_str)) else 0.0
+            if (g + s + b) > 0 or pt > 0:
+                player_trophies[p]['gold'] += g
+                player_trophies[p]['silver'] += s
+                player_trophies[p]['bronze'] += b
+                player_trophies[p]['points'] += pt
+    except Exception:
+        pass
+
+    # 2. Fallback to Hall of Fame.xlsx if database had no entries
+    if not player_trophies:
+        hof_path = Path("data/tournaments/Hall of Fame.xlsx")
+        if pd is not None and hof_path.exists():
+            try:
+                xl = pd.ExcelFile(hof_path)
+                if 'Intermezzo Championship' in xl.sheet_names:
+                    df = xl.parse('Intermezzo Championship')
+                    for _, row in df.iterrows():
+                        p = row.get('Unnamed: 3')
+                        if pd.isna(p) or not str(p).strip() or str(p).startswith('Player') or str(p).startswith('Season') or 'ordered by' in str(p) or '*' in str(p):
+                            continue
+                        p = str(p).strip()
+                        gold = int(row['Winner']) if pd.notna(row['Winner']) else 0
+                        silver = int(row['Runner-up']) if pd.notna(row['Runner-up']) else 0
+                        bronze = int(row['3rd place']) if pd.notna(row['3rd place']) else 0
+                        pts = float(row['Points']) if pd.notna(row['Points']) else 0.0
+                        if (gold + silver + bronze) > 0 or pts > 0:
+                            player_trophies[p]['gold'] += gold
+                            player_trophies[p]['silver'] += silver
+                            player_trophies[p]['bronze'] += bronze
+                            player_trophies[p]['points'] += pts
+            except Exception:
+                pass
 
     trophyboard = []
     for p, stats in player_trophies.items():
@@ -198,28 +226,56 @@ def derive_intermezzo_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[Dic
 
 def derive_international_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[Dict[str, Any]]]:
     """Derives Grandmaster / Diamond (Premier) division standings and podiums for all International Championship seasons."""
-    hof_path = Path("data/tournaments/Hall of Fame.xlsx")
     season_podiums = {}
     player_trophies = defaultdict(lambda: {'gold': 0, 'silver': 0, 'bronze': 0, 'points': 0.0})
 
-    if pd is not None and hof_path.exists():
-        xl = pd.ExcelFile(hof_path)
-        if 'International Championship' in xl.sheet_names:
-            df = xl.parse('International Championship')
-            for _, row in df.iterrows():
-                p = row.get('Player')
-                if pd.isna(p) or not str(p).strip() or str(p).startswith('Player') or str(p).startswith('Season') or 'ordered by' in str(p) or '*' in str(p):
-                    continue
-                p = str(p).strip()
-                gold = int(row['Winner']) if pd.notna(row['Winner']) else 0
-                silver = int(row['Runner-up']) if pd.notna(row['Runner-up']) else 0
-                bronze = int(row['3rd place']) if pd.notna(row['3rd place']) else 0
-                pts = float(row['Points']) if pd.notna(row['Points']) else 0.0
-                if (gold + silver + bronze) > 0 or pts > 0:
-                    player_trophies[p]['gold'] += gold
-                    player_trophies[p]['silver'] += silver
-                    player_trophies[p]['bronze'] += bronze
-                    player_trophies[p]['points'] += pts
+    # 1. Primary: query tournament_records table in SQLite (fully independent of pandas/openpyxl)
+    try:
+        rows = conn.execute("""
+            SELECT player_name, placement, points
+            FROM tournament_records
+            WHERE tournament_name = 'International Championship' AND division LIKE '%Hall of Fame%'
+        """).fetchall()
+        for r in rows:
+            p = r['player_name']
+            plc = r['placement'] or ''
+            pts_str = r['points'] or ''
+            g = int(m.group(1)) if (m := re.search(r'(\d+)x 1st', plc)) else 0
+            s = int(m.group(1)) if (m := re.search(r'(\d+)x 2nd', plc)) else 0
+            b = int(m.group(1)) if (m := re.search(r'(\d+)x 3rd', plc)) else 0
+            pt = float(m.group(1)) if (m := re.search(r'([\d.]+)', pts_str)) else 0.0
+            if (g + s + b) > 0 or pt > 0:
+                player_trophies[p]['gold'] += g
+                player_trophies[p]['silver'] += s
+                player_trophies[p]['bronze'] += b
+                player_trophies[p]['points'] += pt
+    except Exception:
+        pass
+
+    # 2. Fallback to Hall of Fame.xlsx if database had no entries
+    if not player_trophies:
+        hof_path = Path("data/tournaments/Hall of Fame.xlsx")
+        if pd is not None and hof_path.exists():
+            try:
+                xl = pd.ExcelFile(hof_path)
+                if 'International Championship' in xl.sheet_names:
+                    df = xl.parse('International Championship')
+                    for _, row in df.iterrows():
+                        p = row.get('Player')
+                        if pd.isna(p) or not str(p).strip() or str(p).startswith('Player') or str(p).startswith('Season') or 'ordered by' in str(p) or '*' in str(p):
+                            continue
+                        p = str(p).strip()
+                        gold = int(row['Winner']) if pd.notna(row['Winner']) else 0
+                        silver = int(row['Runner-up']) if pd.notna(row['Runner-up']) else 0
+                        bronze = int(row['3rd place']) if pd.notna(row['3rd place']) else 0
+                        pts = float(row['Points']) if pd.notna(row['Points']) else 0.0
+                        if (gold + silver + bronze) > 0 or pts > 0:
+                            player_trophies[p]['gold'] += gold
+                            player_trophies[p]['silver'] += silver
+                            player_trophies[p]['bronze'] += bronze
+                            player_trophies[p]['points'] += pts
+            except Exception:
+                pass
 
     trophyboard = []
     for p, stats in player_trophies.items():
@@ -650,8 +706,10 @@ def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool 
 
     conn = get_connection(db_path)
     try:
-        # 1. Sync achievements to ensure latest database states
-        sync_tournament_achievements(conn)
+        # 1. Sync achievements if table is unpopulated or refresh is requested
+        ach_count = conn.execute("SELECT COUNT(*) FROM player_achievements").fetchone()[0]
+        if ach_count == 0 or force_refresh:
+            sync_tournament_achievements(conn)
 
         # 2. Derive Major Circuits Trophyboards
         rl_podiums, rl_board = derive_royal_league_podiums(conn)
@@ -669,13 +727,15 @@ def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool 
                    royal_league_titles, other_titles, gold_medals, silver_medals, bronze_medals, top_achievements_json
             FROM player_achievements
             WHERE total_titles > 0 OR (gold_medals + silver_medals + bronze_medals) >= 2
-            ORDER BY total_titles DESC, gold_medals DESC, silver_medals DESC, bronze_medals DESC, (gold_medals + silver_medals + bronze_medals) DESC
         """).fetchall()
 
         all_time_major_legends = []
         for r in achievements_rows:
             top_ach = json.loads(r['top_achievements_json']) if r['top_achievements_json'] else []
             major_titles = r['world_titles'] + r['international_titles'] + r['intermezzo_titles'] + r['royal_league_titles']
+            gold = r['gold_medals']
+            silver = r['silver_medals']
+            bronze = r['bronze_medals']
             all_time_major_legends.append({
                 'player': r['player_name'],
                 'total_titles': major_titles,
@@ -683,12 +743,17 @@ def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool 
                 'intl_titles': r['international_titles'],
                 'inter_titles': r['intermezzo_titles'],
                 'rl_titles': r['royal_league_titles'],
-                'gold': r['gold_medals'],
-                'silver': r['silver_medals'],
-                'bronze': r['bronze_medals'],
-                'total_medals': r['gold_medals'] + r['silver_medals'] + r['bronze_medals'],
+                'gold': gold,
+                'silver': silver,
+                'bronze': bronze,
+                'total_medals': gold + silver + bronze,
                 'top_achievements': top_ach[:3]
             })
+
+        all_time_major_legends.sort(
+            key=lambda x: (x['total_titles'], x['world_titles'], x['gold'], x['silver'], x['bronze'], x['total_medals']),
+            reverse=True
+        )
 
         total_intl_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'International%'").fetchone()[0]
         total_inter_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'Intermezzo%'").fetchone()[0]

@@ -616,6 +616,38 @@ def test_tournaments_hub_and_detail_routes(client):
     assert rv_404.status_code == 404
 
 
+def test_hall_of_fame_without_pandas(client):
+    """Ensure Hall of Fame data and trophyboards derive completely and accurately without pandas."""
+    import src.data.hall_of_fame as hof
+    original_pd = hof.pd
+    try:
+        hof.pd = None
+        hof.clear_hof_cache()
+        data = hof.derive_hall_of_fame_data(force_refresh=True)
+        assert len(data['all_time_major_legends']) >= 20
+        top_legend = data['all_time_major_legends'][0]
+        assert top_legend['player'] == 'Weidenbaum'
+        assert top_legend['total_titles'] >= 14
+        assert top_legend['intl_titles'] == 6
+        assert top_legend['inter_titles'] == 8
+
+        second_legend = data['all_time_major_legends'][1]
+        assert second_legend['player'] == 'Martin_Pecheur'
+        assert second_legend['total_titles'] >= 6
+
+        # Check web response
+        rv = client.get('/hall_of_fame')
+        assert rv.status_code == 200
+        html = rv.get_data(as_text=True)
+        assert 'Weidenbaum' in html
+        assert 'Martin_Pecheur' in html
+        assert 'All-Time Major Circuits Hall of Fame' in html
+        assert 'wcs-table' in html
+    finally:
+        hof.pd = original_pd
+        hof.clear_hof_cache()
+
+
 def test_player_rivals_sortable_and_wc_badges(client):
     """Ensure Head-to-Head rivals table contains sort handlers and WC badges render with purple diamond aesthetic."""
     # a440 profile

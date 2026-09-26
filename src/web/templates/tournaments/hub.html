@@ -5,12 +5,12 @@
 {% block extra_head %}
 <style>
   .tournaments-header {
-    background: linear-gradient(135deg, rgba(28, 19, 13, 0.95), rgba(45, 30, 20, 0.9));
-    border: 1px solid var(--border-subtle);
+    background: linear-gradient(135deg, rgba(32, 20, 13, 0.95), rgba(20, 13, 9, 0.98));
+    border: 1.5px solid rgba(229, 169, 60, 0.3);
     border-radius: 8px;
     padding: 2rem;
     margin-bottom: 2rem;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.6);
     position: relative;
     overflow: hidden;
   }
@@ -47,7 +47,7 @@
     border-top: 1px solid rgba(229, 169, 60, 0.15);
   }
   .stat-pill {
-    background: rgba(0, 0, 0, 0.35);
+    background: rgba(0, 0, 0, 0.45);
     border: 1px solid rgba(229, 169, 60, 0.25);
     padding: 0.4rem 0.9rem;
     border-radius: 6px;
@@ -64,8 +64,8 @@
     margin-bottom: 2.5rem;
   }
   .series-card {
-    background: var(--surface-panel);
-    border: 1px solid var(--border-subtle);
+    background: linear-gradient(145deg, rgba(28, 18, 12, 0.95), rgba(20, 13, 9, 0.98));
+    border: 1.5px solid rgba(74, 53, 37, 0.6);
     border-radius: 8px;
     padding: 1.5rem;
     display: flex;
@@ -75,11 +75,12 @@
     text-decoration: none;
     color: inherit;
     position: relative;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
   }
   .series-card:hover {
     transform: translateY(-3px);
     border-color: var(--accent-gold);
-    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.5), 0 0 12px rgba(229, 169, 60, 0.2);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7), 0 0 14px rgba(229, 169, 60, 0.25);
   }
   .series-card-top {
     display: flex;
@@ -148,11 +149,12 @@
     transform: translateX(4px);
   }
   .podium-preview-card {
-    background: linear-gradient(145deg, rgba(20, 14, 10, 0.95), rgba(30, 20, 15, 0.9));
-    border: 1px solid rgba(229, 169, 60, 0.25);
+    background: linear-gradient(145deg, rgba(28, 18, 12, 0.95), rgba(20, 13, 9, 0.98));
+    border: 1.5px solid rgba(229, 169, 60, 0.25);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 2rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
   }
   .podium-preview-title {
     font-size: 1.2rem;
@@ -169,13 +171,18 @@
     gap: 1rem;
   }
   .champ-highlight-box {
-    background: rgba(0, 0, 0, 0.4);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(16, 10, 6, 0.75);
+    border: 1px solid rgba(229, 169, 60, 0.25);
     border-radius: 6px;
     padding: 1rem;
     display: flex;
     align-items: center;
     gap: 1rem;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .champ-highlight-box:hover {
+    border-color: var(--accent-gold);
+    transform: translateY(-2px);
   }
   .champ-highlight-avatar {
     font-size: 2rem;
@@ -208,14 +215,14 @@
     line-height: 1.35;
   }
 
-  /* WCS Bracket Analytics Section */
+  /* WCS & Circuit Analytics Section */
   .wcs-analytics-card {
-    background: var(--surface-panel);
-    border: 1.5px solid var(--border-subtle);
+    background: linear-gradient(145deg, rgba(28, 18, 12, 0.95), rgba(20, 13, 9, 0.98));
+    border: 1.5px solid rgba(229, 169, 60, 0.25);
     border-radius: 8px;
     padding: 1.5rem;
     margin-bottom: 2.5rem;
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5);
   }
   .wcs-grid-two {
     display: grid;
@@ -230,24 +237,36 @@
     width: 100%;
     border-collapse: collapse;
     font-family: var(--font-stats);
-    font-size: 0.88rem;
+    font-size: 0.9rem;
   }
   .wcs-table th {
     background: rgba(30, 20, 14, 0.95);
     color: var(--accent-gold);
-    padding: 0.5rem 0.75rem;
+    padding: 0.75rem 1rem;
     text-align: left;
     border-bottom: 2px solid var(--border-subtle);
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: var(--font-heading);
+  }
+  .wcs-table tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  .wcs-table tbody tr:nth-child(odd) {
+    background: rgba(16, 10, 6, 0.65);
+  }
+  .wcs-table tbody tr:nth-child(even) {
+    background: rgba(28, 18, 12, 0.40);
   }
   .wcs-table td {
-    padding: 0.5rem 0.75rem;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.3);
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid rgba(74, 53, 37, 0.35);
     color: #f5eedb;
+    font-size: 0.9rem;
   }
-  .wcs-table tr:hover td {
-    background: rgba(229, 169, 60, 0.08);
+  .wcs-table tbody tr:hover td {
+    background: rgba(229, 169, 60, 0.12) !important;
   }
 </style>
 {% endblock %}

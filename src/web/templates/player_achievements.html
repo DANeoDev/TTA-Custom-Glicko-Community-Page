@@ -35,17 +35,19 @@
     margin-bottom: 2rem;
   }
   .medal-card {
-    background: var(--surface-panel);
-    border: 1px solid var(--border-subtle);
+    background: linear-gradient(145deg, rgba(28, 18, 12, 0.95), rgba(20, 13, 9, 0.98));
+    border: 1.5px solid var(--border-subtle);
     border-radius: 6px;
     padding: 1.25rem 1.5rem;
     text-align: center;
     backdrop-filter: blur(4px);
-    transition: transform 0.2s, border-color 0.2s;
+    transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
   }
   .medal-card:hover {
     transform: translateY(-2px);
     border-color: var(--accent-gold);
+    box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6), 0 0 10px rgba(229, 169, 60, 0.2);
   }
   .medal-icon {
     font-size: 2.2rem;
@@ -104,13 +106,23 @@
     text-transform: uppercase;
     border-bottom: 2px solid var(--border-subtle);
     text-align: left;
+    letter-spacing: 0.5px;
+  }
+  .records-table tbody tr {
+    transition: background-color 0.15s ease;
+  }
+  .records-table tbody tr:nth-child(odd) {
+    background: rgba(16, 10, 6, 0.65);
+  }
+  .records-table tbody tr:nth-child(even) {
+    background: rgba(28, 18, 12, 0.40);
   }
   .records-table td {
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(74, 53, 37, 0.4);
+    border-bottom: 1px solid rgba(74, 53, 37, 0.35);
   }
-  .records-table tr:hover td {
-    background: rgba(229, 169, 60, 0.06);
+  .records-table tbody tr:hover td {
+    background: rgba(229, 169, 60, 0.12) !important;
   }
 
   .medal-badge-inline {
