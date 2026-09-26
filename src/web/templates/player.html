@@ -264,9 +264,9 @@
       </p>
     {% else %}
       <p style="margin-bottom: 0.5rem;">
-        <strong>{{ player.name }}</strong> has competed in <strong>{{ recent_matches|length }}</strong> recent matches across competitive TTA tournament divisions
+        <strong>{{ player.name }}</strong> has competed in <strong>{{ total_matches_count }}</strong> competitive matches across TTA tournament divisions
         {% if player.title %}
-          and holds the official title of <strong>{% if player.title == 'GM' %}Grandmaster{% elif player.title == 'M' %}Master{% elif player.title == 'P' %}Platinum{% elif player.title == 'G' %}Gold{% else %}{{ player.title }}{% endif %}</strong>.
+          and holds the official title of <strong>{{ get_title_name(player.title) }}</strong>.
         {% endif %}
       </p>
     {% endif %}

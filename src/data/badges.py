@@ -1,7 +1,7 @@
 """Tournament Badge Derivation Engine for Through the Ages.
 
 Implements the official badge award rules:
-- Recency Rule: Badges are displayed only for players active within the last 6 months in tournament play.
+- Recency Rule: Badges are displayed only for players active within the last 1 year (12 months) in tournament play.
 - Highest league in Intermezzo (3P), International Championship (4P), Royal League (2P), or World Championship -> GM (Grandmaster)
 - 2nd highest league -> M (Master)
 - 3rd highest league -> P (Platinum)
@@ -189,17 +189,17 @@ def parse_badge_reason(tournament_name: str, tier: int) -> str:
 
 
 def derive_tournament_badges(db_path: Optional[str] = None) -> Dict[str, Any]:
-    """Derives and saves tournament badges for all active players within 6 months."""
+    """Derives and saves tournament badges for all active players within the last 1 year (12 months)."""
     conn = get_connection(db_path)
     try:
-        # Determine 6-month recency cutoff based on latest match in DB
+        # Determine 1-year (12-month) recency cutoff based on latest match in DB
         max_row = conn.execute("SELECT MAX(date) FROM matches").fetchone()
         if not max_row or not max_row[0]:
             return {}
         max_date = datetime.strptime(max_row[0], "%Y-%m-%d")
-        cutoff_date = (max_date - relativedelta(months=6)).strftime("%Y-%m-%d")
+        cutoff_date = (max_date - relativedelta(years=1)).strftime("%Y-%m-%d")
 
-        # Select matches played within last 6 months
+        # Select matches played within last 12 months (1 year)
         rows = conn.execute("""
             SELECT tournament, date, player1, player2, player3, player4
             FROM matches

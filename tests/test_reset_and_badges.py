@@ -65,6 +65,18 @@ def test_badge_classification():
     assert classify_division_tier("Intermezzo S30 - Wood 5") == 7      # W
 
 
+def test_derive_tournament_badges_one_year_recency():
+    """Verifies that 1-year tournament recency correctly assigns Bronze to ArthursDad and Silver to Olesch."""
+    badges = derive_tournament_badges()
+    assert 'ArthursDad' in badges
+    assert badges['ArthursDad']['title'] == 'B'
+    assert 'Bronze' in badges['ArthursDad']['badge_reason']
+
+    assert 'Olesch' in badges
+    assert badges['Olesch']['title'] == 'S'
+    assert 'Silver' in badges['Olesch']['badge_reason']
+
+
 def test_delta_config(tmp_path):
     """Tests setting and retrieving active delta snapshot config."""
     db_file = tmp_path / "test.db"

@@ -200,6 +200,12 @@
         <span class="badge badge-p" title="Official Competitive Title: Platinum">Platinum</span>
       {% elif player.title == 'G' %}
         <span class="badge badge-g" title="Official Competitive Title: Gold">Gold</span>
+      {% elif player.title == 'S' %}
+        <span class="badge badge-s" title="Official Competitive Title: Silver">Silver</span>
+      {% elif player.title == 'B' %}
+        <span class="badge badge-b" title="Official Competitive Title: Bronze">Bronze</span>
+      {% elif player.title == 'W' %}
+        <span class="badge badge-w" title="Official Competitive Title: Wood">Wood</span>
       {% endif %}
       <h1 class="player-profile-name" style="margin: 0.2rem 0;">{{ player.name }}</h1>
     </div>

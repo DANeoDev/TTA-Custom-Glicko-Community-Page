@@ -83,6 +83,22 @@ def create_app():
             except Exception:
                 return []
 
+        TITLE_FULL_NAMES = {
+            'WC': 'World Champion',
+            'GM': 'Grandmaster',
+            'M': 'Master',
+            'P': 'Platinum',
+            'G': 'Gold',
+            'S': 'Silver',
+            'B': 'Bronze',
+            'W': 'Wood'
+        }
+
+        def get_title_name(code):
+            if not code:
+                return ''
+            return TITLE_FULL_NAMES.get(str(code).upper(), str(code))
+
         return {
             'active_model': active_model,
             'active_model_name': VALID_MODELS.get(active_model, 'GlickoD'),
@@ -91,6 +107,7 @@ def create_app():
             'active_format_name': VALID_FORMATS.get(active_format, 'All Formats'),
             'formats': VALID_FORMATS,
             'get_flag': country_flag_emoji,
+            'get_title_name': get_title_name,
             'max': max,
             'min': min,
             'cms_blocks': cms_blocks,
