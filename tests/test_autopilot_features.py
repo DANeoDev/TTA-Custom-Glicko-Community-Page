@@ -945,3 +945,50 @@ def test_faq_super_gm_and_peak_career_season_badges(client):
         assert 'Peak Career Season:' in p_html, f"Missing Peak Career Season card for {p_name}"
         assert expected_yr in p_html, f"Expected year {expected_yr} in {p_name}'s profile"
         assert expected_badge in p_html, f"Expected badge class {expected_badge} in {p_name}'s profile"
+
+
+def test_download_ratings_csv(client):
+    """Verify CSV download functionality for tournament organizers."""
+    # 1. Verify download button presence on the leaderboard page
+    rv_page = client.get('/leaderboard')
+    assert rv_page.status_code == 200
+    page_html = rv_page.get_data(as_text=True)
+    assert 'Download currently selected ratings' in page_html
+    assert 'Tournament Data Export' in page_html
+    assert 'btnDownloadRatings' in page_html
+
+    # 2. Test standard live ratings download (active players by default)
+    rv_dl = client.get('/ratings/download')
+    assert rv_dl.status_code == 200
+    assert 'text/csv' in rv_dl.content_type
+    assert 'attachment;' in rv_dl.headers.get('Content-Disposition', '')
+    assert 'tta_ratings_glicko2_daneo_all_formats_continuous_live_active.csv' in rv_dl.headers.get('Content-Disposition', '')
+
+    csv_text = rv_dl.get_data(as_text=True)
+    lines = csv_text.strip().splitlines()
+    assert len(lines) > 1300  # Active players with >= 30 matches
+    # Check CSV header
+    header = lines[0].replace('\ufeff', '')
+    assert 'Rank,Player,Country,Title,Title_Name,Badge_Reason,Peak_Title,Peak_Year,Rating,RD,Conservative_Rating,Matches,Wins,Losses,Draws,Win_Rate,Status,Last_Played,Model,Format,Reset_Mode,Season' in header
+
+    # 3. Test download with inactive players included (all players)
+    rv_all = client.get('/ratings/download?status=all&min_opps=0')
+    assert rv_all.status_code == 200
+    assert 'tta_ratings_glicko2_daneo_all_formats_continuous_live_all.csv' in rv_all.headers.get('Content-Disposition', '')
+    lines_all = rv_all.get_data(as_text=True).strip().splitlines()
+    assert len(lines_all) >= 3489  # All players in the database
+
+    # 4. Test format filtering (2-Player duel format)
+    rv_2p = client.get('/ratings/download?format=2&status=all&min_opps=0')
+    assert rv_2p.status_code == 200
+    assert 'tta_ratings_glicko2_daneo_2p_continuous_live_all.csv' in rv_2p.headers.get('Content-Disposition', '')
+    csv_2p = rv_2p.get_data(as_text=True)
+    assert '2-Player (Duel)' in csv_2p
+
+    # 5. Test yearly snapshot download
+    rv_yr = client.get('/ratings/2024/download?status=active')
+    assert rv_yr.status_code == 200
+    assert 'tta_ratings_glicko2_daneo_all_formats_continuous_2024_active.csv' in rv_yr.headers.get('Content-Disposition', '')
+    csv_yr = rv_yr.get_data(as_text=True)
+    assert '2024' in csv_yr
+

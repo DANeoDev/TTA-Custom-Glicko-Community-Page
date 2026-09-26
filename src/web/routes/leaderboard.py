@@ -1,7 +1,9 @@
+import csv
+import io
 from datetime import datetime, timedelta
-from flask import Blueprint, render_template, request, session, url_for, abort
+from flask import Blueprint, render_template, request, session, url_for, abort, Response
 from src.data.db import get_connection, ensure_yearly_stats
-from src.data.badges import TITLE_ORDER
+from src.data.badges import TITLE_ORDER, TITLE_FULL_NAMES
 
 leaderboard_bp = Blueprint('leaderboard', __name__)
 
@@ -97,6 +99,96 @@ def suggest_players():
         conn.close()
 
 
+def _build_leaderboard_query(conn, year, db_model, active_format, status, min_opps, title_filter, stats_view):
+    if year is not None:
+        # Look up year-end snapshot date for active model & format
+        snap_row = conn.execute(
+            "SELECT MAX(period_date) as max_date FROM rating_history WHERE model_type = ? AND player_count = ? AND period_date LIKE ?",
+            (db_model, active_format, f"{year}%")
+        ).fetchone()
+        snapshot_date = snap_row['max_date'] if snap_row and snap_row['max_date'] else None
+
+        # Fallback across any model/format if current format had no period
+        if not snapshot_date:
+            fallback_snap = conn.execute(
+                "SELECT MAX(period_date) as max_date FROM rating_history WHERE period_date LIKE ?",
+                (f"{year}%",)
+            ).fetchone()
+            snapshot_date = fallback_snap['max_date'] if fallback_snap and fallback_snap['max_date'] else f"{year}-12-31"
+
+        where_clauses = ['rh.model_type = ?', 'rh.player_count = ?', 'rh.period_date = ?']
+        pool_params = [year, active_format, db_model, active_format, snapshot_date]
+
+        opp_col = 'COALESCE(yps.career_opps, 0)' if stats_view == 'career' else 'COALESCE(yps.opponents_count, 0)'
+        wins_col = 'COALESCE(yps.career_wins, 0)' if stats_view == 'career' else 'COALESCE(yps.wins, 0)'
+        losses_col = 'COALESCE(yps.career_losses, 0)' if stats_view == 'career' else 'COALESCE(yps.losses, 0)'
+        draws_col = 'COALESCE(yps.career_draws, 0)' if stats_view == 'career' else 'COALESCE(yps.draws, 0)'
+        winrate_col = 'COALESCE(yps.career_win_rate, 0.0)' if stats_view == 'career' else 'COALESCE(yps.win_rate, 0.0)'
+
+        if min_opps > 0:
+            where_clauses.append(f'{opp_col} >= ?')
+            pool_params.append(min_opps)
+
+        if status == 'active':
+            where_clauses.append('COALESCE(yps.opponents_count, 0) > 0')
+        elif status == 'inactive':
+            where_clauses.append('COALESCE(yps.opponents_count, 0) == 0')
+
+        if title_filter and title_filter != 'ALL':
+            where_clauses.append('p.title = ?')
+            pool_params.append(title_filter)
+
+        where_sql = ' AND '.join(where_clauses)
+
+        pool_sql = (
+            'SELECT ROW_NUMBER() OVER (ORDER BY rh.c_rating DESC) as rank, '
+            '0 as rank_delta, rh.player_name, p.country_code, p.title, p.title_count, p.badge_reason, p.peak_title, p.peak_year, '
+            'rh.rating, rh.rd, 0.0 as sigma, rh.c_rating, '
+            f'{opp_col} as opponents_count, '
+            f'{wins_col} as wins, {losses_col} as losses, '
+            f'{draws_col} as draws, {winrate_col} as win_rate, '
+            'yps.last_played, '
+            'ROW_NUMBER() OVER (ORDER BY rh.c_rating DESC) as display_rank '
+            'FROM rating_history rh '
+            'LEFT JOIN players p ON rh.player_name = p.name '
+            'LEFT JOIN yearly_player_stats yps ON yps.year = ? AND yps.player_count = ? AND yps.player_name = rh.player_name '
+            'WHERE ' + where_sql
+        )
+        return pool_sql, pool_params, snapshot_date
+    else:
+        # All-Time / Live Leaderboard
+        where_clauses = ['pr.model_type = ?', 'pr.player_count = ?']
+        pool_params = [db_model, active_format]
+
+        if min_opps > 0:
+            where_clauses.append('pr.opponents_count >= ?')
+            pool_params.append(min_opps)
+
+        if status == 'active':
+            where_clauses.append('pr.last_played > ?')
+            pool_params.append(INACTIVE_CUTOFF_DATE)
+        elif status == 'inactive':
+            where_clauses.append('(pr.last_played IS NULL OR pr.last_played <= ?)')
+            pool_params.append(INACTIVE_CUTOFF_DATE)
+
+        if title_filter and title_filter != 'ALL':
+            where_clauses.append('p.title = ?')
+            pool_params.append(title_filter)
+
+        where_sql = ' AND '.join(where_clauses)
+
+        pool_sql = (
+            'SELECT pr.rank, pr.rank_delta, pr.player_name, p.country_code, p.title, p.title_count, p.badge_reason, p.peak_title, p.peak_year, '
+            'pr.rating, pr.rd, pr.sigma, pr.c_rating, pr.opponents_count, pr.wins, pr.losses, pr.draws, '
+            'pr.win_rate, pr.last_played, '
+            'ROW_NUMBER() OVER (ORDER BY pr.c_rating DESC) as display_rank '
+            'FROM player_ratings pr '
+            'LEFT JOIN players p ON pr.player_name = p.name '
+            'WHERE ' + where_sql
+        )
+        return pool_sql, pool_params, None
+
+
 def render_leaderboard(year=None):
     if year is not None and year not in AVAILABLE_YEARS:
         abort(404)
@@ -183,23 +275,12 @@ def render_leaderboard(year=None):
     try:
         ensure_yearly_stats(conn)
 
+        pool_sql, pool_params, snapshot_date = _build_leaderboard_query(
+            conn, year, db_model, active_format, status, min_opps, title_filter, stats_view
+        )
+
         year_info = None
         if year is not None:
-            # Look up year-end snapshot date for active model & format
-            snap_row = conn.execute(
-                "SELECT MAX(period_date) as max_date FROM rating_history WHERE model_type = ? AND player_count = ? AND period_date LIKE ?",
-                (db_model, active_format, f"{year}%")
-            ).fetchone()
-            snapshot_date = snap_row['max_date'] if snap_row and snap_row['max_date'] else None
-
-            # Fallback across any model/format if current format had no period
-            if not snapshot_date:
-                fallback_snap = conn.execute(
-                    "SELECT MAX(period_date) as max_date FROM rating_history WHERE period_date LIKE ?",
-                    (f"{year}%",)
-                ).fetchone()
-                snapshot_date = fallback_snap['max_date'] if fallback_snap and fallback_snap['max_date'] else f"{year}-12-31"
-
             match_row = conn.execute(
                 "SELECT COUNT(*) as total FROM matches WHERE date LIKE ?",
                 (f"{year}%",)
@@ -213,76 +294,6 @@ def render_leaderboard(year=None):
                 'world_champion': WORLD_CHAMPIONS.get(year),
                 'stats_view': stats_view
             }
-
-            where_clauses = ['rh.model_type = ?', 'rh.player_count = ?', 'rh.period_date = ?']
-            pool_params = [year, active_format, db_model, active_format, snapshot_date]
-
-            opp_col = 'COALESCE(yps.career_opps, 0)' if stats_view == 'career' else 'COALESCE(yps.opponents_count, 0)'
-            wins_col = 'COALESCE(yps.career_wins, 0)' if stats_view == 'career' else 'COALESCE(yps.wins, 0)'
-            losses_col = 'COALESCE(yps.career_losses, 0)' if stats_view == 'career' else 'COALESCE(yps.losses, 0)'
-            draws_col = 'COALESCE(yps.career_draws, 0)' if stats_view == 'career' else 'COALESCE(yps.draws, 0)'
-            winrate_col = 'COALESCE(yps.career_win_rate, 0.0)' if stats_view == 'career' else 'COALESCE(yps.win_rate, 0.0)'
-
-            if min_opps > 0:
-                where_clauses.append(f'{opp_col} >= ?')
-                pool_params.append(min_opps)
-
-            if status == 'active':
-                where_clauses.append('COALESCE(yps.opponents_count, 0) > 0')
-            elif status == 'inactive':
-                where_clauses.append('COALESCE(yps.opponents_count, 0) == 0')
-
-            if title_filter and title_filter != 'ALL':
-                where_clauses.append('p.title = ?')
-                pool_params.append(title_filter)
-
-            where_sql = ' AND '.join(where_clauses)
-
-            pool_sql = (
-                'SELECT ROW_NUMBER() OVER (ORDER BY rh.c_rating DESC) as rank, '
-                '0 as rank_delta, rh.player_name, p.country_code, p.title, p.title_count, p.badge_reason, p.peak_title, p.peak_year, '
-                'rh.rating, rh.rd, 0.0 as sigma, rh.c_rating, '
-                f'{opp_col} as opponents_count, '
-                f'{wins_col} as wins, {losses_col} as losses, '
-                f'{draws_col} as draws, {winrate_col} as win_rate, '
-                'yps.last_played, '
-                'ROW_NUMBER() OVER (ORDER BY rh.c_rating DESC) as display_rank '
-                'FROM rating_history rh '
-                'LEFT JOIN players p ON rh.player_name = p.name '
-                'LEFT JOIN yearly_player_stats yps ON yps.year = ? AND yps.player_count = ? AND yps.player_name = rh.player_name '
-                'WHERE ' + where_sql
-            )
-        else:
-            # All-Time / Live Leaderboard
-            where_clauses = ['pr.model_type = ?', 'pr.player_count = ?']
-            pool_params = [db_model, active_format]
-
-            if min_opps > 0:
-                where_clauses.append('pr.opponents_count >= ?')
-                pool_params.append(min_opps)
-
-            if status == 'active':
-                where_clauses.append('pr.last_played > ?')
-                pool_params.append(INACTIVE_CUTOFF_DATE)
-            elif status == 'inactive':
-                where_clauses.append('(pr.last_played IS NULL OR pr.last_played <= ?)')
-                pool_params.append(INACTIVE_CUTOFF_DATE)
-
-            if title_filter and title_filter != 'ALL':
-                where_clauses.append('p.title = ?')
-                pool_params.append(title_filter)
-
-            where_sql = ' AND '.join(where_clauses)
-
-            pool_sql = (
-                'SELECT pr.rank, pr.rank_delta, pr.player_name, p.country_code, p.title, p.title_count, p.badge_reason, p.peak_title, p.peak_year, '
-                'pr.rating, pr.rd, pr.sigma, pr.c_rating, pr.opponents_count, pr.wins, pr.losses, pr.draws, '
-                'pr.win_rate, pr.last_played, '
-                'ROW_NUMBER() OVER (ORDER BY pr.c_rating DESC) as display_rank '
-                'FROM player_ratings pr '
-                'LEFT JOIN players p ON pr.player_name = p.name '
-                'WHERE ' + where_sql
-            )
 
         sort_map = {
             'rank': 'display_rank',
@@ -545,6 +556,221 @@ def render_leaderboard(year=None):
             year_info=year_info,
             stats_view=stats_view,
             make_url=make_url
+        )
+    finally:
+        conn.close()
+
+
+@leaderboard_bp.route('/ratings/download')
+@leaderboard_bp.route('/leaderboard/download')
+@leaderboard_bp.route('/ratings/<int:year>/download')
+@leaderboard_bp.route('/leaderboard/<int:year>/download')
+def download_ratings(year=None):
+    """Generates and streams a CSV export of ratings according to currently selected filters."""
+    if year is None and request.args.get('year'):
+        try:
+            year = int(request.args.get('year'))
+        except ValueError:
+            year = None
+
+    if year is not None and year not in AVAILABLE_YEARS:
+        abort(404)
+
+    # 1. Model selection
+    model_param = request.args.get('model') or session.get('active_model')
+    if not model_param or model_param not in VALID_MODELS:
+        model_param = 'glicko2_daneo'
+    active_model = model_param
+
+    # 2. Season Reset Mode selection (continuous, softer)
+    reset_param = request.args.get('reset_mode') or session.get('active_reset_mode')
+    if reset_param in ('soft', 'amplified'):
+        reset_param = 'softer'
+    if not reset_param or reset_param not in VALID_RESET_MODES:
+        reset_param = 'continuous'
+    active_reset_mode = reset_param
+
+    # Retrospective Prior Calibration (Option A) lever
+    retro_param = request.args.get('retro')
+    if retro_param is not None:
+        active_retro = (retro_param.lower() in ('1', 'true', 'yes'))
+    else:
+        active_retro = session.get('active_retro', False)
+
+    # Effective database model key
+    if active_model in ('glicko2_daneo', 'whr'):
+        db_model = f"{active_model}_{active_reset_mode}" if active_reset_mode != 'continuous' else active_model
+    else:
+        if active_retro:
+            db_model = f"{active_model}_{active_reset_mode}_retro" if active_reset_mode != 'continuous' else f"{active_model}_retro"
+        else:
+            db_model = f"{active_model}_{active_reset_mode}" if active_reset_mode != 'continuous' else active_model
+
+    # 3. Format selection (0=All, 2=2p, 3=3p, 4=4p)
+    format_param = request.args.get('format')
+    if format_param is not None:
+        try:
+            fmt_int = int(format_param)
+            active_format = fmt_int if fmt_int in VALID_FORMATS else 0
+        except ValueError:
+            active_format = 0
+    else:
+        active_format = session.get('active_format', 0)
+        if active_format not in VALID_FORMATS:
+            active_format = 0
+
+    # 4. Status filter: 'active' (default), 'all', 'inactive'
+    status = request.args.get('status', 'active').lower()
+    if status not in ('active', 'all', 'inactive'):
+        status = 'active'
+
+    # 5. Minimum matches / opponents filter
+    min_opps_param = request.args.get('min_opps')
+    if min_opps_param is not None:
+        try:
+            min_opps = max(0, int(min_opps_param.strip()))
+        except ValueError:
+            min_opps = 0 if (year is not None or status == 'all') else 30
+    else:
+        min_opps = 0 if (year is not None or status == 'all') else 30
+
+    # 6. Seasonal vs Career Stats Switcher for yearly view
+    stats_view = request.args.get('stats_view', 'season').lower()
+    if stats_view not in ('season', 'career'):
+        stats_view = 'season'
+
+    search = (request.args.get('search') or '').strip()
+    title_filter = (request.args.get('title') or '').strip()
+    sort_by = request.args.get('sort', 'rank')
+    order = request.args.get('order', 'asc').lower()
+
+    conn = get_connection()
+    try:
+        ensure_yearly_stats(conn)
+
+        pool_sql, pool_params, _ = _build_leaderboard_query(
+            conn, year, db_model, active_format, status, min_opps, title_filter, stats_view
+        )
+
+        sort_map = {
+            'rank': 'display_rank',
+            'rating': 'rating',
+            'c_rating': 'c_rating',
+            'opps': 'opponents_count',
+            'win_rate': 'win_rate',
+            'name': 'player_name',
+            'last_played': 'last_played'
+        }
+        col_sort = sort_map.get(sort_by, 'display_rank')
+        sort_dir = 'DESC' if order == 'desc' else 'ASC'
+
+        if search:
+            if ',' in search:
+                names = [n.strip() for n in search.split(',') if n.strip()]
+                or_clauses = ['(LOWER(player_name) LIKE ? OR LOWER(country_code) = ?)' for _ in names]
+                or_params = []
+                for n in names:
+                    or_params.extend([f"%{n.lower()}%", n.lower()])
+                final_sql = f"WITH pool AS ({pool_sql}) SELECT * FROM pool WHERE {' OR '.join(or_clauses)} ORDER BY {col_sort} {sort_dir}"
+                final_params = pool_params + or_params
+            else:
+                final_sql = f"WITH pool AS ({pool_sql}) SELECT * FROM pool WHERE LOWER(player_name) LIKE ? OR LOWER(country_code) = ? ORDER BY {col_sort} {sort_dir}"
+                final_params = pool_params + [f"%{search.lower()}%", search.lower()]
+        else:
+            final_sql = f"WITH pool AS ({pool_sql}) SELECT * FROM pool ORDER BY {col_sort} {sort_dir}"
+            final_params = pool_params
+
+        rows = conn.execute(final_sql, final_params).fetchall()
+
+        si = io.StringIO()
+        si.write('\ufeff')  # UTF-8 BOM for Microsoft Excel compatibility
+        writer = csv.writer(si)
+        writer.writerow([
+            'Rank',
+            'Player',
+            'Country',
+            'Title',
+            'Title_Name',
+            'Badge_Reason',
+            'Peak_Title',
+            'Peak_Year',
+            'Rating',
+            'RD',
+            'Conservative_Rating',
+            'Matches',
+            'Wins',
+            'Losses',
+            'Draws',
+            'Win_Rate',
+            'Status',
+            'Last_Played',
+            'Model',
+            'Format',
+            'Reset_Mode',
+            'Season'
+        ])
+
+        model_name = VALID_MODELS.get(active_model, active_model)
+        format_name = VALID_FORMATS.get(active_format, str(active_format))
+        reset_name = VALID_RESET_MODES.get(active_reset_mode, {}).get('name', active_reset_mode)
+        season_name = str(year) if year is not None else 'Live / All-Time'
+
+        for idx, r in enumerate(rows):
+            if year is not None:
+                is_active = bool((r['opponents_count'] or 0) > 0)
+            else:
+                lp = r['last_played']
+                is_active = bool(lp and lp > INACTIVE_CUTOFF_DATE)
+
+            title_code = r['title'] or ''
+            title_name = TITLE_FULL_NAMES.get(title_code, title_code)
+            peak_title_code = r['peak_title'] or ''
+            peak_title_name = TITLE_FULL_NAMES.get(peak_title_code, peak_title_code)
+
+            display_rank = r['display_rank'] if 'display_rank' in r and r['display_rank'] is not None else (idx + 1)
+            rating = f"{round(r['rating'], 2):.2f}" if r['rating'] is not None else ""
+            rd = f"{round(r['rd'], 2):.2f}" if r['rd'] is not None else ""
+            c_rating = f"{round(r['c_rating'], 2):.2f}" if r['c_rating'] is not None else ""
+            win_rate = f"{round(r['win_rate'] * 100, 1):.1f}%" if r['win_rate'] is not None else "0.0%"
+
+            writer.writerow([
+                display_rank,
+                r['player_name'],
+                r['country_code'] or '',
+                title_code,
+                title_name,
+                r['badge_reason'] or '',
+                peak_title_name,
+                r['peak_year'] or '',
+                rating,
+                rd,
+                c_rating,
+                r['opponents_count'] or 0,
+                r['wins'] or 0,
+                r['losses'] or 0,
+                r['draws'] or 0,
+                win_rate,
+                'Active' if is_active else 'Inactive',
+                r['last_played'] or '',
+                model_name,
+                format_name,
+                reset_name,
+                season_name
+            ])
+
+        output = si.getvalue()
+        format_slug = f"{active_format}p" if active_format > 0 else "all_formats"
+        year_slug = str(year) if year is not None else "live"
+        status_slug = status
+        filename = f"tta_ratings_{active_model}_{format_slug}_{active_reset_mode}_{year_slug}_{status_slug}.csv"
+
+        return Response(
+            output,
+            mimetype="text/csv",
+            headers={
+                "Content-Disposition": f'attachment; filename="{filename}"',
+                "Content-Type": "text/csv; charset=utf-8"
+            }
         )
     finally:
         conn.close()
