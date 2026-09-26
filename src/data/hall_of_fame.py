@@ -340,10 +340,10 @@ def derive_world_championship_trophyboard(conn) -> List[Dict[str, Any]]:
 
 
 def derive_grand_slams_trophyboard(conn) -> List[Dict[str, Any]]:
-    """Derives trophyboard for all Grand Slams & Championship Cups (Survivors Cup, Wimbledon, Eiffel Tower, Slow Burn, French Open)."""
+    """Derives trophyboard dynamically for Grand Slams & Championship Cups directly from match records."""
     trophies = defaultdict(lambda: {'gold': 0, 'silver': 0, 'bronze': 0, 'cups': []})
 
-    # 1. Survivors Cup 2026 Final
+    # 1. Survivors Cup 2026 Finals (3-player survival table)
     sc_final = conn.execute("""
         SELECT player1, score1, player2, score2, player3, score3
         FROM matches
@@ -355,32 +355,89 @@ def derive_grand_slams_trophyboard(conn) -> List[Dict[str, Any]]:
         plist = sorted([(p, float(sc) if sc is not None else 0.0) for p, sc in plist if p], key=lambda x: x[1], reverse=True)
         if len(plist) >= 1:
             trophies[plist[0][0]]['gold'] += 1
-            trophies[plist[0][0]]['cups'].append('Survivors Cup 2026 Champion')
+            trophies[plist[0][0]]['cups'].append('2026 Survivors Cup Champion')
         if len(plist) >= 2:
             trophies[plist[1][0]]['silver'] += 1
-            trophies[plist[1][0]]['cups'].append('Survivors Cup 2026 Runner-Up')
+            trophies[plist[1][0]]['cups'].append('2026 Survivors Cup Runner-Up')
         if len(plist) >= 3:
             trophies[plist[2][0]]['bronze'] += 1
+            trophies[plist[2][0]]['cups'].append('2026 Survivors Cup 3rd Place')
 
-    # 2. Slow Burn Finals (wolvs champion)
+    # 2. Slow Burn Season 15 Finals (3-match endurance series)
     sb_rows = conn.execute("""
         SELECT player1, score1, player2, score2, player3, score3
         FROM matches
         WHERE tournament LIKE '%Slow Burn%Final%'
     """).fetchall()
     if sb_rows:
-        sb_pts = defaultdict(float)
+        sb_scores = defaultdict(float)
+        sb_wins = defaultdict(int)
         for r in sb_rows:
             plist = [(r['player1'], r['score1']), (r['player2'], r['score2']), (r['player3'], r['score3'])]
             plist = sorted([(p, float(sc) if sc is not None else 0.0) for p, sc in plist if p], key=lambda x: x[1], reverse=True)
-            if plist: sb_pts[plist[0][0]] += 1
-        sorted_sb = sorted(sb_pts.items(), key=lambda x: x[1], reverse=True)
-        if sorted_sb:
-            champ = sorted_sb[0][0]
-            trophies[champ]['gold'] += 1
-            trophies[champ]['cups'].append('Slow Burn Season 15 Champion')
+            if plist:
+                sb_wins[plist[0][0]] += 1
+                for p, sc in plist:
+                    sb_scores[p] += sc
+        sorted_sb = sorted(sb_scores.keys(), key=lambda p: (sb_wins[p], sb_scores[p]), reverse=True)
+        if len(sorted_sb) >= 1:
+            trophies[sorted_sb[0]]['gold'] += 1
+            trophies[sorted_sb[0]]['cups'].append('Slow Burn S15 Champion')
+        if len(sorted_sb) >= 2:
+            trophies[sorted_sb[1]]['silver'] += 1
+            trophies[sorted_sb[1]]['cups'].append('Slow Burn S15 Runner-Up')
+        if len(sorted_sb) >= 3:
+            trophies[sorted_sb[2]]['bronze'] += 1
+            trophies[sorted_sb[2]]['cups'].append('Slow Burn S15 3rd Place')
 
-    # 3. Eiffel Tower "The Top" leaders
+    # 3. Wimbledon TTA (2023 & 2025 Editions)
+    # 2023 Finals (Stage 7 - 5 games)
+    wimb_23 = conn.execute("""
+        SELECT player1, score1, player2, score2
+        FROM matches
+        WHERE tournament LIKE 'Wimbledon 2023 stage 7%'
+    """).fetchall()
+    if wimb_23:
+        w23_wins = defaultdict(int)
+        for r in wimb_23:
+            s1, s2 = float(r['score1'] or 0), float(r['score2'] or 0)
+            if s1 > s2: w23_wins[r['player1']] += 1
+            elif s2 > s1: w23_wins[r['player2']] += 1
+        sorted_w23 = sorted(w23_wins.items(), key=lambda x: x[1], reverse=True)
+        if len(sorted_w23) >= 1:
+            trophies[sorted_w23[0][0]]['gold'] += 1
+            trophies[sorted_w23[0][0]]['cups'].append('2023 Wimbledon TTA Champion')
+        if len(sorted_w23) >= 2:
+            trophies[sorted_w23[1][0]]['silver'] += 1
+            trophies[sorted_w23[1][0]]['cups'].append('2023 Wimbledon TTA Runner-Up')
+
+    # 2025 Finals (Stage 10 - Round Robin)
+    wimb_25 = conn.execute("""
+        SELECT player1, score1, player2, score2
+        FROM matches
+        WHERE tournament LIKE 'Wimbledon 2025 Stage 10%'
+    """).fetchall()
+    if wimb_25:
+        w25_wins = defaultdict(int)
+        w25_pts = defaultdict(float)
+        for r in wimb_25:
+            p1, s1 = r['player1'], float(r['score1'] or 0)
+            p2, s2 = r['player2'], float(r['score2'] or 0)
+            w25_pts[p1] += s1; w25_pts[p2] += s2
+            if s1 > s2: w25_wins[p1] += 1
+            elif s2 > s1: w25_wins[p2] += 1
+        sorted_w25 = sorted(w25_wins.keys(), key=lambda p: (w25_wins[p], w25_pts[p]), reverse=True)
+        if len(sorted_w25) >= 1:
+            trophies[sorted_w25[0]]['gold'] += 1
+            trophies[sorted_w25[0]]['cups'].append('2025 Wimbledon TTA Champion')
+        if len(sorted_w25) >= 2:
+            trophies[sorted_w25[1]]['silver'] += 1
+            trophies[sorted_w25[1]]['cups'].append('2025 Wimbledon TTA Runner-Up')
+        if len(sorted_w25) >= 3:
+            trophies[sorted_w25[2]]['bronze'] += 1
+            trophies[sorted_w25[2]]['cups'].append('2025 Wimbledon TTA 3rd Place')
+
+    # 4. Eiffel Tower "The Top" Peak Competitors
     eiffel_top = conn.execute("""
         SELECT player1, score1, player2, score2, player3, score3, player4, score4, player_count
         FROM matches
@@ -389,19 +446,13 @@ def derive_grand_slams_trophyboard(conn) -> List[Dict[str, Any]]:
     e_wins = defaultdict(int)
     for r in eiffel_top:
         p_cnt = r['player_count']
-        plist = [(r['player1'], r['score1']), (r['player2'], r['score2']), (r['player3'], r['score3']), (r['player4'], r['score4'])][:p_cnt]
-        plist = sorted([(p, float(sc) if sc is not None else 0.0) for p, sc in plist if p], key=lambda x: x[1], reverse=True)
-        if plist: e_wins[plist[0][0]] += 1
-    for p, w in sorted(e_wins.items(), key=lambda x: x[1], reverse=True)[:4]:
-        trophies[p]['gold'] += (1 if w >= 22 else 0)
-        trophies[p]['silver'] += (1 if w < 22 and w >= 20 else 0)
+        plist = [(r[f'player{i}'], r[f'score{i}']) for i in range(1, p_cnt + 1) if r[f'player{i}'] and r[f'score{i}'] is not None]
+        plist = sorted([(p, float(sc)) for p, sc in plist], key=lambda x: x[1], reverse=True)
+        if plist:
+            e_wins[plist[0][0]] += 1
+    for p, w in sorted(e_wins.items(), key=lambda x: x[1], reverse=True)[:3]:
+        trophies[p]['gold'] += 1
         trophies[p]['cups'].append(f'Eiffel Tower Pinnacle Champion ({w} Top Victories)')
-
-    # 4. Wimbledon TTA
-    trophies['holy834']['gold'] += 1
-    trophies['holy834']['cups'].append('Wimbledon TTA 2025 Finalist')
-    trophies['zoldaria']['gold'] += 1
-    trophies['zoldaria']['cups'].append('Wimbledon TTA 2025 Finalist')
 
     gs_board = []
     for p, stats in trophies.items():
@@ -656,7 +707,12 @@ def get_premier_seasonal_records(series_slug: str, db_path: Optional[str] = None
             return []
 
         rows = conn.execute(query).fetchall()
-        campaigns = defaultdict(lambda: {'pts': 0.0, 'games': 0, 'wins': 0, 'second_places': 0, 'date': '', 'div': ''})
+        campaigns = defaultdict(lambda: {
+            'pts': 0.0, 'games': 0,
+            'p1': 0, 'p2': 0, 'p3': 0, 'p4': 0,
+            'w': 0, 'd': 0, 'l': 0,
+            'date': '', 'div': ''
+        })
 
         for r in rows:
             t = r['tournament']
@@ -675,43 +731,75 @@ def get_premier_seasonal_records(series_slug: str, db_path: Optional[str] = None
             season_key = f"Season {m.group(1)}" if m else "Season"
             div_name = "Emperor" if series_slug == 'royal_league' else "Grandmaster"
 
-            for rank, (p, sc) in enumerate(plist, 1):
-                c_key = (season_key, p)
-                camp = campaigns[c_key]
-                camp['games'] += 1
-                camp['date'] = r['date']
-                camp['div'] = div_name
-
-                if series_slug == 'royal_league':
-                    if rank == 1 and (len(plist) == 1 or plist[0][1] > plist[1][1]):
-                        camp['pts'] += 2.0; camp['wins'] += 1
-                    elif len(plist) > 1 and plist[0][1] == plist[1][1]:
-                        camp['pts'] += 1.0
-                elif series_slug == 'intermezzo':
+            if series_slug == 'royal_league':
+                p1, sc1 = plist[0]
+                p2, sc2 = plist[1] if len(plist) > 1 else ('', 0.0)
+                if not p1 or not p2:
+                    continue
+                c1, c2 = campaigns[(season_key, p1)], campaigns[(season_key, p2)]
+                c1['games'] += 1; c2['games'] += 1
+                c1['date'] = r['date']; c2['date'] = r['date']
+                c1['div'] = div_name; c2['div'] = div_name
+                if sc1 > sc2:
+                    c1['pts'] += 2.0; c1['w'] += 1; c2['l'] += 1
+                elif sc2 > sc1:
+                    c2['pts'] += 2.0; c2['w'] += 1; c1['l'] += 1
+                else:
+                    c1['pts'] += 1.0; c2['pts'] += 1.0
+                    c1['d'] += 1; c2['d'] += 1
+            elif series_slug == 'intermezzo':
+                for rank, (p, sc) in enumerate(plist, 1):
+                    c = campaigns[(season_key, p)]
+                    c['games'] += 1; c['date'] = r['date']; c['div'] = div_name
                     if rank == 1:
-                        camp['pts'] += 5.0; camp['wins'] += 1
+                        c['pts'] += 5.0; c['p1'] += 1
                     elif rank == 2:
-                        camp['pts'] += 2.0; camp['second_places'] += 1
-                elif series_slug == 'international':
+                        c['pts'] += 2.0; c['p2'] += 1
+                    elif rank == 3:
+                        c['p3'] += 1
+            elif series_slug == 'international':
+                for rank, (p, sc) in enumerate(plist, 1):
+                    c = campaigns[(season_key, p)]
+                    c['games'] += 1; c['date'] = r['date']; c['div'] = div_name
                     if rank == 1:
-                        camp['pts'] += (6.0 if p_cnt == 4 else 5.0); camp['wins'] += 1
+                        c['pts'] += (6.0 if p_cnt == 4 else 5.0)
+                        c['p1'] += 1
                     elif rank == 2:
-                        camp['pts'] += (3.0 if p_cnt == 4 else 2.0); camp['second_places'] += 1
-                    elif rank == 3 and p_cnt == 4:
-                        camp['pts'] += 1.0
+                        c['pts'] += (3.0 if p_cnt == 4 else 2.0)
+                        c['p2'] += 1
+                    elif rank == 3:
+                        if p_cnt == 4:
+                            c['pts'] += 1.0
+                        c['p3'] += 1
+                    elif rank == 4:
+                        c['p4'] += 1
 
         min_games = 5 if series_slug == 'royal_league' else 6
         records = []
         for (s_key, p), data in campaigns.items():
             if data['games'] >= min_games:
+                if series_slug == 'royal_league':
+                    rec_display = f"{data['w']}/{data['l']}" if data['d'] == 0 else f"{data['w']}/{data['d']}/{data['l']}"
+                    wins = data['w']
+                    seconds = data['d']
+                elif series_slug == 'intermezzo':
+                    rec_display = f"{data['p1']}/{data['p2']}/{data['p3']}"
+                    wins = data['p1']
+                    seconds = data['p2']
+                else:  # international
+                    rec_display = f"{data['p1']}/{data['p2']}/{data['p3']}/{data['p4']}"
+                    wins = data['p1']
+                    seconds = data['p2']
+
                 records.append({
                     'player': p,
                     'season': s_key,
                     'division': data['div'],
                     'points': data['pts'],
                     'games': data['games'],
-                    'wins': data['wins'],
-                    'second_places': data['second_places'],
+                    'wins': wins,
+                    'second_places': seconds,
+                    'record_display': rec_display,
                     'date': data['date']
                 })
 

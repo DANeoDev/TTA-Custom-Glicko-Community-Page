@@ -31,7 +31,7 @@ TOURNAMENT_SERIES = {
         "seasons_count": 34,
         "active_range": "2016 – Present (Current: Season 34)",
         "icon": "🌐",
-        "summary": "The premier 3/4-player competitive league in Through the Ages. Structured across hierarchical skill divisions (Diamond/Grandmaster, Platinum, Gold, Silver, Bronze, Wood) with quarterly promotion and relegation.",
+        "summary": "The premier 3/4-player competitive league in Through the Ages. Structured across hierarchical skill divisions (Grandmaster, Platinum, Gold, Silver, Bronze, Wood) with quarterly promotion and relegation.",
         "rules": [
             "7 players per division playing a standard seasonal schedule of 7 matches (4 four-player games and 3 three-player games).",
             "Scoring System: 4-Player games award 6/3/1/0 points; 3-Player games award 5/2/0 points (ties split points equally).",
@@ -44,13 +44,13 @@ TOURNAMENT_SERIES = {
                 "player": "Weidenbaum",
                 "badge": "Dynastic Record",
                 "title": "The Golden Hexa-Crown • 6 International Titles & 9 Podiums",
-                "text": "Grandmaster Weidenbaum holds the all-time championship record in the International Championship with 6 GM Division titles, 2 runner-up finishes, and 1 bronze across 14 competitive seasons (accumulating 282 Hall of Fame points)."
+                "text": "Grandmaster Weidenbaum holds the all-time championship record in the International Championship with 6 GM Division titles, 2 runner-up finishes, and 1 bronze across 14 competitive seasons."
             },
             {
                 "player": "Genghisip",
                 "badge": "Podium Benchmark",
                 "title": "All-Time Medal Leader • 11 Top-3 Finishes & 4 Titles",
-                "text": "Holding the all-time record for total podium finishes in the International Championship, Genghisip captured 4 Gold medals, 2 Silvers, and 5 Bronzes across 15 recorded seasons, compiling an all-time high 299 Hall of Fame points."
+                "text": "Holding the all-time record for total podium finishes in the International Championship, Genghisip captured 4 Gold medals, 2 Silvers, and 5 Bronzes across 15 recorded seasons."
             },
             {
                 "player": "DANeo",
@@ -72,7 +72,7 @@ TOURNAMENT_SERIES = {
         "seasons_count": 30,
         "active_range": "2018 – Present (Current: Season 30)",
         "icon": "⚔️",
-        "summary": "The premier 3-player competitive league. Characterized by high tactical tension, rapid turn pacing, and razor-thin military balance.",
+        "summary": "The premier 3-player competitive league.",
         "rules": [
             "5 players per division in a round-robin schedule totaling 10 matches per division.",
             "Each player competes in exactly 6 games per season (3-player tables paired with every pair of division rivals).",
@@ -107,13 +107,13 @@ TOURNAMENT_SERIES = {
         "seasons_count": 9,
         "active_range": "2024 – Present (Current: Season 9)",
         "icon": "👑",
-        "summary": "The premier 2-player recurrent championship. Pure head-to-head duels where military mastery and zero-sum tactical calculations are absolute.",
+        "summary": "The premier 2-player recurrent championship.",
         "rules": [
             "2-player head-to-head matches exclusively under medium async with 48h reserve per Age.",
             "8 players per division playing 7 weekly match rounds against all group opponents (28 matches total; max 14.0 pts).",
             "Points: 2 for win, 1 for draw, 0 for loss.",
             "Tiebreaker Protocol: 1st tiebreaker is Head-to-Head (H2H) match results between tied players. If unresolved for critical promotion, relegation, or podium finishes, official staged playoff tiebreaker tournaments are run.",
-            "Fibonacci-pyramidal divisional hierarchy: Emperor (Premier), King, Prince, Duke, Marquess, Count, Viscount, Baron."
+            "Fibonacci-pyramidal divisional hierarchy: Emperor, King, Prince, Duke, Marquess, Count, Viscount, Baron."
         ],
         "stories": [
             {
