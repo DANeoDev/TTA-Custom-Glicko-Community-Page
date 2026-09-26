@@ -198,7 +198,7 @@
     <a href="{{ url_for('player.profile', player_name=player.name, format=active_format) }}" class="btn-antique" style="text-decoration: none; font-size: 0.85rem;">
       &laquo; Return to Profile
     </a>
-    <a href="{{ url_for('player.player_achievements', player_name=player.name) }}" class="btn-reset" style="font-size: 0.85rem;">
+    <a href="{{ url_for('player.player_achievements', player_name=player.name) }}" class="btn-antique" style="text-decoration: none; font-size: 0.85rem;">
       🏆 Achievements &raquo;
     </a>
   </div>
@@ -275,10 +275,9 @@
     <table class="matrix-table" style="margin-bottom: 0;">
       <thead>
         <tr>
-          <th style="width: 28%; text-align: left;">Rating Engine</th>
-          <th style="width: 24%;">Continuous (Career)</th>
-          <th style="width: 24%;">Season Reset (Standard)</th>
-          <th style="width: 24%;">Soft Reset (&phi;)</th>
+          <th style="width: 36%; text-align: left;">Rating Engine</th>
+          <th style="width: 32%;">Continuous (Career)</th>
+          <th style="width: 32%;">Season Reset</th>
         </tr>
       </thead>
       <tbody>
@@ -288,7 +287,7 @@
             <div style="font-weight: 700; color: #ffd54f; font-size: 1.05rem;">👑 GlickoD</div>
             <div style="font-size: 0.8rem; color: #c7a76d; margin-top: 0.2rem;">φ^(N-2) MP decomposition &amp; 15-game re-calibration</div>
           </td>
-          {% for r_mode in ['continuous', 'softer', 'soft'] %}
+          {% for r_mode in ['continuous', 'softer'] %}
             {% set cell = matrix_cells.get(('glicko2_daneo', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -312,7 +311,7 @@
             <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Glicko-2 Standard</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Naive 1v1 pairwise baseline</div>
           </td>
-          {% for r_mode in ['continuous', 'softer', 'soft'] %}
+          {% for r_mode in ['continuous', 'softer'] %}
             {% set cell = matrix_cells.get(('glicko2_std', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -336,7 +335,7 @@
             <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Glicko-2 MP-Weighted</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Coulom fractional w=1/(N-1)</div>
           </td>
-          {% for r_mode in ['continuous', 'softer', 'soft'] %}
+          {% for r_mode in ['continuous', 'softer'] %}
             {% set cell = matrix_cells.get(('glicko2_mp', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -360,7 +359,7 @@
             <div style="font-weight: 700; color: #4ade80; font-size: 1.05rem;">Glicko-2 Adaptive-T</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Format-specific temperature $T(P, N)$</div>
           </td>
-          {% for r_mode in ['continuous', 'softer', 'soft'] %}
+          {% for r_mode in ['continuous', 'softer'] %}
             {% set cell = matrix_cells.get(('glicko2_adapt', r_mode), {}) %}
             <td>
               {% if cell.rating %}
@@ -384,7 +383,7 @@
             <div style="font-weight: 700; color: #fff; font-size: 1.05rem;">Whole-History Rating (WHR)</div>
             <div style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.2rem;">Retrospective Brownian MAP</div>
           </td>
-          {% for r_mode in ['continuous', 'softer', 'soft'] %}
+          {% for r_mode in ['continuous', 'softer'] %}
             {% set cell = matrix_cells.get(('whr', r_mode), {}) %}
             <td>
               {% if cell.rating %}
