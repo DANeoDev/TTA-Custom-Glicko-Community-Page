@@ -7,6 +7,7 @@ Provides comprehensive coverage of official TTA tournaments:
 - Fact-based Success Stories & Highlights for Master+ (M+) Profiles
 - All-Time Highest Scoring Division Records with complete Opponent details
 """
+from typing import Optional, Dict, Any, List
 from flask import Blueprint, render_template, abort, redirect, url_for, request
 from src.data.db import get_connection
 from src.data.hall_of_fame import (
@@ -21,20 +22,21 @@ TOURNAMENT_SERIES = {
     "international": {
         "slug": "international",
         "name": "International Championship",
-        "short_name": "International (4P)",
-        "player_count": 4,
-        "format_badge": "4-Player League",
+        "short_name": "International (3/4P)",
+        "subtitle": "3/4-Player Competitive Format",
+        "player_count": "3/4",
+        "format_badge": "3/4-Player League",
         "frequency": "Quarterly (4 seasons / year)",
         "total_matches": 31673,
         "seasons_count": 34,
         "active_range": "2016 – Present (Current: Season 34)",
         "icon": "🌐",
-        "summary": "The premier 4-player competitive league in Through the Ages. Structured across hierarchical skill divisions (Diamond/Grandmaster, Platinum, Gold, Silver, Bronze, Wood) with quarterly promotion and relegation.",
+        "summary": "The premier 3/4-player competitive league in Through the Ages. Structured across hierarchical skill divisions (Diamond/Grandmaster, Platinum, Gold, Silver, Bronze, Wood) with quarterly promotion and relegation.",
         "rules": [
             "7 players per division playing a standard seasonal schedule of 7 matches (4 four-player games and 3 three-player games).",
             "Scoring System: 4-Player games award 6/3/1/0 points; 3-Player games award 5/2/0 points (ties split points equally).",
             "Theoretical Seasonal Maximum: (4 x 6) + (3 x 5) = 39.0 points.",
-            "Divisional pyramid: Grandmaster / Diamond (Premier), Master (1 & 2), Platinum (1-4), Gold (1-8), Silver (1-14), Bronze (1-14), Wood (1-10).",
+            "Divisional pyramid: Grandmaster, Master (1 & 2), Platinum (1-4), Gold (1-8), Silver (1-14), Bronze (1-14), Wood (1-10).",
             "Top division crowns the official International Champion each season."
         ],
         "stories": [
@@ -42,7 +44,7 @@ TOURNAMENT_SERIES = {
                 "player": "Weidenbaum",
                 "badge": "Dynastic Record",
                 "title": "The Golden Hexa-Crown • 6 International Titles & 9 Podiums",
-                "text": "Grandmaster Weidenbaum holds the all-time championship record in the International Championship with 6 Diamond Division titles, 2 runner-up finishes, and 1 bronze across 14 competitive seasons (accumulating 282 Hall of Fame points)."
+                "text": "Grandmaster Weidenbaum holds the all-time championship record in the International Championship with 6 GM Division titles, 2 runner-up finishes, and 1 bronze across 14 competitive seasons (accumulating 282 Hall of Fame points)."
             },
             {
                 "player": "Genghisip",
@@ -62,6 +64,7 @@ TOURNAMENT_SERIES = {
         "slug": "intermezzo",
         "name": "Intermezzo Championship",
         "short_name": "Intermezzo (3P)",
+        "subtitle": "3-Player Competitive Format",
         "player_count": 3,
         "format_badge": "3-Player League",
         "frequency": "Quarterly (4 seasons / year)",
@@ -96,10 +99,11 @@ TOURNAMENT_SERIES = {
         "slug": "royal_league",
         "name": "Royal League",
         "short_name": "Royal League (2P)",
+        "subtitle": "2-Player Competitive Format",
         "player_count": 2,
         "format_badge": "2-Player Duel",
         "frequency": "Quarterly (4 seasons / year)",
-        "total_matches": 14689,
+        "total_matches": 14740,
         "seasons_count": 9,
         "active_range": "2024 – Present (Current: Season 9)",
         "icon": "👑",
@@ -136,6 +140,7 @@ TOURNAMENT_SERIES = {
         "slug": "worlds",
         "name": "Through the Ages World Championship",
         "short_name": "World Championship",
+        "subtitle": "4-Player Competitive Format",
         "player_count": 4,
         "format_badge": "Annual World Championship",
         "frequency": "Annual (Every Year)",
@@ -175,12 +180,13 @@ TOURNAMENT_SERIES = {
         "slug": "grand_slams",
         "name": "Grand Slams & Championship Cups",
         "short_name": "Grand Slams",
+        "subtitle": "4-Player Major Open Format",
         "player_count": 4,
         "format_badge": "Major Cups & Slams",
         "frequency": "Annual / Seasonal Majors",
-        "total_matches": 12284,
+        "total_matches": 12868,
         "seasons_count": 6,
-        "active_range": "2024 – Present",
+        "active_range": "2023 – Present",
         "icon": "🎾",
         "summary": "Prestigious open championships and multi-stage endurance cups: Survivors Cup (3P survival elimination), Wimbledon TTA (1v1 knockout duel bracket), French Open (3P/4P clay season major), Eiffel Tower Tournament (floor climbing stages to The Top), and Slow Burn.",
         "rules": [
@@ -208,12 +214,13 @@ TOURNAMENT_SERIES = {
         "slug": "ladders",
         "name": "Competitive Ladders (Mercurial, Sodium & Transcontinental)",
         "short_name": "Competitive Ladders",
-        "player_count": 3,
+        "subtitle": "2 & 3-Player Continuous Ladder Format",
+        "player_count": "2/3",
         "format_badge": "Tiered Ladders",
         "frequency": "Continuous / Quarterly",
-        "total_matches": 5537,
+        "total_matches": 7980,
         "seasons_count": 16,
-        "active_range": "2020 – Present",
+        "active_range": "2017 – Present",
         "icon": "🪜",
         "summary": "Perpetual rung-based ladders where competitors battle in 3-player and 2-player encounters to ascend through dynamic tier rankings.",
         "rules": [
@@ -233,14 +240,32 @@ TOURNAMENT_SERIES = {
 }
 
 
+def get_populated_tournament_series(hof_data: Optional[dict] = None) -> dict:
+    """Returns TOURNAMENT_SERIES dynamically populated with real-time match totals and season figures."""
+    if hof_data is None:
+        hof_data = derive_hall_of_fame_data()
+    series_metrics = hof_data.get('series_metrics', {})
+
+    populated = {}
+    for slug, base in TOURNAMENT_SERIES.items():
+        s = dict(base)
+        if slug in series_metrics:
+            s['total_matches'] = series_metrics[slug].get('total_matches', s['total_matches'])
+            s['seasons_count'] = series_metrics[slug].get('seasons_count', s['seasons_count'])
+            s['active_range'] = series_metrics[slug].get('active_range', s['active_range'])
+        populated[slug] = s
+    return populated
+
+
 @hall_of_fame_bp.route('')
 def index():
     """Hall of Fame overview hub page."""
     force = request.args.get('refresh') == '1'
     hof_data = derive_hall_of_fame_data(force_refresh=force)
+    series_map = get_populated_tournament_series(hof_data=hof_data)
     return render_template(
         'tournaments/hub.html',
-        series_list=list(TOURNAMENT_SERIES.values()),
+        series_list=list(series_map.values()),
         hof_data=hof_data
     )
 
@@ -248,11 +273,13 @@ def index():
 @hall_of_fame_bp.route('/<series_slug>')
 def series_detail(series_slug):
     """Detailed showcase page for a specific tournament series in Hall of Fame."""
-    series = TOURNAMENT_SERIES.get(series_slug.lower())
+    force = request.args.get('refresh') == '1'
+    hof_data = derive_hall_of_fame_data(force_refresh=force)
+    series_map = get_populated_tournament_series(hof_data=hof_data)
+    series = series_map.get(series_slug.lower())
     if not series:
         abort(404)
-    hof_data = derive_hall_of_fame_data()
-    
+
     # Inject dynamically derived trophyboard
     if series_slug == 'royal_league':
         series['trophyboard'] = hof_data['rl_board']
@@ -272,7 +299,7 @@ def series_detail(series_slug):
     return render_template(
         'tournaments/detail.html',
         series=series,
-        all_series=list(TOURNAMENT_SERIES.values()),
+        all_series=list(series_map.values()),
         records=records,
         seasonal_records=seasonal_records,
         hof_data=hof_data

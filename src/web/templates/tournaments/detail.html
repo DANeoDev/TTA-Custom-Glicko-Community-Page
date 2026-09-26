@@ -319,7 +319,7 @@
       <div>
         <div class="detail-hero-title">{{ series.name }}</div>
         <div style="color: var(--accent-gold); font-size: 0.95rem; font-weight: 600;">
-          {{ series.player_count }}-Player Competitive Format
+          {{ series.subtitle or (series.player_count ~ '-Player Competitive Format') }}
         </div>
       </div>
     </div>

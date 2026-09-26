@@ -730,6 +730,106 @@ def clear_hof_cache():
     _HOF_CACHE = None
 
 
+def derive_series_live_metrics(conn: sqlite3.Connection) -> Dict[str, Dict[str, Any]]:
+    """Derives exact match totals, season counts, and active ranges dynamically from database match history."""
+    cur = conn.cursor()
+
+    # 1. International
+    intl_m = cur.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'International%'").fetchone()[0] or 0
+    intl_seasons = [
+        int(m.group(1))
+        for (t,) in cur.execute("SELECT DISTINCT tournament FROM matches WHERE tournament LIKE 'International%'").fetchall()
+        if t and (m := re.search(r'S(\d+)', t, re.I))
+    ]
+    intl_max = max(intl_seasons) if intl_seasons else 34
+
+    # 2. Intermezzo
+    inter_m = cur.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'Intermezzo%'").fetchone()[0] or 0
+    inter_seasons = [
+        int(m.group(1))
+        for (t,) in cur.execute("SELECT DISTINCT tournament FROM matches WHERE tournament LIKE 'Intermezzo%'").fetchall()
+        if t and (m := re.search(r'S(\d+)', t, re.I))
+    ]
+    inter_max = max(inter_seasons) if inter_seasons else 30
+
+    # 3. Royal League
+    rl_m = cur.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'RL_%' OR tournament LIKE '%Royal League%'").fetchone()[0] or 0
+    rl_seasons = [
+        int(m.group(1))
+        for (t,) in cur.execute("SELECT DISTINCT tournament FROM matches WHERE tournament LIKE 'RL_%' OR tournament LIKE '%Royal League%'").fetchall()
+        if t and (m := re.search(r's0?(\d+)', t, re.I))
+    ]
+    rl_max = max(rl_seasons) if rl_seasons else 9
+
+    # 4. World Championship
+    wcs_m = cur.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE '%World%' OR tournament LIKE '%Worlds%'").fetchone()[0] or 0
+    wcs_editions = set()
+    for (t,) in cur.execute("SELECT DISTINCT tournament FROM matches WHERE tournament LIKE '%World%' OR tournament LIKE '%Worlds%'").fetchall():
+        if t:
+            m = re.search(r'Worlds?\s*(\d+)', t, re.I) or re.search(r'202\d', t)
+            if m:
+                wcs_editions.add(m.group(0))
+    wcs_count = len(wcs_editions) if wcs_editions else 4
+
+    # 5. Grand Slams & Championship Cups
+    gs_m = cur.execute("""
+        SELECT COUNT(*) FROM matches
+        WHERE tournament LIKE '%Survivor%' OR tournament LIKE '%Slam%' OR tournament LIKE '%Eiffel%'
+           OR tournament LIKE '%Wimbledon%' OR tournament LIKE '%Slow Burn%' OR tournament LIKE 'Australian Open%'
+           OR tournament LIKE 'French Open%'
+    """).fetchone()[0] or 0
+    gs_tourneys = {
+        t.split('Stage')[0].strip()
+        for (t,) in cur.execute("""
+            SELECT DISTINCT tournament FROM matches
+            WHERE tournament LIKE '%Survivor%' OR tournament LIKE '%Slam%' OR tournament LIKE '%Eiffel%'
+               OR tournament LIKE '%Wimbledon%' OR tournament LIKE '%Slow Burn%' OR tournament LIKE 'Australian Open%'
+               OR tournament LIKE 'French Open%'
+        """).fetchall()
+        if t
+    }
+    gs_count = len(gs_tourneys) if gs_tourneys else 6
+
+    # 6. Ladders
+    ladder_m = cur.execute("""
+        SELECT COUNT(*) FROM matches
+        WHERE tournament LIKE '%Mercurial%' OR tournament LIKE '%Sodium%' OR tournament LIKE '%TCL%' OR tournament LIKE 'ML_%'
+    """).fetchone()[0] or 0
+
+    return {
+        'international': {
+            'total_matches': intl_m,
+            'seasons_count': intl_max,
+            'active_range': f"2016 – Present (Current: Season {intl_max})"
+        },
+        'intermezzo': {
+            'total_matches': inter_m,
+            'seasons_count': inter_max,
+            'active_range': f"2018 – Present (Current: Season {inter_max})"
+        },
+        'royal_league': {
+            'total_matches': rl_m,
+            'seasons_count': rl_max,
+            'active_range': f"2024 – Present (Current: Season {rl_max})"
+        },
+        'worlds': {
+            'total_matches': wcs_m,
+            'seasons_count': wcs_count,
+            'active_range': f"2023 – Present (Next: 2027)"
+        },
+        'grand_slams': {
+            'total_matches': gs_m,
+            'seasons_count': gs_count,
+            'active_range': "2023 – Present"
+        },
+        'ladders': {
+            'total_matches': ladder_m,
+            'seasons_count': 16,
+            'active_range': "2017 – Present"
+        }
+    }
+
+
 def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool = False) -> Dict[str, Any]:
     """Builds complete Hall of Fame datasets with in-memory memoization."""
     global _HOF_CACHE
@@ -821,11 +921,7 @@ def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool 
             reverse=True
         )
 
-        total_intl_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'International%'").fetchone()[0]
-        total_inter_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'Intermezzo%'").fetchone()[0]
-        total_rl_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE 'RL_%'").fetchone()[0]
-        total_wcs_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE '%World%'").fetchone()[0]
-        total_gs_matches = conn.execute("SELECT COUNT(*) FROM matches WHERE tournament LIKE '%Survivor%' OR tournament LIKE '%Slam%' OR tournament LIKE '%Eiffel%' OR tournament LIKE '%Wimbledon%' OR tournament LIKE '%Slow Burn%'").fetchone()[0]
+        series_metrics = derive_series_live_metrics(conn)
 
         result = {
             'rl_board': rl_board,
@@ -835,12 +931,13 @@ def derive_hall_of_fame_data(db_path: Optional[str] = None, force_refresh: bool 
             'gs_board': gs_board,
             'ladder_board': ladder_board,
             'all_time_major_legends': all_time_major_legends[:25],
+            'series_metrics': series_metrics,
             'metrics': {
-                'intl_matches': total_intl_matches,
-                'inter_matches': total_inter_matches,
-                'rl_matches': total_rl_matches,
-                'wcs_matches': total_wcs_matches,
-                'gs_matches': total_gs_matches,
+                'intl_matches': series_metrics['international']['total_matches'],
+                'inter_matches': series_metrics['intermezzo']['total_matches'],
+                'rl_matches': series_metrics['royal_league']['total_matches'],
+                'wcs_matches': series_metrics['worlds']['total_matches'],
+                'gs_matches': series_metrics['grand_slams']['total_matches'],
             }
         }
         if db_path is None:
