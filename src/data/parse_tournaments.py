@@ -466,10 +466,22 @@ def parse_all_tournaments(db_path=None):
             content = f.read()
         hof_match = re.search(r'Season\s+Gold[^\n]*\n(.*?)(?:\n\s*\n|Full Results)', content, re.DOTALL)
         if hof_match:
+            rl_season_map = {
+                '2024 Q3': 'Season 1',
+                '2024 Q4': 'Season 2',
+                '2025 Q1': 'Season 3',
+                '2025 Q2': 'Season 4',
+                '2025 Q3': 'Season 5',
+                '2025 Q4': 'Season 6',
+                '2026 Q1': 'Season 7',
+                '2026 Q2': 'Season 8',
+                '2026 Q3': 'Season 9',
+            }
             for line in hof_match.group(1).strip().split('\n'):
                 parts = [p.strip() for p in line.split('\t') if p.strip()]
                 if len(parts) >= 2:
-                    season_name = parts[0]
+                    season_quarter = parts[0]
+                    season_name = rl_season_map.get(season_quarter, season_quarter)
                     golds = [normalize_name(x, canonical_map) for x in parts[1].split(',') if x.strip()]
                     silvers = [normalize_name(x, canonical_map) for x in parts[2].split(',') if x.strip()] if len(parts) > 2 else []
                     bronzes = [normalize_name(x, canonical_map) for x in parts[3].split(',') if x.strip()] if len(parts) > 3 else []
@@ -496,6 +508,7 @@ def parse_all_tournaments(db_path=None):
                         }
                         records.append(rec)
                         official_rec_idx[(g, 'Royal League', season_name)] = rec
+                        official_rec_idx[(g, 'Royal League', season_quarter)] = rec
 
                     for s in silvers:
                         st = get_stats(s)
@@ -515,6 +528,7 @@ def parse_all_tournaments(db_path=None):
                         }
                         records.append(rec)
                         official_rec_idx[(s, 'Royal League', season_name)] = rec
+                        official_rec_idx[(s, 'Royal League', season_quarter)] = rec
 
                     for b in bronzes:
                         st = get_stats(b)
@@ -534,6 +548,7 @@ def parse_all_tournaments(db_path=None):
                         }
                         records.append(rec)
                         official_rec_idx[(b, 'Royal League', season_name)] = rec
+                        official_rec_idx[(b, 'Royal League', season_quarter)] = rec
 
     # 3. Parse Royal League S1 CSV (now in matches/ subfolder)
     rl_s1_csv = TOURNAMENTS_DIR / 'Royal_League' / 'matches' / 'RL_s01.csv'

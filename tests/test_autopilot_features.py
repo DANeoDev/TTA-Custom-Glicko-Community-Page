@@ -1027,3 +1027,99 @@ def test_ensure_schema_migrations_auto_heals_missing_columns(tmp_path):
         c.close()
         db_mod._SCHEMA_MIGRATED = False
 
+
+def test_majondor_royal_league_achievements_and_deduplication():
+    """Verify that Majondor's Royal League title is tracked in player_achievements and no duplicate quarterly records exist."""
+    import sqlite3
+    from src.data.db import DEFAULT_DB_PATH
+
+    conn = sqlite3.connect(str(DEFAULT_DB_PATH))
+    conn.row_factory = sqlite3.Row
+    try:
+        # 1. Check player_achievements
+        ach = conn.execute("SELECT * FROM player_achievements WHERE player_name = 'Majondor' COLLATE NOCASE").fetchone()
+        assert ach is not None, "Majondor should have an entry in player_achievements"
+        assert ach['royal_league_titles'] >= 1, f"Majondor must have at least 1 Royal League title, got {ach['royal_league_titles']}"
+        assert ach['total_titles'] >= 2, f"Majondor must have at least 2 total titles, got {ach['total_titles']}"
+        assert ach['gold_medals'] >= 2, f"Majondor must have at least 2 gold medals, got {ach['gold_medals']}"
+        assert 'Royal League' in ach['summary_text']
+        assert 'Royal League Emperor Champion' in ach['top_achievements_json']
+
+        # 2. Check no duplicate Royal League records for Season 5 / 2025-08-31
+        rl_s5_records = conn.execute(
+            "SELECT * FROM tournament_records WHERE LOWER(player_name) = 'majondor' AND tournament_name = 'Royal League' AND finish_date = '2025-08-31'"
+        ).fetchall()
+        assert len(rl_s5_records) == 1, f"Expected exactly 1 Royal League record for Majondor on 2025-08-31, found {len(rl_s5_records)}"
+        rec = rl_s5_records[0]
+        assert rec['season'] == 'Season 5'
+        assert rec['division'] == 'Emperor'
+        assert rec['placement'] == '1 / 8'
+        assert rec['medal'] == 'gold'
+        assert 'Royal League Emperor Division Winner' in rec['details']
+        assert 'Competed in Emperor' in rec['details']
+
+        # 3. Verify zero leftover quarterly '202X QX' records in tournament_records
+        leftover_q = conn.execute(
+            "SELECT COUNT(*) FROM tournament_records WHERE tournament_name = 'Royal League' AND season LIKE '%Q%'"
+        ).fetchone()[0]
+        assert leftover_q == 0, f"Expected 0 leftover quarterly records, found {leftover_q}"
+    finally:
+        conn.close()
+
+
+def test_cleanup_duplicate_tournament_records_synthetic(tmp_path):
+    """Test cleanup_duplicate_tournament_records merges quarterly official records into match records."""
+    import sqlite3
+    from src.data.db import cleanup_duplicate_tournament_records
+
+    db_file = tmp_path / "test_tourney.db"
+    conn = sqlite3.connect(str(db_file))
+    conn.row_factory = sqlite3.Row
+    conn.execute("""
+        CREATE TABLE tournament_records (
+            record_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            player_name TEXT NOT NULL,
+            tournament_name TEXT NOT NULL,
+            season TEXT,
+            division TEXT,
+            placement TEXT,
+            points TEXT,
+            medal TEXT,
+            details TEXT,
+            finish_date TEXT,
+            is_career_total INTEGER DEFAULT 0
+        )
+    """)
+    # Insert match-based record
+    conn.execute("""
+        INSERT INTO tournament_records (player_name, tournament_name, season, division, placement, points, medal, details, finish_date)
+        VALUES ('TestPlayer', 'Royal League', 'Season 5', 'Emperor', '1 / 8', '5W - 2L (71.4%)', '', 'Competed in Emperor: 7 matches played', '2025-08-31')
+    """)
+    # Insert quarterly record
+    conn.execute("""
+        INSERT INTO tournament_records (player_name, tournament_name, season, division, placement, points, medal, details, finish_date)
+        VALUES ('TestPlayer', 'Royal League', '2025 Q3', 'Emperor', '1 / 8', 'Gold Medal', 'gold', 'Royal League Emperor Division Winner (2025 Q3)', '2025-08-31')
+    """)
+    conn.commit()
+
+    cleanup_duplicate_tournament_records(conn)
+
+    rows = conn.execute("SELECT * FROM tournament_records WHERE player_name = 'TestPlayer'").fetchall()
+    assert len(rows) == 1, f"Expected 1 merged row, got {len(rows)}"
+    merged = rows[0]
+    assert merged['season'] == 'Season 5'
+    assert merged['medal'] == 'gold'
+    assert 'Royal League Emperor Division Winner (2025 Q3)' in merged['details']
+    assert 'Competed in Emperor: 7 matches played' in merged['details']
+    conn.close()
+
+
+def test_player_achievements_page_displays_royal_league_title(client):
+    """Test web endpoint /player/Majondor/achievements renders the Royal League title."""
+    rv = client.get('/player/Majondor/achievements')
+    assert rv.status_code == 200
+    html = rv.get_data(as_text=True)
+    assert 'Royal League' in html
+    assert 'Emperor' in html
+    assert 'Season 5' in html
+

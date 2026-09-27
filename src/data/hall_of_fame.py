@@ -47,7 +47,7 @@ def derive_royal_league_podiums(conn) -> Tuple[Dict[int, Dict[str, Any]], List[D
         2: {'gold': 'vanishadow', 'silver': 'SandHippo', 'bronze': 'Weidenbaum'},
         3: {'gold': 'ben0728', 'silver': 'vanishadow', 'bronze': 'Martin_Pecheur'},
         4: {'gold': 'Martin_Pecheur', 'silver': 'DANeo', 'bronze': 'saru'},
-        5: {'gold': 'majondor', 'silver': 'Grozz', 'bronze': 'Martin_Pecheur'},
+        5: {'gold': 'Majondor', 'silver': 'Grozz', 'bronze': 'Martin_Pecheur'},
         6: {'gold': 'Martin_Pecheur', 'silver': 'saru', 'bronze': 'Grozz'},
         7: {'gold': 'saru', 'silver': 'DANeo', 'bronze': 'pv4'},
         8: {'gold': 'saru', 'silver': 'Martin_Pecheur', 'bronze': 'yaop'},
@@ -525,9 +525,16 @@ def sync_tournament_achievements(conn: sqlite3.Connection) -> None:
         'achievements': []
     })
 
+    canonical_map = {row[0].lower(): row[0] for row in conn.execute("SELECT name FROM players").fetchall()}
+
+    def norm_p(name):
+        if not name:
+            return ""
+        return canonical_map.get(str(name).strip().lower(), str(name).strip())
+
     # 1. World Championships
     for item in wc_board:
-        p = item['player']
+        p = norm_p(item['player'])
         if item['gold'] > 0:
             player_stats[p]['world_titles'] += item['gold']
             player_stats[p]['world_gold'] += item['gold']
@@ -540,7 +547,7 @@ def sync_tournament_achievements(conn: sqlite3.Connection) -> None:
 
     # 2. International Championship
     for item in ic_board:
-        p = item['player']
+        p = norm_p(item['player'])
         player_stats[p]['intl_titles'] += item['gold']
         player_stats[p]['intl_gold'] += item['gold']
         player_stats[p]['intl_silver'] += item['silver']
@@ -550,7 +557,7 @@ def sync_tournament_achievements(conn: sqlite3.Connection) -> None:
 
     # 3. Intermezzo Championship
     for item in im_board:
-        p = item['player']
+        p = norm_p(item['player'])
         player_stats[p]['inter_titles'] += item['gold']
         player_stats[p]['inter_gold'] += item['gold']
         player_stats[p]['inter_silver'] += item['silver']
@@ -560,7 +567,7 @@ def sync_tournament_achievements(conn: sqlite3.Connection) -> None:
 
     # 4. Royal League (Emperor)
     for item in rl_board:
-        p = item['player']
+        p = norm_p(item['player'])
         player_stats[p]['rl_titles'] += item['gold']
         player_stats[p]['rl_gold'] += item['gold']
         player_stats[p]['rl_silver'] += item['silver']

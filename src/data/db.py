@@ -241,7 +241,10 @@ CREATE TABLE IF NOT EXISTS tournament_records (
     division TEXT,
     placement TEXT,
     points TEXT,
-    finish_date TEXT
+    medal TEXT,
+    details TEXT,
+    finish_date TEXT,
+    is_career_total INTEGER DEFAULT 0
 );
 CREATE INDEX IF NOT EXISTS idx_tr_player ON tournament_records(player_name);
 CREATE INDEX IF NOT EXISTS idx_tr_tourney ON tournament_records(tournament_name);
@@ -328,8 +331,24 @@ def ensure_schema_migrations(conn=None):
                 except sqlite3.OperationalError:
                     pass
 
+        # Tournament records columns
+        tr_cols = {row[1] for row in conn.execute("PRAGMA table_info(tournament_records)").fetchall()}
+        for col, col_def in [
+            ('medal', 'TEXT'),
+            ('details', 'TEXT'),
+            ('is_career_total', 'INTEGER DEFAULT 0')
+        ]:
+            if col not in tr_cols:
+                try:
+                    conn.execute(f"ALTER TABLE tournament_records ADD COLUMN {col} {col_def}")
+                except sqlite3.OperationalError:
+                    pass
+
         conn.commit()
         _SCHEMA_MIGRATED = True
+
+        # Deduplicate Royal League quarterly tournament records
+        cleanup_duplicate_tournament_records(conn)
 
         # Check if peak_title needs population (if columns were just added or empty)
         try:
@@ -340,11 +359,93 @@ def ensure_schema_migrations(conn=None):
         except Exception:
             pass
 
+        # Sync tournament achievements with canonical player names
+        try:
+            from src.data.hall_of_fame import sync_tournament_achievements
+            sync_tournament_achievements(conn)
+        except Exception:
+            pass
+
     except Exception:
         pass
     finally:
         if close_after:
             conn.close()
+
+
+def cleanup_duplicate_tournament_records(conn):
+    """
+    Cleans up duplicate Royal League quarterly records in tournament_records by merging them
+    into the canonical match-based 'Season X' records.
+    """
+    rl_season_map = {
+        '2024 Q3': 'Season 1',
+        '2024 Q4': 'Season 2',
+        '2025 Q1': 'Season 3',
+        '2025 Q2': 'Season 4',
+        '2025 Q3': 'Season 5',
+        '2025 Q4': 'Season 6',
+        '2026 Q1': 'Season 7',
+        '2026 Q2': 'Season 8',
+        '2026 Q3': 'Season 9',
+    }
+
+    try:
+        has_table = conn.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='tournament_records'").fetchone()
+        if not has_table:
+            return
+
+        q_rows = conn.execute(
+            "SELECT record_id, player_name, season, division, placement, points, medal, details, finish_date "
+            "FROM tournament_records WHERE tournament_name = 'Royal League' AND season LIKE '%Q%'"
+        ).fetchall()
+
+        for r in q_rows:
+            rec_id = r[0]
+            pname = r[1]
+            quarter = r[2]
+            r_medal = r[6]
+            r_details = r[7]
+            r_fdate = r[8]
+
+            s_target = rl_season_map.get(quarter)
+            if not s_target:
+                continue
+
+            match_row = conn.execute(
+                "SELECT record_id, medal, details, finish_date FROM tournament_records "
+                "WHERE tournament_name = 'Royal League' AND season = ? AND LOWER(player_name) = LOWER(?)",
+                (s_target, pname)
+            ).fetchone()
+
+            if match_row:
+                m_id = match_row[0]
+                m_medal = match_row[1]
+                m_details = match_row[2] or ''
+                m_fdate = match_row[3]
+
+                medal = r_medal or m_medal
+                q_det = r_details or ''
+                if q_det and q_det not in m_details:
+                    merged_details = f"{q_det} • {m_details}" if m_details else q_det
+                else:
+                    merged_details = m_details or q_det
+
+                f_date = m_fdate or r_fdate
+
+                conn.execute(
+                    "UPDATE tournament_records SET medal = ?, details = ?, finish_date = ? WHERE record_id = ?",
+                    (medal, merged_details, f_date, m_id)
+                )
+                conn.execute("DELETE FROM tournament_records WHERE record_id = ?", (rec_id,))
+            else:
+                conn.execute(
+                    "UPDATE tournament_records SET season = ? WHERE record_id = ?",
+                    (s_target, rec_id)
+                )
+        conn.commit()
+    except Exception:
+        pass
 
 
 def get_connection(db_path=None):

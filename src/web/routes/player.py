@@ -693,13 +693,13 @@ def player_achievements(player_name):
         player_name = player['name']
 
         ach_row = conn.execute(
-            'SELECT * FROM player_achievements WHERE player_name = ?',
+            'SELECT * FROM player_achievements WHERE player_name = ? COLLATE NOCASE',
             (player_name,)
         ).fetchone()
 
         records_rows = conn.execute(
             'SELECT record_id, tournament_name, season, division, placement, points, medal, details, finish_date, is_career_total '
-            'FROM tournament_records WHERE player_name = ? '
+            'FROM tournament_records WHERE player_name = ? COLLATE NOCASE '
             'ORDER BY finish_date DESC, record_id DESC',
             (player_name,)
         ).fetchall()
