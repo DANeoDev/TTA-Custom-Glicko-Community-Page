@@ -1219,6 +1219,8 @@ def test_player_achievements_cge_links_and_result_column(client):
     assert 'Result <span id="s-arrow-4">' in html
     assert 'Score / Result' not in html
     assert 'Podium Medal <span id="s-arrow-6">' not in html
+    assert 'Tournament Records &amp; Career Hall of Fame Finishes' not in html
+    assert 'Last Match:' not in html
 
 
 def test_matches_replay_codes_populated():
