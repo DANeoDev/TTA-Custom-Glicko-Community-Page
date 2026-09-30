@@ -397,7 +397,8 @@ class CGEClient:
     def parse_tournament_html(
         html: str, 
         target: Optional[Union[int, str]] = None,
-        tournament_id: Optional[Union[int, str]] = None
+        tournament_id: Optional[Union[int, str]] = None,
+        min_date: Optional[str] = None
     ) -> Dict[str, Any]:
         """Parses CGE tournament detail HTML into structured tournament metadata, stages, and games."""
         effective_target = target if target is not None else tournament_id
@@ -654,7 +655,7 @@ class CGEClient:
                     # Extract game-specific date if present in title row or row itself, fallback to finish_date
                     parsed_gdate = parse_cge_date(r.get_text()) or parse_cge_date(r_game.get_text())
                     game_date = parsed_gdate if parsed_gdate else finish_date
-                    if game_date < MIN_CRAWL_DATE:
+                    if min_date and game_date < min_date:
                         # Allow French Open Stage 1 even if finished in mid-2025
                         if not ("french" in title.lower() and active_season_num == 1):
                             continue
@@ -682,8 +683,8 @@ class CGEClient:
                     })
 
         # Strategy 2: Fallback to explicit games-table (used in test mocks or custom table views)
-        if not games and soup.find("table", class_=re.compile(r"games-table|tournament-games", re.IGNORECASE)):
-            tables = soup.find_all("table", class_=re.compile(r"games-table|tournament-games", re.IGNORECASE))
+        if not games and soup.find("table", class_=re.compile(r"games-table|tournaments?-games", re.IGNORECASE)):
+            tables = soup.find_all("table", class_=re.compile(r"games-table|tournaments?-games", re.IGNORECASE))
             for table in tables:
                 rows = table.find_all("tr")
                 for tr in rows:
@@ -746,7 +747,7 @@ class CGEClient:
 
                         parsed_gdate = parse_cge_date(row_text)
                         game_date = parsed_gdate if parsed_gdate else finish_date
-                        if game_date < MIN_CRAWL_DATE:
+                        if min_date and game_date < min_date:
                             if not ("french" in title.lower() and active_season_num == 1):
                                 continue
 
