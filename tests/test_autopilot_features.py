@@ -1123,3 +1123,111 @@ def test_player_achievements_page_displays_royal_league_title(client):
     assert 'Emperor' in html
     assert 'Season 5' in html
 
+
+def test_leaderboard_delta_rank_continuous_and_season_reset(client):
+    """Ensure delta rank is computed and returned on leaderboard in both Continuous and Season Reset modes."""
+    # Continuous mode
+    rv = client.get('/leaderboard?delta=last_update')
+    assert rv.status_code == 200
+    html = rv.get_data(as_text=True)
+    assert 'delta-badge' in html
+
+    # Season reset mode (softer)
+    rv_reset = client.get('/leaderboard?reset_mode=softer&delta=last_update')
+    assert rv_reset.status_code == 200
+    html_reset = rv_reset.get_data(as_text=True)
+    assert 'delta-badge' in html_reset
+
+
+def test_survivors_cup_single_row_and_placement_format():
+    """Verify Survivors Cup rows are consolidated into 1 row per player with x / 339 placement."""
+    conn = get_connection()
+    try:
+        # Check that no player has duplicate Survivors Cup season records
+        dup_check = conn.execute("""
+            SELECT player_name, COUNT(*) 
+            FROM tournament_records 
+            WHERE tournament_name = 'Survivors Cup' AND is_career_total = 0
+            GROUP BY player_name 
+            HAVING COUNT(*) > 1
+        """).fetchall()
+        assert len(dup_check) == 0, f"Found duplicate Survivors Cup entries: {dup_check}"
+
+        # Total players should be 339
+        total_players = conn.execute("""
+            SELECT COUNT(*) FROM tournament_records 
+            WHERE tournament_name = 'Survivors Cup' AND is_career_total = 0
+        """).fetchone()[0]
+        assert total_players == 339, f"Expected 339 players, got {total_players}"
+
+        # Winner should be Grozz with 1 / 339 and Gold medal
+        winner = conn.execute("""
+            SELECT player_name, placement, medal, details 
+            FROM tournament_records 
+            WHERE tournament_name = 'Survivors Cup' AND medal = 'gold'
+        """).fetchone()
+        assert winner is not None
+        assert winner['player_name'] == 'Grozz'
+        assert winner['placement'] == '1 / 339'
+        assert 'Stage 11' in winner['details']
+
+        # Only 3 medals total (Gold, Silver, Bronze)
+        medal_count = conn.execute("""
+            SELECT COUNT(*) FROM tournament_records 
+            WHERE tournament_name = 'Survivors Cup' AND medal IN ('gold', 'silver', 'bronze')
+        """).fetchone()[0]
+        assert medal_count == 3
+    finally:
+        conn.close()
+
+
+def test_subordinate_divisions_have_no_medals():
+    """Ensure medals are never awarded to subordinate tiers (e.g. non-Emperor RL or non-Tier 1 ladders)."""
+    conn = get_connection()
+    try:
+        # Subordinate Royal League divisions must have NO medals
+        sub_rl = conn.execute("""
+            SELECT COUNT(*) FROM tournament_records 
+            WHERE tournament_name = 'Royal League' 
+              AND division != 'Emperor' 
+              AND medal != ''
+        """).fetchone()[0]
+        assert sub_rl == 0, f"Subordinate Royal League tiers should have 0 medals, got {sub_rl}"
+
+        # Subordinate Ladders must have NO medals
+        sub_ladders = conn.execute("""
+            SELECT COUNT(*) FROM tournament_records 
+            WHERE (tournament_name LIKE '%Ladder%' OR tournament_name LIKE 'TCL%')
+              AND LOWER(division) NOT IN ('tier 1', 'tier 01', '01 tier', '1 tier', 'hydrogen', 'sodium tier', 'mercurial tier', 'premium tier 1')
+              AND LOWER(division) NOT LIKE '1-hydrogen%'
+              AND medal != ''
+        """).fetchone()[0]
+        assert sub_ladders == 0, f"Subordinate Ladder tiers should have 0 medals, got {sub_ladders}"
+    finally:
+        conn.close()
+
+
+def test_player_achievements_cge_links_and_result_column(client):
+    """Verify player achievements table contains official CGE tournament links and merged Result column."""
+    rv = client.get('/player/Weidenbaum/achievements')
+    assert rv.status_code == 200
+    html = rv.get_data(as_text=True)
+    # Check CGE official tournament link
+    assert 'https://account.czechgames.com/tournaments/detail/' in html
+    assert 'tournament-cge-link' in html
+    # Check 6-column header
+    assert 'Result <span id="s-arrow-4">' in html
+    assert 'Score / Result' not in html
+    assert 'Podium Medal <span id="s-arrow-6">' not in html
+
+
+def test_matches_replay_codes_populated():
+    """Verify that matches table has authentic replay_code values populated."""
+    conn = get_connection()
+    try:
+        cnt = conn.execute("SELECT COUNT(*) FROM matches WHERE replay_code IS NOT NULL AND replay_code != ''").fetchone()[0]
+        assert cnt >= 3800, f"Expected at least 3800 replay codes, got {cnt}"
+    finally:
+        conn.close()
+
+

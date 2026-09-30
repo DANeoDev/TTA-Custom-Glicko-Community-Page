@@ -406,19 +406,25 @@ def render_leaderboard(year=None):
                 if prev_snap_row and prev_snap_row['max_date']:
                     prev_date = prev_snap_row['max_date']
                     hist_rows = conn.execute(
-                        f"SELECT player_name, rating, rd, c_rating FROM rating_history "
-                        f"WHERE model_type = ? AND player_count = ? AND period_date = ? "
-                        f"AND player_name IN ({placeholders})",
+                        f"WITH hist_pool AS ("
+                        f"  SELECT player_name, rating, rd, c_rating, "
+                        f"         ROW_NUMBER() OVER (ORDER BY c_rating DESC) as hist_rank "
+                        f"  FROM rating_history "
+                        f"  WHERE model_type = ? AND player_count = ? AND period_date = ?"
+                        f") "
+                        f"SELECT player_name, rating, rd, c_rating, hist_rank FROM hist_pool "
+                        f"WHERE player_name IN ({placeholders})",
                         [db_model, active_format, prev_date] + player_names
                     ).fetchall()
                     for hr in hist_rows:
                         deltas_by_player[hr['player_name']] = {
                             'hist_c': hr['c_rating'],
                             'hist_r': hr['rating'],
-                            'hist_rd': hr['rd']
+                            'hist_rd': hr['rd'],
+                            'hist_rank': hr['hist_rank']
                         }
             elif year is None:
-                if delta_window == 'baseline':
+                if delta_window == 'baseline' and active_reset_mode == 'continuous':
                     base_rows = conn.execute(
                         f"SELECT player_name, rank_delta, c_rating_delta, rating_delta, rd_delta, opps_delta, win_rate_delta "
                         f"FROM official_baseline WHERE player_name IN ({placeholders})",
@@ -434,50 +440,78 @@ def render_leaderboard(year=None):
                             'win_rate': br['win_rate_delta']
                         }
                 else:
+                    # Dynamically calculate cutoffs from latest available period in rating_history
+                    latest_snap_row = conn.execute(
+                        "SELECT MAX(period_date) as max_date FROM rating_history WHERE model_type = ? AND player_count = ?",
+                        (db_model, active_format)
+                    ).fetchone()
+                    latest_date = latest_snap_row['max_date'] if latest_snap_row and latest_snap_row['max_date'] else None
+                    if not latest_date:
+                        fallback_row = conn.execute("SELECT MAX(period_date) as max_date FROM rating_history").fetchone()
+                        latest_date = fallback_row['max_date'] if fallback_row and fallback_row['max_date'] else '2026-08-31'
+
+                    try:
+                        latest_dt = datetime.strptime(latest_date[:10], '%Y-%m-%d')
+                    except Exception:
+                        latest_dt = datetime(2026, 8, 31)
+
                     if delta_window == 'last_update':
-                        # 1. Check webmaster configured delta baseline
                         delta_cfg = conn.execute("SELECT cutoff_date FROM delta_config WHERE id = 1 AND cutoff_date IS NOT NULL").fetchone()
-                        if delta_cfg and delta_cfg['cutoff_date']:
+                        if delta_cfg and delta_cfg['cutoff_date'] and delta_cfg['cutoff_date'] < latest_date:
                             cutoff = delta_cfg['cutoff_date']
                         else:
                             pu_row = conn.execute(
-                                "SELECT cutoff_date FROM pipeline_updates WHERE cutoff_date IS NOT NULL ORDER BY id DESC LIMIT 1"
+                                "SELECT cutoff_date FROM pipeline_updates WHERE cutoff_date IS NOT NULL AND cutoff_date < ? ORDER BY id DESC LIMIT 1",
+                                (latest_date,)
                             ).fetchone()
                             if pu_row and pu_row['cutoff_date']:
                                 cutoff = pu_row['cutoff_date']
                             else:
-                                # Dynamic penultimate period snapshot
                                 p_rows = conn.execute(
-                                    "SELECT DISTINCT period_date FROM rating_history WHERE model_type = ? AND player_count = ? ORDER BY period_date DESC LIMIT 2",
-                                    (db_model, active_format)
+                                    "SELECT DISTINCT period_date FROM rating_history WHERE model_type = ? AND player_count = ? AND period_date < ? ORDER BY period_date DESC LIMIT 1",
+                                    (db_model, active_format, latest_date)
                                 ).fetchall()
-                                cutoff = p_rows[1]['period_date'] if len(p_rows) >= 2 else (p_rows[0]['period_date'] if p_rows else '2026-03-01')
+                                cutoff = p_rows[0]['period_date'] if p_rows else '2026-07-31'
+                    elif delta_window == 'month':
+                        cutoff = (latest_dt - timedelta(days=30)).strftime('%Y-%m-%d')
+                    elif delta_window == 'quarter':
+                        cutoff = (latest_dt - timedelta(days=90)).strftime('%Y-%m-%d')
+                    elif delta_window == 'year' or (delta_window == 'baseline' and active_reset_mode != 'continuous'):
+                        cutoff = (latest_dt - timedelta(days=365)).strftime('%Y-%m-%d')
                     else:
-                        cutoff_map = {
-                            'game': '2026-05-15',
-                            'month': '2026-05-01',
-                            'quarter': '2026-03-01',
-                            'year': '2025-05-31'
-                        }
-                        cutoff = cutoff_map.get(delta_window, '2026-03-01')
-                    hist_rows = conn.execute(
-                        f"SELECT player_name, period_date, rating, rd, c_rating "
-                        f"FROM rating_history "
-                        f"WHERE model_type = ? AND player_count = ? AND period_date <= ? "
-                        f"AND player_name IN ({placeholders}) "
-                        f"ORDER BY period_date DESC",
-                        [db_model, active_format, cutoff] + player_names
-                    ).fetchall()
+                        cutoff = (latest_dt - timedelta(days=30)).strftime('%Y-%m-%d')
 
-                    seen = set()
-                    for hr in hist_rows:
-                        pn = hr['player_name']
-                        if pn not in seen:
-                            seen.add(pn)
-                            deltas_by_player[pn] = {
+                    # Find target historical period <= cutoff
+                    target_row = conn.execute(
+                        "SELECT MAX(period_date) as p_date FROM rating_history WHERE model_type = ? AND player_count = ? AND period_date <= ?",
+                        (db_model, active_format, cutoff)
+                    ).fetchone()
+                    target_period = target_row['p_date'] if target_row and target_row['p_date'] else None
+                    if not target_period:
+                        min_row = conn.execute(
+                            "SELECT MIN(period_date) as p_date FROM rating_history WHERE model_type = ? AND player_count = ?",
+                            (db_model, active_format)
+                        ).fetchone()
+                        target_period = min_row['p_date'] if min_row and min_row['p_date'] else None
+
+                    if target_period:
+                        hist_rows = conn.execute(
+                            f"WITH hist_pool AS ("
+                            f"  SELECT player_name, rating, rd, c_rating, "
+                            f"         ROW_NUMBER() OVER (ORDER BY c_rating DESC) as hist_rank "
+                            f"  FROM rating_history "
+                            f"  WHERE model_type = ? AND player_count = ? AND period_date = ?"
+                            f") "
+                            f"SELECT player_name, rating, rd, c_rating, hist_rank FROM hist_pool "
+                            f"WHERE player_name IN ({placeholders})",
+                            [db_model, active_format, target_period] + player_names
+                        ).fetchall()
+                        for hr in hist_rows:
+                            deltas_by_player[hr['player_name']] = {
                                 'hist_c': hr['c_rating'],
                                 'hist_r': hr['rating'],
-                                'hist_rd': hr['rd']
+                                'hist_rd': hr['rd'],
+                                'hist_rank': hr['hist_rank']
                             }
 
         # Build player dicts
@@ -499,14 +533,17 @@ def render_leaderboard(year=None):
             # Attach delta
             if delta_window != 'none':
                 d_info = deltas_by_player.get(p['player_name'])
-                if delta_window == 'baseline' and d_info and 'c_rating' in d_info:
+                if delta_window == 'baseline' and active_reset_mode == 'continuous' and d_info and 'c_rating' in d_info:
                     p['delta'] = d_info
                 elif d_info and 'hist_c' in d_info:
+                    curr_rank = p.get('rank') or p.get('display_rank')
+                    h_rank = d_info.get('hist_rank')
+                    rank_delta = (h_rank - curr_rank) if (h_rank and curr_rank) else 0
                     p['delta'] = {
                         'c_rating': round(p['c_rating'] - d_info['hist_c'], 2),
                         'rating': round(p['rating'] - d_info['hist_r'], 2),
                         'rd': round(p['rd'] - d_info['hist_rd'], 2),
-                        'rank': 0,
+                        'rank': rank_delta,
                         'opps': 0,
                         'win_rate': 0.0
                     }

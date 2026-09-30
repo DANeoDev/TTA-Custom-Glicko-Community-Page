@@ -704,9 +704,56 @@ def player_achievements(player_name):
             (player_name,)
         ).fetchall()
 
+        CGE_TOURNAMENT_MAP = {
+            'International Championship': 'https://account.czechgames.com/tournaments/detail/21',
+            'Intermezzo Championship': 'https://account.czechgames.com/tournaments/detail/19',
+            'Royal League': 'https://account.czechgames.com/tournaments/detail/5000',
+            'RL_': 'https://account.czechgames.com/tournaments/detail/5000',
+            'Sodium Ladder': 'https://account.czechgames.com/tournaments/detail/5169',
+            'Mercurial Ladder': 'https://account.czechgames.com/tournaments/detail/4193',
+            'Survivors Cup': 'https://account.czechgames.com/tournaments/detail/5731',
+            'World Championship': 'https://account.czechgames.com/tournaments/detail/5633',
+            'Australian Open': 'https://account.czechgames.com/tournaments/detail/5703',
+            'French Open': 'https://account.czechgames.com/tournaments/detail/5860',
+            'Wimbledon': 'https://account.czechgames.com/tournaments/detail/4933',
+            'Slow Burn': 'https://account.czechgames.com/tournaments/detail/5979',
+            'Quick and Dirty': 'https://account.czechgames.com/tournaments/detail/4500',
+            'Transcontinental Ladder': 'https://account.czechgames.com/tournaments/detail/53',
+            'TCL': 'https://account.czechgames.com/tournaments/detail/53',
+            'Leaderboard Trophy': 'https://account.czechgames.com/tournaments/detail/5633',
+        }
+
+        def get_cge_url(t_name):
+            if not t_name:
+                return None
+            for k, url in CGE_TOURNAMENT_MAP.items():
+                if k.lower() in t_name.lower():
+                    return url
+            return None
+
+        def get_tournament_category(t_name):
+            if not t_name:
+                return 'other'
+            tl = t_name.lower()
+            if 'world championship' in tl or 'worlds' in tl:
+                return 'wcs'
+            if 'international' in tl or 'intermezzo' in tl or 'royal league' in tl or tl.startswith('rl_'):
+                return 'major'
+            if 'ladder' in tl or tl.startswith('tcl '):
+                return 'ladder'
+            if 'open' in tl or 'wimbledon' in tl or 'slam' in tl:
+                return 'slam'
+            return 'other'
+
         achievements = dict(ach_row) if ach_row else None
         top_achievements = json.loads(ach_row['top_achievements_json']) if ach_row and ach_row['top_achievements_json'] else []
-        all_records = [dict(r) for r in records_rows]
+        all_records = []
+        for r in records_rows:
+            rec = dict(r)
+            t_name = rec.get('tournament_name') or ''
+            rec['cge_url'] = get_cge_url(t_name)
+            rec['category'] = get_tournament_category(t_name)
+            all_records.append(rec)
 
         # Separate into individual seasons (standard view) vs career totals & Hall of Fame
         season_records = [r for r in all_records if not r.get('is_career_total')]

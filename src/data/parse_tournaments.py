@@ -102,23 +102,55 @@ def normalize_campaign(tourney_str):
         div = m_w.group(3) or stage
         return (f"World Championship {w_year}", stage.title(), div)
 
-    m_merc = re.match(r'Mercurial\s+Season\s+(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    m_merc = re.match(r'(?:Mercurial\s+Season|ML_[sr])\s*0?(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
     if m_merc:
         s_num = m_merc.group(1)
         div = m_merc.group(2) or "Ladder Division"
-        return ("Mercurial Ladder", f"Season {s_num}", div)
+        return ("Mercurial Ladder", f"Season {int(s_num)}", div)
 
-    m_sod = re.match(r'Sodium\s+Season\s+(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    m_sod = re.match(r'(?:Sodium\s+Season|Sodium\s+Ladder\s+Season|NL_s)\s*0?(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
     if m_sod:
         s_num = m_sod.group(1)
         div = m_sod.group(2) or "Ladder Division"
-        return ("Sodium Ladder", f"Season {s_num}", div)
+        return ("Sodium Ladder", f"Season {int(s_num)}", div)
+
+    m_pl = re.match(r'(?:PL_s|Premier\s+League\s+)0?(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    if m_pl:
+        s_num = m_pl.group(1)
+        div = m_pl.group(2) or "Division"
+        return ("Premier League", f"Season {int(s_num)}", div)
+
+    m_dc = re.match(r'DC_s0?(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    if m_dc:
+        s_num = m_dc.group(1)
+        div = m_dc.group(2) or "Division"
+        return ("Diamond Cup", f"Season {int(s_num)}", div)
+
+    m_sb = re.match(r'Slow\s+Burn\s*S?0?(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    if m_sb:
+        s_num = m_sb.group(1)
+        div = m_sb.group(2) or "Division"
+        return ("Slow Burn", f"Season {int(s_num)}", div)
+
+    m_sc = re.match(r'Survivors\s+Cup\s+(\d+)(?:\s+Stage\s+(\d+))?(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    if m_sc:
+        year = m_sc.group(1)
+        stage = m_sc.group(2)
+        div = m_sc.group(3) or (f"Stage {stage}" if stage else "Championship")
+        return ("Survivors Cup", year, div)
+
+    m_lt = re.match(r'Leaderboard\s+Trophy\s+(\d+)(?:\s+Stage\s+(\d+))?(?:\s*-\s*(.*))?', s, re.IGNORECASE)
+    if m_lt:
+        year = m_lt.group(1)
+        stage = m_lt.group(2)
+        div = m_lt.group(3) or (f"Stage {stage}" if stage else "Championship")
+        return ("Leaderboard Trophy", year, div)
 
     m_eff = re.match(r'Eiffel\s+Tower\s+S(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
     if m_eff:
         s_num = m_eff.group(1)
         div = m_eff.group(2) or "Division"
-        return ("Eiffel Tower Cup", f"Season {s_num}", div)
+        return ("Eiffel Tower Cup", f"Season {int(s_num)}", div)
 
     parts = [p.strip() for p in s.split(' - ') if p.strip()]
     if len(parts) >= 2:
@@ -839,7 +871,26 @@ def parse_all_tournaments(db_path=None):
                 placement = f"{div_rank} / {total_group_players}"
                 points = f"{w}W - {l}L ({wr}%)"
 
-            medal = 'gold' if (placement.startswith('1 /') and (g >= 5 or total_group_players >= 4)) else ''
+            def is_top_division(tourney_name, div):
+                if not div:
+                    return False
+                d = div.strip().lower()
+                t = tourney_name.strip().lower()
+                if 'royal league' in t:
+                    return d == 'emperor'
+                if 'international' in t or 'intermezzo' in t:
+                    return d in ('grandmaster', 'championship', 'premier')
+                if 'world' in t:
+                    return d in ('championship', 'final', 'finals', 'grand final', 'main')
+                if 'ladder' in t:
+                    return d in ('tier 1', 'tier 01', 'hydrogen', '1-hydrogen', 'ladder division 1', 'top tier')
+                if 'slam' in t or 'open' in t:
+                    return d in ('championship', 'final', 'finals', 'main')
+                if 'cup' in t or 'trophy' in t:
+                    return d in ('championship', 'final', 'finals', 'stage 11', 'stage 3')
+                return d in ('championship', 'grandmaster', 'emperor', 'tier 1')
+
+            medal = 'gold' if (placement.startswith('1 /') and (g >= 5 or total_group_players >= 4) and is_top_division(t_name, div_name)) else ''
 
             if (pname, t_name, s_name) in official_rec_idx:
                 exist = official_rec_idx[(pname, t_name, s_name)]

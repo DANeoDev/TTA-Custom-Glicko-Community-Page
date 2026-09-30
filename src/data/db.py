@@ -375,9 +375,12 @@ def ensure_schema_migrations(conn=None):
 
 def cleanup_duplicate_tournament_records(conn):
     """
-    Cleans up duplicate Royal League quarterly records in tournament_records by merging them
-    into the canonical match-based 'Season X' records.
+    Cleans up duplicate tournament records, standardizes quarters to canonical seasons,
+    normalizes shorthand tournament names (ML, NL, DC, PL), consolidates multi-stage events
+    (Survivors Cup, Leaderboard Trophy) into unified single-row entries, and restricts
+    medals strictly to top-tier division podiums.
     """
+    import re
     rl_season_map = {
         '2024 Q3': 'Season 1',
         '2024 Q4': 'Season 2',
@@ -395,6 +398,7 @@ def cleanup_duplicate_tournament_records(conn):
         if not has_table:
             return
 
+        # 1. Merge Royal League quarterly records into match rows
         q_rows = conn.execute(
             "SELECT record_id, player_name, season, division, placement, points, medal, details, finish_date "
             "FROM tournament_records WHERE tournament_name = 'Royal League' AND season LIKE '%Q%'"
@@ -443,6 +447,230 @@ def cleanup_duplicate_tournament_records(conn):
                     "UPDATE tournament_records SET season = ? WHERE record_id = ?",
                     (s_target, rec_id)
                 )
+
+        # Standardize any remaining quarterly season references
+        for q_name, s_name in rl_season_map.items():
+            conn.execute("UPDATE tournament_records SET season = ? WHERE tournament_name = 'Royal League' AND season = ?", (s_name, q_name))
+
+        # 2. Standardize Shorthand Tournaments (ML_*, NL_*, DC_*, PL_*, Slow Burn)
+        sh_rows = conn.execute("SELECT record_id, tournament_name, season FROM tournament_records").fetchall()
+        updates = []
+        for r in sh_rows:
+            rec_id, t, s = r[0], r[1], r[2]
+            new_t, new_s = None, None
+
+            # Mercurial Ladder
+            m_ml = re.match(r'ML_[sr]0?(\d+)', t, re.IGNORECASE)
+            if m_ml:
+                new_t = 'Mercurial Ladder'
+                new_s = f"Season {int(m_ml.group(1))}"
+
+            # Sodium Ladder
+            m_nl = re.match(r'NL_s0?(\d+)', t, re.IGNORECASE)
+            if m_nl:
+                new_t = 'Sodium Ladder'
+                new_s = f"Season {int(m_nl.group(1))}"
+            elif re.match(r'Sodium Ladder Season\s*0?(\d+)', t, re.IGNORECASE):
+                m_sod = re.match(r'Sodium Ladder Season\s*0?(\d+)', t, re.IGNORECASE)
+                new_t = 'Sodium Ladder'
+                new_s = f"Season {int(m_sod.group(1))}"
+
+            # Premier League
+            m_pl = re.match(r'(?:PL_s|Premier League\s+)0?(\d+)', t, re.IGNORECASE)
+            if m_pl:
+                new_t = 'Premier League'
+                new_s = f"Season {int(m_pl.group(1))}"
+
+            # Diamond Cup
+            m_dc = re.match(r'DC_s0?(\d+)', t, re.IGNORECASE)
+            if m_dc:
+                new_t = 'Diamond Cup'
+                new_s = f"Season {int(m_dc.group(1))}"
+
+            # Slow Burn
+            m_sb = re.match(r'Slow Burn\s*S?0?(\d+)', t, re.IGNORECASE)
+            if m_sb:
+                new_t = 'Slow Burn'
+                new_s = f"Season {int(m_sb.group(1))}"
+
+            if new_t:
+                updates.append((new_t, new_s or s, rec_id))
+
+        if updates:
+            conn.executemany("UPDATE tournament_records SET tournament_name = ?, season = ? WHERE record_id = ?", updates)
+
+        # 3. Multi-Stage Consolidation for Survivors Cup 2026
+        sc_rows = conn.execute(
+            "SELECT record_id, player_name, tournament_name, division, placement, points, details, finish_date "
+            "FROM tournament_records WHERE tournament_name LIKE 'Survivors Cup 2026%'"
+        ).fetchall()
+        if sc_rows:
+            sc_players = {}
+            for r in sc_rows:
+                p = r[1]
+                if p not in sc_players:
+                    sc_players[p] = []
+                sc_players[p].append(r)
+
+            total_field = len(sc_players)
+            player_ranks = []
+            for p, p_rows in sc_players.items():
+                max_st = 1
+                tot_g, tot_w, tot_pts = 0, 0, 0
+                latest_date = '2026-01-01'
+                exit_placement = 3
+
+                for r in p_rows:
+                    t_str = r[2]
+                    m_st = re.search(r'Stage\s*(\d+)', t_str, re.IGNORECASE)
+                    st_num = int(m_st.group(1)) if m_st else 1
+                    if st_num >= max_st:
+                        max_st = st_num
+                        m_pl = re.match(r'(\d+)\s*/', r[4] or '')
+                        if m_pl:
+                            exit_placement = int(m_pl.group(1))
+                        f_d = r[7]
+                        if f_d and f_d > latest_date:
+                            latest_date = f_d
+
+                    det = r[6] or ''
+                    m_match = re.search(r'(\d+)\s+matches played,\s+(\d+)\s+victories', det)
+                    if m_match:
+                        tot_g += int(m_match.group(1))
+                        tot_w += int(m_match.group(2))
+                    else:
+                        tot_g += 1
+
+                    pts_str = r[5] or ''
+                    m_pts = re.search(r'(\d+)\s*pts', pts_str)
+                    if m_pts:
+                        tot_pts += int(m_pts.group(1))
+
+                wr = round(tot_w / tot_g * 100, 1) if tot_g > 0 else 0.0
+                player_ranks.append({
+                    'player_name': p,
+                    'max_stage': max_st,
+                    'exit_placement': exit_placement,
+                    'total_points': tot_pts,
+                    'total_games': tot_g,
+                    'total_wins': tot_w,
+                    'win_rate': wr,
+                    'finish_date': latest_date
+                })
+
+            player_ranks.sort(key=lambda x: (-x['max_stage'], x['exit_placement'], -x['total_points']))
+            all_sc_ids = [r[0] for r in sc_rows]
+            conn.execute(f"DELETE FROM tournament_records WHERE record_id IN ({','.join('?' for _ in all_sc_ids)})", all_sc_ids)
+
+            new_sc_records = []
+            for rank_idx, pr in enumerate(player_ranks, 1):
+                medal = 'gold' if rank_idx == 1 else ('silver' if rank_idx == 2 else ('bronze' if rank_idx == 3 else ''))
+                det = f"Advanced to Stage {pr['max_stage']} • {pr['total_games']} matches played, {pr['total_wins']} victories ({pr['win_rate']}% win rate) • Cumulative Score: {pr['total_points']:,} pts"
+                new_sc_records.append((
+                    pr['player_name'],
+                    'Survivors Cup',
+                    '2026',
+                    'Championship',
+                    f"{rank_idx} / {total_field}",
+                    f"{pr['total_points']} pts",
+                    medal,
+                    det,
+                    pr['finish_date'],
+                    0
+                ))
+
+            conn.executemany("""
+                INSERT INTO tournament_records (player_name, tournament_name, season, division, placement, points, medal, details, finish_date, is_career_total)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, new_sc_records)
+
+        # 4. Multi-Stage Consolidation for Leaderboard Trophy 2025
+        lt_rows = conn.execute(
+            "SELECT record_id, player_name, tournament_name, division, placement, points, details, finish_date "
+            "FROM tournament_records WHERE tournament_name LIKE 'Leaderboard Trophy 2025%'"
+        ).fetchall()
+        if lt_rows:
+            lt_players = {}
+            for r in lt_rows:
+                p = r[1]
+                if p not in lt_players:
+                    lt_players[p] = []
+                lt_players[p].append(r)
+
+            total_field = len(lt_players)
+            player_ranks = []
+            for p, p_rows in lt_players.items():
+                max_st = 1
+                tot_g, tot_w = 0, 0
+                latest_date = '2026-01-01'
+                exit_placement = 3
+
+                for r in p_rows:
+                    t_str = r[2]
+                    m_st = re.search(r'Stage\s*(\d+)', t_str, re.IGNORECASE)
+                    st_num = int(m_st.group(1)) if m_st else 1
+                    if st_num >= max_st:
+                        max_st = st_num
+                        m_pl = re.match(r'(\d+)\s*/', r[4] or '')
+                        if m_pl:
+                            exit_placement = int(m_pl.group(1))
+                        f_d = r[7]
+                        if f_d and f_d > latest_date:
+                            latest_date = f_d
+
+                    det = r[6] or ''
+                    m_match = re.search(r'(\d+)\s+matches played,\s+(\d+)\s+victories', det)
+                    if m_match:
+                        tot_g += int(m_match.group(1))
+                        tot_w += int(m_match.group(2))
+                    else:
+                        tot_g += 1
+
+                wr = round(tot_w / tot_g * 100, 1) if tot_g > 0 else 0.0
+                player_ranks.append({
+                    'player_name': p,
+                    'max_stage': max_st,
+                    'exit_placement': exit_placement,
+                    'total_games': tot_g,
+                    'total_wins': tot_w,
+                    'win_rate': wr,
+                    'finish_date': latest_date
+                })
+
+            player_ranks.sort(key=lambda x: (-x['max_stage'], x['exit_placement']))
+            all_lt_ids = [r[0] for r in lt_rows]
+            conn.execute(f"DELETE FROM tournament_records WHERE record_id IN ({','.join('?' for _ in all_lt_ids)})", all_lt_ids)
+
+            new_lt_records = []
+            for rank_idx, pr in enumerate(player_ranks, 1):
+                medal = 'gold' if rank_idx == 1 else ('silver' if rank_idx == 2 else ('bronze' if rank_idx == 3 else ''))
+                det = f"Advanced to Stage {pr['max_stage']} • {pr['total_games']} matches played, {pr['total_wins']} victories ({pr['win_rate']}% win rate)"
+                new_lt_records.append((
+                    pr['player_name'],
+                    'Leaderboard Trophy',
+                    '2025',
+                    'Championship',
+                    f"{rank_idx} / {total_field}",
+                    '',
+                    medal,
+                    det,
+                    pr['finish_date'],
+                    0
+                ))
+
+            conn.executemany("""
+                INSERT INTO tournament_records (player_name, tournament_name, season, division, placement, points, medal, details, finish_date, is_career_total)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, new_lt_records)
+
+        # 5. Clear lower-tier medals (Only award medals for top tier of each format)
+        conn.execute("UPDATE tournament_records SET medal = '' WHERE tournament_name = 'Royal League' AND LOWER(division) != 'emperor'")
+        conn.execute("UPDATE tournament_records SET medal = '' WHERE tournament_name IN ('International Championship', 'Intermezzo Championship') AND LOWER(division) NOT IN ('grandmaster', 'championship', 'premier')")
+        conn.execute("UPDATE tournament_records SET medal = '' WHERE tournament_name = 'Mercurial Ladder' AND LOWER(division) NOT IN ('tier 1', 'tier 01', 'hydrogen', 'mercurial tier', 'premium tier 1') AND LOWER(division) NOT LIKE '1-hydrogen%'")
+        conn.execute("UPDATE tournament_records SET medal = '' WHERE tournament_name = 'Sodium Ladder' AND LOWER(division) NOT IN ('tier 1', 'tier 01', '01 tier', '1 tier', 'sodium tier')")
+        conn.execute("UPDATE tournament_records SET medal = '' WHERE tournament_name LIKE 'TCL Round%'")
+        conn.execute("UPDATE tournament_records SET medal = '' WHERE tournament_name IN ('Premier League', 'Diamond Cup', 'Slow Burn') AND LOWER(division) NOT IN ('tier 1', 'division 1', 'championship', 'premier', 'main')")
+
         conn.commit()
     except Exception:
         pass
