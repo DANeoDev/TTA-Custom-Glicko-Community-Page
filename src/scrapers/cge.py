@@ -231,9 +231,11 @@ def format_tournament_match_name(
             return f"International S{s_num}{div_part} game {g_num}"
         return f"International S{s_num} - {g_title}"
 
-    # 3. Intermezzo Championship
+    # 3. Intermezzo Championship (CGE season 1 = Community season 6; CGE 25 = Season 30)
     elif "intermezzo" in t_lower:
         s_num = active_season_num or 1
+        if s_num <= 30:
+            s_num = s_num + 5
         return f"Intermezzo S{s_num} - {g_title}"
 
     # 4. Survivors Cup (Multi-stage)

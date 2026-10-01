@@ -180,6 +180,15 @@ def profile(player_name):
 
         ratings_by_model = {inv_map.get(r['model_type'], r['model_type']): dict(r) for r in ratings_rows}
 
+        # Fetch GlickoD ratings across all player counts (0, 2, 3, 4) for the active reset mode
+        glickod_target_key = key_map.get('glicko2_daneo', 'glicko2_daneo')
+        glickod_rows = conn.execute(
+            'SELECT player_count, rating, rd, sigma, c_rating, rank, rank_delta, opponents_count, wins, losses, draws, win_rate '
+            'FROM player_ratings WHERE player_name = ? AND model_type = ? AND player_count IN (0, 2, 3, 4)',
+            [player_name, glickod_target_key]
+        ).fetchall()
+        glickod_by_format = {r['player_count']: dict(r) for r in glickod_rows}
+
         # Fetch history points for Chart.js across both continuous and season reset modes
         chart_base_keys = ['glicko2_daneo', 'glicko2_std', 'glicko2_mp', 'glicko2_adapt', 'whr']
         chart_reset_keys = [f"{k}_softer" for k in chart_base_keys]
@@ -607,42 +616,10 @@ def profile(player_name):
                 peak_rank = rank_query[0] if rank_query else None
                 peaks[m_key] = {'rating': peak_rating, 'rank': peak_rank, 'date': best_date}
 
-        divergence_notes = []
-        if std_r and mp_r:
-            diff_mp = std_r.get('rating', 1500) - mp_r.get('rating', 1500)
-            if diff_mp > 15:
-                divergence_notes.append(
-                    f"Rating adjusts downward by {diff_mp:.1f} pts under MP-Weighted, reflecting calibration for multiplayer (3p/4p) play where naive dueling over-accumulates confidence."
-                )
-            elif diff_mp < -15:
-                divergence_notes.append(
-                    f"Rating gains {abs(diff_mp):.1f} pts under MP-Weighted, demonstrating high conversion efficiency in complex multiplayer tables."
-                )
-            else:
-                divergence_notes.append(
-                    "Standard and MP-Weighted ratings are tightly aligned, indicating balanced duel and multiplayer tournament exposure."
-                )
-
-        if std_r and whr_r:
-            diff_whr = whr_r.get('rating', 1500) - std_r.get('rating', 1500)
-            if diff_whr > 20:
-                divergence_notes.append(
-                    f"WHR evaluates career strength {diff_whr:.1f} pts higher retrospectively, crediting resilient play across high-variance tournament seasons."
-                )
-            elif diff_whr < -20:
-                divergence_notes.append(
-                    f"WHR smooths out localized hot streaks by {abs(diff_whr):.1f} pts, grounding historical trajectory against opponents' lifetime records."
-                )
-            else:
-                divergence_notes.append(
-                    "WHR retrospective reconstruction confirms the forward Glicko-2 trajectory with exceptional fidelity."
-                )
-
         career_summary = achievements['summary_text'] if achievements and achievements.get('summary_text') else None
 
         narrative = {
             'peaks': peaks,
-            'divergence': divergence_notes,
             'career_summary': career_summary
         }
 
@@ -650,6 +627,7 @@ def profile(player_name):
             'player.html',
             player=player,
             ratings=ratings_by_model,
+            glickod_by_format=glickod_by_format,
             chart_json=json.dumps(chart_data),
             reset_chart_json=json.dumps(reset_chart_data),
             recent_matches=recent_matches,

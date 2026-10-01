@@ -339,13 +339,6 @@
         {% endfor %}
       </div>
     {% endif %}
-    {% if narrative and narrative.divergence %}
-      <ul style="margin-left: 1.25rem; margin-top: 0.4rem; color: #d0c0b0; font-size: 0.9rem;">
-        {% for note in narrative.divergence %}
-          <li style="margin-bottom: 0.25rem;">{{ note }}</li>
-        {% endfor %}
-      </ul>
-    {% endif %}
   </div>
 </div>
 
@@ -367,107 +360,53 @@
 </div>
 {% endif %}
 
-<!-- 5 Models Rating Summary Cards -->
+<!-- 4 GlickoD Player Count Rating Cards -->
 <div class="cards-grid" style="grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));">
-  <!-- GlickoD (Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo) -->
-  {% set daneo = ratings.get('glicko2_daneo', {}) %}
-  <div class="model-card {% if active_model == 'glicko2_daneo' %}active-card{% endif %}" style="border: 1.5px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95) 0%, rgba(22, 14, 9, 0.98) 100%); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(229, 169, 60, 0.2);">
-    <h3 style="color: #ffd54f;">
-      <span>👑 GlickoD</span>
-      <span class="badge badge-rank" style="background: #332211; color: #ffd54f; border: 1.5px solid #b8860b; font-weight: 700;">#{{ daneo.get('rank', '-') }}</span>
-    </h3>
-    <div class="rating-number" style="color: #ffde8a; font-weight: 800;">
-      {{ "%.1f"|format(daneo.get('rating', 1500.0)) }}
-      <span class="rd-tag" style="color: #c7a76d;">&plusmn;{{ "%.1f"|format(daneo.get('rd', 350.0)) }}</span>
-    </div>
-    <div class="c-rating-box" style="border-top-color: rgba(184, 134, 11, 0.4);">
-      <span style="color: #bfaea0;">Conservative (C = &mu; - 3&sigma;):</span>
-      <strong style="color: #ffd54f;">{{ "%.2f"|format(daneo.get('c_rating', 450.0)) }}</strong>
-    </div>
-    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #a89880;">
-      Custom Glicko2 implementation for Multiplayer Boardgaming by DANeo
-    </div>
-  </div>
+  {% set format_configs = [
+    (0, 'Overall (All Formats)', '👑', 'Combined competitive rating across all multiplayer and duel tables'),
+    (2, '2-Player (Duels)', '⚔️', 'Direct head-to-head duel mastery and tactical tempo'),
+    (3, '3-Player Tables', '👥', '3-player dynamic pacing and opportunistic scoring'),
+    (4, '4-Player Tables', '🏰', 'Full 4-player diplomatic resilience and multi-threat navigation')
+  ] %}
 
-  <!-- Glicko-2 Standard -->
-  {% set std = ratings.get('glicko2_std', {}) %}
-  <div class="model-card {% if active_model == 'glicko2_std' %}active-card{% endif %}">
-    <h3>
-      <span>Glicko-2 Standard</span>
-      <span class="badge badge-rank">#{{ std.get('rank', '-') }}</span>
-    </h3>
-    <div class="rating-number">
-      {{ "%.1f"|format(std.get('rating', 1500.0)) }}
-      <span class="rd-tag">&plusmn;{{ "%.1f"|format(std.get('rd', 350.0)) }}</span>
-    </div>
-    <div class="c-rating-box">
-      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
-      <strong style="color: var(--accent-gold);">{{ "%.2f"|format(std.get('c_rating', 450.0)) }}</strong>
-    </div>
-    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
-      Matches: {{ std.get('opponents_count', 0) }} | Win%: {{ "%.1f"|format(std.get('win_rate', 0.0)) }}%
-    </div>
-  </div>
-
-  <!-- Glicko-2 MP-Weighted -->
-  {% set mp = ratings.get('glicko2_mp', {}) %}
-  <div class="model-card {% if active_model == 'glicko2_mp' %}active-card{% endif %}">
-    <h3>
-      <span>Glicko-2 MP-Weighted</span>
-      <span class="badge badge-rank">#{{ mp.get('rank', '-') }}</span>
-    </h3>
-    <div class="rating-number">
-      {{ "%.1f"|format(mp.get('rating', 1500.0)) }}
-      <span class="rd-tag">&plusmn;{{ "%.1f"|format(mp.get('rd', 350.0)) }}</span>
-    </div>
-    <div class="c-rating-box">
-      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
-      <strong style="color: var(--accent-gold);">{{ "%.2f"|format(mp.get('c_rating', 450.0)) }}</strong>
-    </div>
-    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
-      Multiplayer fractional variance calibration
-    </div>
-  </div>
-
-  <!-- Glicko-2 Adaptive-T -->
-  {% set adapt = ratings.get('glicko2_adapt', {}) %}
-  <div class="model-card {% if active_model == 'glicko2_adapt' %}active-card{% endif %}">
-    <h3>
-      <span>Glicko-2 Adaptive-T</span>
-      <span class="badge badge-rank" style="background: rgba(34, 197, 94, 0.2); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.4);">#{{ adapt.get('rank', '-') }}</span>
-    </h3>
-    <div class="rating-number" style="color: #4ade80;">
-      {{ "%.1f"|format(adapt.get('rating', 1500.0)) }}
-      <span class="rd-tag">&plusmn;{{ "%.1f"|format(adapt.get('rd', 350.0)) }}</span>
-    </div>
-    <div class="c-rating-box">
-      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
-      <strong style="color: #22c55e;">{{ "%.2f"|format(adapt.get('c_rating', 450.0)) }}</strong>
-    </div>
-    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
-      Adaptive format temperature $T(P, N)$
-    </div>
-  </div>
-
-  <!-- Whole-History Rating (WHR) -->
-  {% set whr = ratings.get('whr', {}) %}
-  <div class="model-card {% if active_model == 'whr' %}active-card{% endif %}">
-    <h3>
-      <span>Whole-History Rating</span>
-      <span class="badge badge-rank">#{{ whr.get('rank', '-') }}</span>
-    </h3>
-    <div class="rating-number">
-      {{ "%.1f"|format(whr.get('rating', 1500.0)) }}
-      <span class="rd-tag">&plusmn;{{ "%.1f"|format(whr.get('rd', 350.0)) }}</span>
-    </div>
-    <div class="c-rating-box">
-      <span style="color: var(--text-muted);">Conservative (C = &mu; - 3&sigma;):</span>
-      <strong style="color: var(--accent-gold);">{{ "%.2f"|format(whr.get('c_rating', 450.0)) }}</strong>
-    </div>
-    <div style="margin-top: 0.4rem; font-size: 0.8rem; color: #887864;">
-      Full 2017-2026 retrospective Brownian walk
-    </div>
-  </div>
+  {% for f_id, f_label, f_icon, f_desc in format_configs %}
+    {% set f_rating = (glickod_by_format or {}).get(f_id, {}) %}
+    <a href="?model=glicko2_daneo&format={{ f_id }}&reset_mode={{ active_reset_mode or reset_mode }}" 
+       class="model-card {% if active_format == f_id %}active-card{% endif %}" 
+       style="text-decoration: none; color: inherit; cursor: pointer; transition: transform 0.15s ease, box-shadow 0.15s ease; {% if active_format == f_id %}border: 1.5px solid #b8860b; background: linear-gradient(135deg, rgba(46, 31, 20, 0.95) 0%, rgba(22, 14, 9, 0.98) 100%); box-shadow: 0 4px 18px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(229, 169, 60, 0.2);{% endif %}">
+      <h3 style="{% if active_format == f_id %}color: #ffd54f;{% endif %} display: flex; justify-content: space-between; align-items: center;">
+        <span>{{ f_icon }} {{ f_label }}</span>
+        <span class="badge badge-rank" style="{% if active_format == f_id %}background: #332211; color: #ffd54f; border: 1.5px solid #b8860b; font-weight: 700;{% endif %}">
+          {% if f_rating.get('rank') %}#{{ f_rating.rank }}{% else %}Unranked{% endif %}
+        </span>
+      </h3>
+      <div class="rating-number" style="{% if active_format == f_id %}color: #ffde8a; font-weight: 800;{% endif %}">
+        {% if f_rating.get('rating') %}
+          {{ "%.1f"|format(f_rating.rating) }}
+          <span class="rd-tag" style="{% if active_format == f_id %}color: #c7a76d;{% endif %}">&plusmn;{{ "%.1f"|format(f_rating.get('rd', 350.0)) }}</span>
+        {% else %}
+          <span style="color: var(--text-muted); font-size: 1.05rem; font-weight: normal;">No matches</span>
+        {% endif %}
+      </div>
+      <div class="c-rating-box" style="{% if active_format == f_id %}border-top-color: rgba(184, 134, 11, 0.4);{% endif %}">
+        <span style="color: {% if active_format == f_id %}#bfaea0{% else %}var(--text-muted){% endif %};">Conservative (C = &mu; - 3&sigma;):</span>
+        <strong style="color: {% if active_format == f_id %}#ffd54f{% else %}var(--accent-gold){% endif %};">
+          {% if f_rating.get('c_rating') is not none %}
+            {{ "%.2f"|format(f_rating.c_rating) }}
+          {% else %}
+            &mdash;
+          {% endif %}
+        </strong>
+      </div>
+      <div style="margin-top: 0.4rem; font-size: 0.8rem; color: {% if active_format == f_id %}#a89880{% else %}#887864{% endif %};">
+        {% if f_rating.get('opponents_count') %}
+          Matches: {{ f_rating.opponents_count }} | Win%: {{ "%.1f"|format(f_rating.get('win_rate', 0.0)) }}%
+        {% else %}
+          {{ f_desc }}
+        {% endif %}
+      </div>
+    </a>
+  {% endfor %}
 </div>
 
 <!-- Interactive Chart.js Trajectory Comparison -->
@@ -578,10 +517,14 @@
               {% endif %}
             </td>
             <td>
-              <div style="display: flex; flex-wrap: wrap; gap: 0.4rem;">
                 {% for p in m.participants %}
                   <span style="{% if p.name == player.name %}color: var(--accent-gold); font-weight: bold;{% else %}color: var(--text-muted);{% endif %}">
-                    {{ p.name }} ({{ p.score|int if p.score == p.score|int else p.score }}){% if not loop.last %},{% endif %}
+                    {% if p.name == player.name %}
+                      {{ p.name }}
+                    {% else %}
+                      <a href="{{ url_for('player.profile', player_name=p.name) }}" class="player-link" style="color: #ffd54f; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">{{ p.name }}</a>
+                    {% endif %}
+                    <span style="color: var(--text-muted);">({{ p.score|int if p.score == p.score|int else p.score }})</span>{% if not loop.last %}<span style="color: var(--text-muted);">,</span>{% endif %}
                   </span>
                 {% endfor %}
               </div>
@@ -816,7 +759,7 @@
         const isTarget = p.name.toLowerCase() === data.player1.toLowerCase() || p.name.toLowerCase() === data.player2.toLowerCase();
         const color = isTarget ? '#ffd54f' : 'var(--text-muted)';
         const weight = isTarget ? '700' : 'normal';
-        return `<span style="color: ${color}; font-weight: ${weight};">${p.name}: ${p.score}</span>`;
+        return `<span style="color: ${color}; font-weight: ${weight};"><a href="/player/${encodeURIComponent(p.name)}" class="player-link" style="color: ${color}; text-decoration: none;" onmouseover="this.style.textDecoration='underline'" onmouseout="this.style.textDecoration='none'">${p.name}</a>: ${p.score}</span>`;
       }).join(', ');
 
       html += `

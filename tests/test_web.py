@@ -94,3 +94,23 @@ def test_player_suggest_api(client):
     assert arthur_entry is not None
     assert arthur_entry['title'] == 'B'
 
+
+def test_player_profile_glickod_cards_and_links(client):
+    resp = client.get('/player/DireNTropy')
+    assert resp.status_code == 200
+    html = resp.data.decode('utf-8')
+
+    # 1. Verify 4 GlickoD format cards are rendered
+    assert 'Overall (All Formats)' in html
+    assert '2-Player (Duels)' in html
+    assert '3-Player Tables' in html
+    assert '4-Player Tables' in html
+
+    # 2. Verify divergence text is removed
+    assert 'Standard and MP-Weighted ratings are tightly aligned' not in html
+    assert 'WHR smooths out localized hot streaks' not in html
+
+    # 3. Verify opponent player links in recent games
+    assert 'class="player-link"' in html
+
+
