@@ -2126,7 +2126,7 @@
       }
 
       function positionDropdown() {
-        if (!activeInput || dropdown.style.display !== 'block') return;
+        if (!activeInput) return;
         const rect = activeInput.getBoundingClientRect();
         dropdown.style.left = (rect.left + window.scrollX) + 'px';
         dropdown.style.top = (rect.bottom + window.scrollY + 4) + 'px';
@@ -2205,8 +2205,8 @@
         `;
 
         dropdown.innerHTML = html;
-        positionDropdown();
         dropdown.style.display = 'block';
+        positionDropdown();
 
         dropdown.querySelectorAll('.search-autocomplete-item').forEach(item => {
           item.addEventListener('mouseenter', () => {

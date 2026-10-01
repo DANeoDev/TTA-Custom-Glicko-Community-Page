@@ -426,18 +426,18 @@ def render_leaderboard(year=None):
             elif year is None:
                 if delta_window == 'baseline' and active_reset_mode == 'continuous':
                     base_rows = conn.execute(
-                        f"SELECT player_name, rank_delta, c_rating_delta, rating_delta, rd_delta, opps_delta, win_rate_delta "
+                        f"SELECT player_name, rank, c_rating, rating, rd, opps, win_rate "
                         f"FROM official_baseline WHERE player_name IN ({placeholders})",
                         player_names
                     ).fetchall()
                     for br in base_rows:
                         deltas_by_player[br['player_name']] = {
-                            'c_rating': br['c_rating_delta'],
-                            'rating': br['rating_delta'],
-                            'rd': br['rd_delta'],
-                            'rank': int(br['rank_delta']) if br['rank_delta'] is not None else 0,
-                            'opps': int(br['opps_delta']) if br['opps_delta'] is not None else 0,
-                            'win_rate': br['win_rate_delta']
+                            'hist_c': br['c_rating'],
+                            'hist_r': br['rating'],
+                            'hist_rd': br['rd'],
+                            'hist_rank': br['rank'],
+                            'base_opps': br['opps'],
+                            'base_wr': br['win_rate']
                         }
                 else:
                     # Dynamically calculate cutoffs from latest available period in rating_history
@@ -533,10 +533,22 @@ def render_leaderboard(year=None):
             # Attach delta
             if delta_window != 'none':
                 d_info = deltas_by_player.get(p['player_name'])
-                if delta_window == 'baseline' and active_reset_mode == 'continuous' and d_info and 'c_rating' in d_info:
-                    p['delta'] = d_info
+                if delta_window == 'baseline' and active_reset_mode == 'continuous' and d_info and 'hist_c' in d_info:
+                    curr_rank = p.get('display_rank') or p.get('rank')
+                    h_rank = d_info.get('hist_rank')
+                    rank_delta = (h_rank - curr_rank) if (h_rank and curr_rank) else 0
+                    base_opps = d_info.get('base_opps') or 0
+                    base_wr = d_info.get('base_wr') or 0.0
+                    p['delta'] = {
+                        'c_rating': round(p['c_rating'] - d_info['hist_c'], 2),
+                        'rating': round(p['rating'] - d_info['hist_r'], 2),
+                        'rd': round(p['rd'] - d_info['hist_rd'], 2),
+                        'rank': rank_delta,
+                        'opps': max(0, p.get('opponents_count', 0) - base_opps),
+                        'win_rate': round(p.get('win_rate', 0.0) - base_wr, 2)
+                    }
                 elif d_info and 'hist_c' in d_info:
-                    curr_rank = p.get('rank') or p.get('display_rank')
+                    curr_rank = p.get('display_rank') or p.get('rank')
                     h_rank = d_info.get('hist_rank')
                     rank_delta = (h_rank - curr_rank) if (h_rank and curr_rank) else 0
                     p['delta'] = {
