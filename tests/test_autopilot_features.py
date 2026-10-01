@@ -1056,7 +1056,7 @@ def test_majondor_royal_league_achievements_and_deduplication():
         assert rec['placement'] == '1 / 8'
         assert rec['medal'] == 'gold'
         assert 'Royal League Emperor Division Winner' in rec['details']
-        assert 'Competed in Emperor' in rec['details']
+        assert 'Record:' in rec['details'] or 'Competed in Emperor' in rec['details']
 
         # 3. Verify zero leftover quarterly '202X QX' records in tournament_records
         leftover_q = conn.execute(

@@ -502,9 +502,9 @@ def cleanup_duplicate_tournament_records(conn):
         # 3. Multi-Stage Consolidation for Survivors Cup 2026
         sc_rows = conn.execute(
             "SELECT record_id, player_name, tournament_name, division, placement, points, details, finish_date "
-            "FROM tournament_records WHERE tournament_name LIKE 'Survivors Cup 2026%'"
+            "FROM tournament_records WHERE (tournament_name = 'Survivors Cup' AND season = '2026') OR tournament_name LIKE 'Survivors Cup 2026%'"
         ).fetchall()
-        if sc_rows:
+        if sc_rows and not all(r[3] == 'Championship' for r in sc_rows):
             sc_players = {}
             for r in sc_rows:
                 p = r[1]
@@ -522,7 +522,9 @@ def cleanup_duplicate_tournament_records(conn):
 
                 for r in p_rows:
                     t_str = r[2]
-                    m_st = re.search(r'Stage\s*(\d+)', t_str, re.IGNORECASE)
+                    div_str = r[3] or ''
+                    det = r[6] or ''
+                    m_st = re.search(r'Stage\s*(\d+)', f"{t_str} {div_str} {det}", re.IGNORECASE)
                     st_num = int(m_st.group(1)) if m_st else 1
                     if st_num >= max_st:
                         max_st = st_num
@@ -533,7 +535,6 @@ def cleanup_duplicate_tournament_records(conn):
                         if f_d and f_d > latest_date:
                             latest_date = f_d
 
-                    det = r[6] or ''
                     m_match = re.search(r'(\d+)\s+matches played,\s+(\d+)\s+victories', det)
                     if m_match:
                         tot_g += int(m_match.group(1))
@@ -587,9 +588,9 @@ def cleanup_duplicate_tournament_records(conn):
         # 4. Multi-Stage Consolidation for Leaderboard Trophy 2025
         lt_rows = conn.execute(
             "SELECT record_id, player_name, tournament_name, division, placement, points, details, finish_date "
-            "FROM tournament_records WHERE tournament_name LIKE 'Leaderboard Trophy 2025%'"
+            "FROM tournament_records WHERE (tournament_name = 'Leaderboard Trophy' AND season = '2025') OR tournament_name LIKE 'Leaderboard Trophy 2025%'"
         ).fetchall()
-        if lt_rows:
+        if lt_rows and not all(r[3] == 'Championship' for r in lt_rows):
             lt_players = {}
             for r in lt_rows:
                 p = r[1]

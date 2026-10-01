@@ -136,14 +136,26 @@ def normalize_campaign(tourney_str):
     if m_sc:
         year = m_sc.group(1)
         stage = m_sc.group(2)
-        div = m_sc.group(3) or (f"Stage {stage}" if stage else "Championship")
+        sub_div = m_sc.group(3)
+        if stage and sub_div:
+            div = f"Stage {stage} - {sub_div}"
+        elif stage:
+            div = f"Stage {stage}"
+        else:
+            div = sub_div or "Championship"
         return ("Survivors Cup", year, div)
 
     m_lt = re.match(r'Leaderboard\s+Trophy\s+(\d+)(?:\s+Stage\s+(\d+))?(?:\s*-\s*(.*))?', s, re.IGNORECASE)
     if m_lt:
         year = m_lt.group(1)
         stage = m_lt.group(2)
-        div = m_lt.group(3) or (f"Stage {stage}" if stage else "Championship")
+        sub_div = m_lt.group(3)
+        if stage and sub_div:
+            div = f"Stage {stage} - {sub_div}"
+        elif stage:
+            div = f"Stage {stage}"
+        else:
+            div = sub_div or "Championship"
         return ("Leaderboard Trophy", year, div)
 
     m_eff = re.match(r'Eiffel\s+Tower\s+S(\d+)(?:\s*-\s*(.*))?', s, re.IGNORECASE)
@@ -1000,6 +1012,10 @@ def parse_all_tournaments(db_path=None):
 
     # Ingest Community Standard Leaderboard
     ingest_community_leaderboard(conn, canonical_map)
+
+    # Clean up and consolidate tournament records (Royal League quarters, Survivors Cup consolidation, etc.)
+    from src.data.db import cleanup_duplicate_tournament_records
+    cleanup_duplicate_tournament_records(conn)
 
     conn.close()
     print(f"Successfully ingested {len(player_stats)} player achievement summaries and {len(records)} tournament records into {db_file}!")

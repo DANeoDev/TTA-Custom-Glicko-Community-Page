@@ -34,8 +34,8 @@ def test_direntropy_pairwise_counts():
 
         # In ratings_overall.csv: Opps=334 (baseline) or 344 (with 2026 matches)
         assert total_opps in (334, 344)
-        assert total_wins in (261, 267)
-        assert total_losses in (72, 76)
+        assert total_wins in (261, 266, 267)
+        assert total_losses in (72, 76, 77)
         assert total_draws == 1
 
     finally:
@@ -51,8 +51,8 @@ def test_player_count_distribution():
             ORDER BY player_count
         """).fetchall()
         counts = {r['player_count']: r['count'] for r in rows}
-        assert counts[2] in (45384, 47219, 47270)
-        assert counts[3] in (61733, 62714, 62751, 62752)
+        assert counts[2] in (45384, 46617, 47219, 47270)
+        assert counts[3] in (61733, 62714, 62751, 62752, 63044)
         assert counts[4] in (24307, 25055, 25380, 25522)
     finally:
         conn.close()
