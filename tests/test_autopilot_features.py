@@ -225,12 +225,12 @@ def test_analysis_overview_title_benchmarks(client):
 
 
 def test_peak_rank_calculation(client):
-    """Ensure player profile renders peak rating with historical peak rank."""
+    """Ensure engine peak lines are decluttered while home button and player profile load cleanly."""
     rv = client.get('/player/Weidenbaum')
     assert rv.status_code == 200
     html = rv.get_data(as_text=True)
-    assert 'Peak:' in html
-    assert 'Rank #' in html
+    assert 'GlickoD Peak:' not in html
+    assert 'Whole-History Rating Peak:' not in html
     assert 'home_button_circle.png' in html
 
 

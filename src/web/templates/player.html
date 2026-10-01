@@ -324,21 +324,6 @@
         </a>
       </div>
     {% endif %}
-
-    {% if narrative and narrative.peaks %}
-      <div style="display: flex; flex-wrap: wrap; gap: 1.25rem; margin: 0.6rem 0; padding: 0.6rem 0.85rem; background: rgba(18, 12, 8, 0.7); border-radius: 4px; border: 1px solid var(--border-subtle); font-family: var(--font-stats); font-size: 0.85rem;">
-        {% for m_key, pk in narrative.peaks.items() %}
-          <div>
-            <span style="color: var(--text-muted);">{{ models.get(m_key, m_key) }} Peak:</span>
-            <strong style="color: #ffd54f;">{{ pk.rating }}</strong>
-            {% if pk.rank %}
-              <span style="color: var(--accent-gold); font-weight: 700; margin-left: 0.2rem;">(Rank #{{ pk.rank }})</span>
-            {% endif %}
-            <span style="color: var(--text-muted); font-size: 0.8rem;">({{ pk.date }})</span>
-          </div>
-        {% endfor %}
-      </div>
-    {% endif %}
   </div>
 </div>
 

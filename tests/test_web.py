@@ -113,4 +113,9 @@ def test_player_profile_glickod_cards_and_links(client):
     # 3. Verify opponent player links in recent games
     assert 'class="player-link"' in html
 
+    # 4. Verify engine peak ratings lines are removed to reduce clutter
+    assert 'GlickoD Peak:' not in html
+    assert 'Glicko-2 Standard Peak:' not in html
+    assert 'Whole-History Rating Peak:' not in html
+
 

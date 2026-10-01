@@ -598,28 +598,10 @@ def profile(player_name):
         achievements = dict(ach_row) if ach_row else None
         top_achievements = json.loads(ach_row['top_achievements_json']) if ach_row and ach_row['top_achievements_json'] else []
 
-        # Dynamic narrative insights and peak calculations
-        std_r = ratings_by_model.get('glicko2_std', {})
-        mp_r = ratings_by_model.get('glicko2_mp', {})
-        whr_r = ratings_by_model.get('whr', {})
-
-        peaks = {}
-        for m_key, s_dict in model_series.items():
-            if s_dict:
-                best_date = max(s_dict.keys(), key=lambda d: s_dict[d])
-                peak_rating = s_dict[best_date]
-                rank_query = conn.execute(
-                    'SELECT COUNT(*) + 1 FROM rating_history '
-                    'WHERE model_type = ? AND player_count = ? AND period_date = ? AND rating > ?',
-                    (m_key, active_format, best_date, peak_rating)
-                ).fetchone()
-                peak_rank = rank_query[0] if rank_query else None
-                peaks[m_key] = {'rating': peak_rating, 'rank': peak_rank, 'date': best_date}
-
+        # Dynamic narrative insights
         career_summary = achievements['summary_text'] if achievements and achievements.get('summary_text') else None
 
         narrative = {
-            'peaks': peaks,
             'career_summary': career_summary
         }
 
